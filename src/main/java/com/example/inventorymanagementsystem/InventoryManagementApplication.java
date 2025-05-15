@@ -10,9 +10,14 @@ import java.io.IOException;
 public class InventoryManagementApplication extends Application {
     @Override
     public void start(Stage stage) throws IOException {
-        FXMLLoader fxmlLoader = new FXMLLoader(InventoryManagementApplication.class.getResource("hello-view.fxml"));
-        Scene scene = new Scene(fxmlLoader.load(), 320, 240);
-        stage.setTitle("Hello!");
+        FXMLLoader fxmlLoader = new FXMLLoader(InventoryManagementApplication.class.getResource("ApplicationUI.fxml"));
+        Scene scene = new Scene(fxmlLoader.load(), 900, 500);
+
+        scene.getStylesheets().add(
+                String.valueOf(InventoryManagementApplication.class.getResource("css/style.css"))
+        );
+
+        stage.setTitle("SFC Inventory Management System with Integrated POS Features");
         stage.setScene(scene);
         stage.show();
     }
