@@ -1,18 +1,13 @@
-package com.example.inventorymanagementsystem.components;
+package com.example.inventorymanagementsystem.view.components;
 
 import com.example.inventorymanagementsystem.constants.Fonts;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.paint.Paint;
-import javafx.scene.text.Font;
-import javafx.scene.text.Text;
-import javafx.scene.text.TextAlignment;
 
 public class TabBuilder {
     public static Tab buildTab(String text){

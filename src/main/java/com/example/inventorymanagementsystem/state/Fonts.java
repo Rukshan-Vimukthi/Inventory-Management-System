@@ -1,4 +1,4 @@
-package com.example.inventorymanagementsystem.constants;
+package com.example.inventorymanagementsystem.state;
 
 import javafx.scene.text.Font;
 

@@ -1,10 +1,12 @@
 package com.example.inventorymanagementsystem;
 
-import com.example.inventorymanagementsystem.components.TabBuilder;
+import com.example.inventorymanagementsystem.view.components.TabBuilder;
 import javafx.fxml.FXML;
-import javafx.scene.control.Label;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+
+import java.io.IOException;
 
 public class InventoryManagementApplicationController {
     @FXML
@@ -25,6 +27,15 @@ public class InventoryManagementApplicationController {
 
         Tab checkoutTab = TabBuilder.buildTab("Checkout");
         Tab stocksTab = TabBuilder.buildTab("Stock");
+        Tab administratorTab = TabBuilder.buildTab("Admininstrator");
+
+        FXMLLoader adminUILoader = new FXMLLoader(InventoryManagementApplication.class.getResource("AdministratorUI.fxml"));
+        try {
+            administratorTab.setContent(adminUILoader.load());
+        }catch(IOException e){
+            // couldn't load the fxml file
+            e.printStackTrace();
+        }
 
         tabPane.getTabs().add(checkoutTab);
         tabPane.getTabs().add(stocksTab);
