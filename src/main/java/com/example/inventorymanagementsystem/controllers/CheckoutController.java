@@ -1,4 +1,4 @@
-package com.example.inventorymanagementsystem.controllers.pages;
+package com.example.inventorymanagementsystem.controllers;
 
 public class CheckoutController {
     public void initialize(){

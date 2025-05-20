@@ -1,4 +1,4 @@
-package com.example.inventorymanagementsystem.controllers.pages;
+package com.example.inventorymanagementsystem.controllers;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.TabPane;

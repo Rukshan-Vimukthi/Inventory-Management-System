@@ -4,7 +4,7 @@
 <?import javafx.scene.layout.AnchorPane?>
 
 
-<AnchorPane prefHeight="450.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.inventorymanagementsystem.controllers.pages.AdministratorController">
+<AnchorPane prefHeight="450.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.inventorymanagementsystem.controllers.AdministratorController">
    <children>
       <TabPane fx:id="adminUITabPane" prefHeight="450.0" prefWidth="600.0" tabClosingPolicy="UNAVAILABLE" />
    </children>
