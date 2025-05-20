@@ -1,6 +1,6 @@
 package com.example.inventorymanagementsystem.view.components;
 
-import com.example.inventorymanagementsystem.constants.Fonts;
+import com.example.inventorymanagementsystem.state.Fonts;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
