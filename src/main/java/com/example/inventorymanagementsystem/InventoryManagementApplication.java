@@ -35,6 +35,8 @@ public class InventoryManagementApplication extends Application {
             String.valueOf(InventoryManagementApplication.class.getResource("css/style.css"))
         );
 
+        // This is the content added by me
+
         stage.setTitle("SFC Inventory Management System with Integrated POS Features");
         stage.setScene(scene);
         stage.show();
