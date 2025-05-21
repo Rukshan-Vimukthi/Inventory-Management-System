@@ -7,6 +7,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 
+// this is test
+
 public class Checkout {
     private HBox checkoutContainer;
 
