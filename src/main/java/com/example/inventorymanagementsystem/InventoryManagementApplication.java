@@ -23,7 +23,7 @@ public class InventoryManagementApplication extends Application {
         TabPane rootLayout = (TabPane) root;
 
         Checkout checkoutLayout = new Checkout();
-        HBox checkoutContainer = checkoutLayout.getLayout();
+        VBox checkoutContainer = checkoutLayout.getLayout();
 
         Tab checkOutTab = new Tab("Checkout");
         checkOutTab.setContent(checkoutContainer);
