@@ -51,7 +51,7 @@ public class Checkout {
 
         // Input area
         TextField amount = new TextField("Type the quantity");
-        String items[] = {"T-Shirts", "Pants", "Shorts", "Caps"};
+        String items[] = {"T-Shirts", "Pants", "Shorts", "Caps", "Shirts"};
         ComboBox itemComboBox = new ComboBox(FXCollections.observableArrayList(items));
         itemComboBox.setValue("Select Items");
         Button addButton = new Button("Add to List");
