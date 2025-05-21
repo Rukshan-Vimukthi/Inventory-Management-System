@@ -1,5 +1,6 @@
 package com.example.inventorymanagementsystem;
 
+import com.example.inventorymanagementsystem.view.Inventory;
 import com.example.inventorymanagementsystem.view.components.TabBuilder;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -27,7 +28,11 @@ public class InventoryManagementApplicationController {
 
         Tab checkoutTab = TabBuilder.buildTab("Checkout");
         Tab stocksTab = TabBuilder.buildTab("Stock");
+        Tab inventory = TabBuilder.buildTab("Inventory");
         Tab administratorTab = TabBuilder.buildTab("Admininstrator");
+
+        Inventory inventoryView = new Inventory();
+        inventory.setContent(inventoryView);
 
         FXMLLoader adminUILoader = new FXMLLoader(InventoryManagementApplication.class.getResource("AdministratorUI.fxml"));
         try {
@@ -39,6 +44,7 @@ public class InventoryManagementApplicationController {
 
         tabPane.getTabs().add(checkoutTab);
         tabPane.getTabs().add(stocksTab);
+        tabPane.getTabs().add(inventory);
 
 //        tabPane.getTabs().add(TabBuilder.buildTab("Reports"));
     }
