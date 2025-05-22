@@ -1,5 +1,4 @@
 package com.example.inventorymanagementsystem;
-
 import com.example.inventorymanagementsystem.view.Checkout;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -7,10 +6,8 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
-
 import java.io.IOException;
 
 public class InventoryManagementApplication extends Application {
@@ -23,7 +20,7 @@ public class InventoryManagementApplication extends Application {
         TabPane rootLayout = (TabPane) root;
 
         Checkout checkoutLayout = new Checkout();
-        VBox checkoutContainer = checkoutLayout.getLayout();
+        BorderPane checkoutContainer = checkoutLayout.getLayout();
 
         Tab checkOutTab = new Tab("Checkout");
         checkOutTab.setContent(checkoutContainer);
