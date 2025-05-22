@@ -2,6 +2,7 @@ package com.example.inventorymanagementsystem.state;
 
 import com.example.inventorymanagementsystem.db.Connection;
 import com.example.inventorymanagementsystem.models.Color;
+import com.example.inventorymanagementsystem.models.ItemDetail;
 import com.example.inventorymanagementsystem.models.Size;
 import com.example.inventorymanagementsystem.models.Stock;
 import javafx.collections.FXCollections;
@@ -12,6 +13,7 @@ public class Data {
     private ObservableList<Stock> stocks;
     private ObservableList<Color> colors;
     private ObservableList<Size> size;
+    private ObservableList<ItemDetail> itemDetails;
 
     /**
      * initializes the Data object instance when the class get loaded
@@ -26,6 +28,7 @@ public class Data {
         stocks = FXCollections.observableArrayList(connection.getStocks());
         colors = FXCollections.observableArrayList(connection.getColors());
         size = FXCollections.observableArrayList(connection.getSizes());
+        itemDetails = FXCollections.observableArrayList(connection.getItemDetails());
     }
 
     public static Data getInstance(){
@@ -45,5 +48,9 @@ public class Data {
 
     public ObservableList<Size> getSize() {
         return size;
+    }
+
+    public ObservableList<ItemDetail> getItemDetails() {
+        return itemDetails;
     }
 }

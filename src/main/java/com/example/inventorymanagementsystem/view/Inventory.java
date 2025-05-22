@@ -1,9 +1,7 @@
 package com.example.inventorymanagementsystem.view;
 
-import com.example.inventorymanagementsystem.models.Color;
-import com.example.inventorymanagementsystem.models.Item;
-import com.example.inventorymanagementsystem.models.Size;
-import com.example.inventorymanagementsystem.models.Stock;
+import com.example.inventorymanagementsystem.db.Connection;
+import com.example.inventorymanagementsystem.models.*;
 import com.example.inventorymanagementsystem.state.Data;
 import com.example.inventorymanagementsystem.view.components.ItemPreview;
 import com.example.inventorymanagementsystem.view.components.TableContainer;
@@ -27,12 +25,17 @@ public class Inventory extends HBox {
         Button searchButton = new Button("search");
         itemTableToolContainer.getChildren().addAll(itemSearchBox, searchButton);
 
-        TableContainer<Item> itemsTable = new TableContainer<>();
+        TableContainer<ItemDetail> itemsTable = new TableContainer<>();
         itemsTable.addColumn("id", Integer.class);
-        itemsTable.addColumn("name", Integer.class);
-        itemsTable.addColumn("price", Integer.class);
-        itemsTable.addColumn("sellingPrice", Integer.class);
-        itemsTable.addColumn("stockID", Integer.class);
+        itemsTable.addColumn("name", String.class);
+        itemsTable.addColumn("price", Double.class);
+        itemsTable.addColumn("sellingPrice", Double.class);
+        itemsTable.addColumn("stockDate", Integer.class);
+        itemsTable.addColumn("stockName", Integer.class);
+        itemsTable.addColumn("itemSize", Integer.class);
+        itemsTable.addColumn("itemColor", Integer.class);
+        itemsTable.addItems(Data.getInstance().getItemDetails());
+
 
         ItemPreview itemPreview = new ItemPreview(null);
 
