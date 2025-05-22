@@ -1,5 +1,4 @@
 package com.example.inventorymanagementsystem;
-
 import com.example.inventorymanagementsystem.view.Checkout;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -9,7 +8,6 @@ import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
-
 import java.io.IOException;
 
 public class InventoryManagementApplication extends Application {

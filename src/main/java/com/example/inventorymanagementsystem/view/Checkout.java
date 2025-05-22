@@ -119,6 +119,7 @@ public class Checkout {
         HBox balanceSec = new HBox();
         balanceSec.setAlignment(Pos.CENTER);
         balanceSec.setPadding(new Insets(10, 0, 10, 0));
+        balanceSec.setSpacing(10);
         balanceSec.getChildren().addAll(balanceTxt, balance);
 
         bottomSection.getChildren().addAll(discountForAll, totalCostTxt, totalCost, totalDiscountTxt, totalDiscount, grandTotalTxt, grandTotal, fundTxt, fund);
@@ -133,6 +134,7 @@ public class Checkout {
         mainLayout.setTop(headerSection);
         mainLayout.setCenter(floatingContainer);
         mainLayout.setBottom(mainFooterSec);
+
     }
 
     public BorderPane getLayout() {
