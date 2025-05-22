@@ -18,21 +18,21 @@ public class Stock {
     }
 
 
-    private IntegerProperty idProperty(){
+    public IntegerProperty idProperty(){
         if (id == null){
             id = new SimpleIntegerProperty(this, "id");
         }
         return id;
     }
 
-    private StringProperty dateProperty(){
+    public StringProperty dateProperty(){
         if (date == null){
             date = new SimpleStringProperty(this, "date");
         }
         return date;
     }
 
-    private StringProperty nameProperty(){
+    public StringProperty nameProperty(){
         if(name == null){
             name = new SimpleStringProperty(this, "name");
         }

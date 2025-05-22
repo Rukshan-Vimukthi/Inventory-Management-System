@@ -9,14 +9,19 @@ public class Color {
     private IntegerProperty id;
     private StringProperty color;
 
-    private IntegerProperty idProperty(){
+    public Color(int id, String colorCode){
+        idProperty().setValue(id);
+        colorProperty().setValue(colorCode);
+    }
+
+    public IntegerProperty idProperty(){
         if (id == null){
             id = new SimpleIntegerProperty(this, "id");
         }
         return id;
     }
 
-    private StringProperty colorProperty(){
+    public StringProperty colorProperty(){
         if (color == null){
             color = new SimpleStringProperty(this, "color");
         }

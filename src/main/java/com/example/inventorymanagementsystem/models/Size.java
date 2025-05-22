@@ -7,7 +7,12 @@ import javafx.beans.property.StringProperty;
 
 public class Size {
     private IntegerProperty id;
-    private StringProperty color;
+    private StringProperty size;
+
+    public Size(int id, String sizeText){
+        idProperty().setValue(id);
+        sizeProperty().setValue(sizeText);
+    }
 
     public IntegerProperty idProperty(){
         if(id == null){
@@ -16,11 +21,11 @@ public class Size {
         return id;
     }
 
-    public StringProperty colorProperty(){
-        if(color == null){
-            color = new SimpleStringProperty(this, "color");
+    public StringProperty sizeProperty(){
+        if(size == null){
+            size = new SimpleStringProperty(this, "size");
         }
-        return color;
+        return size;
     }
 
     public void setId(int id){
@@ -28,6 +33,6 @@ public class Size {
     }
 
     public void setColor(String color){
-        colorProperty().setValue(color);
+        sizeProperty().setValue(color);
     }
 }
