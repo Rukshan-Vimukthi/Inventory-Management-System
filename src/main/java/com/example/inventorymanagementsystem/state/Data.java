@@ -13,8 +13,19 @@ public class Data {
     private ObservableList<Color> colors;
     private ObservableList<Size> size;
 
+    /**
+     * initializes the Data object instance when the class get loaded
+     */
+    static {
+        Data.getInstance();
+        System.out.println("Data instance created!");
+    }
+
     private Data(){
-        stocks = FXCollections.observableArrayList(Connection.getInstance().getStocks());
+        Connection connection = Connection.getInstance();
+        stocks = FXCollections.observableArrayList(connection.getStocks());
+        colors = FXCollections.observableArrayList(connection.getColors());
+        size = FXCollections.observableArrayList(connection.getSizes());
     }
 
     public static Data getInstance(){

@@ -26,26 +26,20 @@ public class InventoryManagementApplicationController {
         tabPane.setTabMinHeight(200.0D);
         tabPane.setTabMaxHeight(200.0D);
 
+        // tabs in the main UI
         Tab checkoutTab = TabBuilder.buildTab("Checkout");
         Tab stocksTab = TabBuilder.buildTab("Stock");
         Tab inventory = TabBuilder.buildTab("Inventory");
         Tab administratorTab = TabBuilder.buildTab("Admininstrator");
 
+        // create the inventory view (custom javaFX layout container ex. HBox, VBox)
         Inventory inventoryView = new Inventory();
+        // set the custom view as the content of the tab created for inventory (inventory)
         inventory.setContent(inventoryView);
 
-        FXMLLoader adminUILoader = new FXMLLoader(InventoryManagementApplication.class.getResource("AdministratorUI.fxml"));
-        try {
-            administratorTab.setContent(adminUILoader.load());
-        }catch(IOException e){
-            // couldn't load the fxml file
-            e.printStackTrace();
-        }
-
+        // Add tabs to the tabPane
         tabPane.getTabs().add(checkoutTab);
         tabPane.getTabs().add(stocksTab);
         tabPane.getTabs().add(inventory);
-
-//        tabPane.getTabs().add(TabBuilder.buildTab("Reports"));
     }
 }

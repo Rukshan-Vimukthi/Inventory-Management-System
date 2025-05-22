@@ -10,7 +10,6 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 
-// this is test
 
 public class Checkout {
     private BorderPane mainLayout;

@@ -1,5 +1,7 @@
 package com.example.inventorymanagementsystem.db;
 
+import com.example.inventorymanagementsystem.models.Color;
+import com.example.inventorymanagementsystem.models.Size;
 import com.example.inventorymanagementsystem.models.Stock;
 
 import java.sql.DriverManager;
@@ -10,6 +12,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * This is a singleton class. Use to do insert, update, delete, retrieve items from the database. to use methods to do those tasks with the
+ * database use Connection.getInstance() to get the instance of the database connection. then call the methods available
+ * to perform the operations with the database.
+ */
 public class Connection {
     private java.sql.Connection connection;
     private static Connection connectionObject;
@@ -23,6 +30,10 @@ public class Connection {
         }
     }
 
+    /**
+     * create the instance of the Connection object if there is not any instance created.
+     * @return Connection instance to perform CRUD operations with the database
+     */
     public static Connection getInstance(){
         if (connectionObject == null){
             connectionObject = new Connection();
@@ -39,9 +50,21 @@ public class Connection {
         }
     }
 
-    public List<String> getColors(){
-        List<String> colorList = new ArrayList<>();
-        return colorList;
+    public List<Color> getColors(){
+        ArrayList<Color> rows = new ArrayList<>();
+        try {
+            statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM `color`");
+            while (resultSet.next()){
+                int id = resultSet.getInt(1);
+                String colorCode = resultSet.getString(2);
+                Color color = new Color(id, colorCode);
+                rows.add(color);
+            }
+        }catch(SQLException sqlException){
+            sqlException.printStackTrace();
+        }
+        return rows;
     }
 
     public void addNewItem(){
@@ -56,8 +79,21 @@ public class Connection {
 
     }
 
-    public void getSizes(){
-
+    public List<Size> getSizes(){
+        ArrayList<Size> rows = new ArrayList<>();
+        try {
+            statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM `size`");
+            while (resultSet.next()){
+                int id = resultSet.getInt(1);
+                String sizeText = resultSet.getString(2);
+                Size size = new Size(id, sizeText);
+                rows.add(size);
+            }
+        }catch(SQLException sqlException){
+            sqlException.printStackTrace();
+        }
+        return rows;
     }
 
     public void addNewUser(){
@@ -76,19 +112,23 @@ public class Connection {
 
     }
 
+    /**
+     * Retrieves and return the records in the stock table in the database
+     * @return ArrayList that stores Stocks retrieved from the database
+     */
     public ArrayList<Stock> getStocks(){
         ArrayList<Stock> rows = new ArrayList<>();
         try {
             statement = connection.createStatement();
             ResultSet resultSet = statement.executeQuery("SELECT * FROM `stock`");
             while (resultSet.next()){
-                int id = resultSet.getInt(0);
-                String date = resultSet.getString(1);
-                String name = resultSet.getString(2);
+                int id = resultSet.getInt(1);
+                String date = resultSet.getString(2);
+                String name = resultSet.getString(3);
+                System.out.println(id + " " + date + " " + name);
                 Stock stock = new Stock(id, date, name);
                 rows.add(stock);
             }
-
         }catch(SQLException sqlException){
             sqlException.printStackTrace();
         }

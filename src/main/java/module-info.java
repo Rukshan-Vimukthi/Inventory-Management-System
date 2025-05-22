@@ -8,6 +8,7 @@ module com.example.inventorymanagementsystem {
     requires java.sql;
 
     opens com.example.inventorymanagementsystem to javafx.fxml;
+    opens com.example.inventorymanagementsystem.models to javafx.base;
     exports com.example.inventorymanagementsystem;
     exports com.example.inventorymanagementsystem.view.components;
     opens com.example.inventorymanagementsystem.view.components to javafx.fxml;

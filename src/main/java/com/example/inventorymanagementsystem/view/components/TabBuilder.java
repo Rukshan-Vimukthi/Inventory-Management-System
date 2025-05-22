@@ -9,7 +9,18 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.paint.Paint;
 
+/**
+ * This class is used to build the custom tabs. call buildTab() method to build a tab
+ *
+ * ex. TabBuilder.buildTab()
+ */
 public class TabBuilder {
+
+    /**
+     * Creates a new tab
+     * @param text - the text to be included in the tab
+     * @return newly created Tab instance.
+     */
     public static Tab buildTab(String text){
         HBox hbox = new HBox();
         hbox.setFillHeight(true);

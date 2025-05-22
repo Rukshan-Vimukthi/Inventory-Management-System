@@ -1,4 +1,7 @@
 package com.example.inventorymanagementsystem;
+
+import com.example.inventorymanagementsystem.state.Data;
+
 import com.example.inventorymanagementsystem.view.Checkout;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -26,7 +29,7 @@ public class InventoryManagementApplication extends Application {
         checkOutTab.setContent(checkoutContainer);
         rootLayout.getTabs().add(checkOutTab);
 
-        Scene scene = new Scene(rootLayout, 900, 500);
+        Scene scene = new Scene(rootLayout, 1000, 720);
 
         scene.getStylesheets().add(
             String.valueOf(InventoryManagementApplication.class.getResource("css/style.css"))
