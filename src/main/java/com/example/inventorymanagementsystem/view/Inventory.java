@@ -7,6 +7,8 @@ import com.example.inventorymanagementsystem.services.interfaces.TableContainerI
 import com.example.inventorymanagementsystem.state.Data;
 import com.example.inventorymanagementsystem.view.components.ItemPreview;
 import com.example.inventorymanagementsystem.view.components.TableContainer;
+import com.example.inventorymanagementsystem.view.dialogs.AddNewColor;
+import com.example.inventorymanagementsystem.view.dialogs.AddNewSize;
 import com.example.inventorymanagementsystem.view.dialogs.AddNewStock;
 import javafx.scene.control.Button;
 import javafx.scene.control.TableColumn;
@@ -81,11 +83,59 @@ public class Inventory extends HBox {
         colorTableContainer.addColumn("id", Integer.class);
         colorTableContainer.addColumn("color", String.class);
         colorTableContainer.addItems(Data.getInstance().getColors());
+        colorTableContainer.setOnActionPerformed(new TableContainerInterface<Color>() {
+            @Override
+            public void addItem() {
+                AddNewColor addNewColor = new AddNewColor(null);
+                addNewColor.show();
+            }
+
+            @Override
+            public void refresh() {
+
+            }
+
+            @Override
+            public void update(Color item) {
+                AddNewColor addNewColor = new AddNewColor(item);
+                addNewColor.show();
+            }
+
+            @Override
+            public void delete(Color item) {
+
+            }
+
+        });
 
         TableContainer<Size> itemSizeTableContainer = new TableContainer<>();
         itemSizeTableContainer.addColumn("id", Integer.class);
         itemSizeTableContainer.addColumn("size", String.class);
         itemSizeTableContainer.addItems(Data.getInstance().getSize());
+        itemSizeTableContainer.setOnActionPerformed(new TableContainerInterface<Size>() {
+            @Override
+            public void addItem() {
+                AddNewSize addNewSize = new AddNewSize(null);
+                addNewSize.show();
+            }
+
+            @Override
+            public void refresh() {
+
+            }
+
+            @Override
+            public void update(Size item) {
+                AddNewSize addNewSize = new AddNewSize(item);
+                addNewSize.show();
+            }
+
+            @Override
+            public void delete(Size item) {
+
+            }
+
+        });
 
         otherTablesContainer.getChildren().addAll(stockTableContainer, colorTableContainer, itemSizeTableContainer);
 
