@@ -11,5 +11,6 @@ module com.example.inventorymanagementsystem {
     opens com.example.inventorymanagementsystem.models to javafx.base;
     exports com.example.inventorymanagementsystem;
     exports com.example.inventorymanagementsystem.view.components;
+    exports com.example.inventorymanagementsystem.services.interfaces;
     opens com.example.inventorymanagementsystem.view.components to javafx.fxml;
 }

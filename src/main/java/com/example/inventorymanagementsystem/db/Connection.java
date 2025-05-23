@@ -22,7 +22,7 @@ public class Connection {
 
     private Connection(){
         try {
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/sandyafashioncorner", "root", "Sandun@2008.sd");
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/sandyafashioncorner", "root", "root@techlix2002");
         }catch(SQLException e){
             e.printStackTrace();
         }
@@ -52,6 +52,10 @@ public class Connection {
         return false;
     }
 
+    /**
+     * Gets colors from the database and return an instance of Lost of colors
+     * @return List of Color instances
+     */
     public List<Color> getColors(){
         ArrayList<Color> rows = new ArrayList<>();
         try {
@@ -121,6 +125,7 @@ public class Connection {
                 int stockID = resultSet.getInt("stock.id");
                 String stockDate = resultSet.getString("stock.date");
                 String stockName = resultSet.getString("stock.name");
+                int itemHasSizeID = resultSet.getInt("item_has_size.id");
                 int itemSizeID = resultSet.getInt("size.id");
                 String itemSize = resultSet.getString("size.size");
                 int itemColorID = resultSet.getInt("color.id");
@@ -137,7 +142,8 @@ public class Connection {
                         itemSizeID,
                         itemSize,
                         itemColorID,
-                        itemColor
+                        itemColor,
+                        itemHasSizeID
                 );
 
                 System.out.println(name);
@@ -246,6 +252,20 @@ public class Connection {
             sqlException.printStackTrace();
         }
         return roles;
+    }
+
+
+    /**
+     * Add new stock
+     */
+    public boolean addNewStock(String date, String name){
+        try{
+            statement = connection.createStatement();
+            return statement.execute("INSERT INTO `stock` (`date`, `name`) VALUES('%s', '%s)".formatted(date, name));
+        }catch(SQLException e){
+            e.printStackTrace();
+        }
+        return false;
     }
 
     /**

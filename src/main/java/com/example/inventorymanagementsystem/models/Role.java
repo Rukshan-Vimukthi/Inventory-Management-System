@@ -27,4 +27,12 @@ public class Role {
         }
         return role;
     }
+
+    public int getId() {
+        return id.get();
+    }
+
+    public String getRole() {
+        return role.get();
+    }
 }

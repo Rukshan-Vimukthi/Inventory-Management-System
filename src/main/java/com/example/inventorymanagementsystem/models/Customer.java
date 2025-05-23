@@ -67,4 +67,24 @@ public class Customer {
     public void setPhone(String phone){
         phoneProperty().setValue(phone);
     }
+
+    public int getId() {
+        return id.get();
+    }
+
+    public String getFirstName() {
+        return firstName.get();
+    }
+
+    public String getLastName() {
+        return lastName.get();
+    }
+
+    public String getPhone() {
+        return phone.get();
+    }
+
+    public String getEmail() {
+        return email.get();
+    }
 }

@@ -35,4 +35,12 @@ public class Size {
     public void setColor(String color){
         sizeProperty().setValue(color);
     }
+
+    public int getId() {
+        return id.get();
+    }
+
+    public String getSize() {
+        return size.get();
+    }
 }

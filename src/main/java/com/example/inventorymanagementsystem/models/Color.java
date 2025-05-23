@@ -31,4 +31,12 @@ public class Color {
     private void setColor(String color){
         colorProperty().setValue(color);
     }
+
+    public int getId() {
+        return id.get();
+    }
+
+    public String getColor() {
+        return color.get();
+    }
 }

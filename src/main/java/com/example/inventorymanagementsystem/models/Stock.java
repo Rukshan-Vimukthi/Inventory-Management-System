@@ -38,4 +38,16 @@ public class Stock {
         }
         return name;
     }
+
+    public int getId() {
+        return id.get();
+    }
+
+    public String getDate() {
+        return date.get();
+    }
+
+    public String getName() {
+        return name.get();
+    }
 }
