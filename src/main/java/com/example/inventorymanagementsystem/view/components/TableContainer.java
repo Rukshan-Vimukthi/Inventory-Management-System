@@ -1,5 +1,6 @@
 package com.example.inventorymanagementsystem.view.components;
 
+import com.example.inventorymanagementsystem.models.ItemDetail;
 import com.example.inventorymanagementsystem.services.interfaces.TableContainerInterface;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -20,10 +21,7 @@ public class TableContainer<T> extends VBox {
     private T model;
     private TableView<T> tableView;
 
-    private TableContainerInterface addItemInterface;
-    private TableContainerInterface refreshInterface;
-    private TableContainerInterface updateInterface;
-    private TableContainerInterface deleteInterface;
+    private TableContainerInterface tableContainerInterface;
 
 //    private final ObservableList<TableColumn<T, ?>> tableColumns = FXCollections.observableArrayList();
     public TableContainer(){
@@ -42,12 +40,23 @@ public class TableContainer<T> extends VBox {
 
         Button addItemButton = new Button("Add");
         addItemButton.setOnAction((actionEvent) -> {
-            addItemInterface.execute();
+            tableContainerInterface.addItem();
         });
 
         Button refresh = new Button("Refresh");
+        refresh.setOnAction(event -> {
+            tableContainerInterface.refresh();
+        });
+
         Button delete = new Button("Delete");
+        delete.setOnAction(event -> {
+            tableContainerInterface.delete(tableView.getSelectionModel().getSelectedItem());
+        });
+
         Button update = new Button("Update");
+        update.setOnAction(event -> {
+            tableContainerInterface.update(tableView.getSelectionModel().getSelectedItem());
+        });
 
         HBox.setHgrow(addItemButton, Priority.ALWAYS);
         HBox.setHgrow(refresh, Priority.ALWAYS);
@@ -75,7 +84,8 @@ public class TableContainer<T> extends VBox {
         tableView.getItems().addAll(data);
     }
 
-    public void setOnAddItem(TableContainerInterface item){
-        this.addItemInterface = item;
+    public void setOnActionPerformed(TableContainerInterface item){
+        this.tableContainerInterface = item;
     }
+
 }

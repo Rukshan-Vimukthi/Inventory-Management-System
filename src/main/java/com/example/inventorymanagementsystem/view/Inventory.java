@@ -31,7 +31,7 @@ public class Inventory extends HBox {
         itemsTable.addColumn("sellingPrice", Double.class);
         itemsTable.addColumn("stockDate", Integer.class);
         itemsTable.addColumn("stockName", Integer.class);
-        itemsTable.addColumn("itemSize", Integer.class);
+        itemsTable.addColumn("size", Integer.class);
         itemsTable.addColumn("itemColor", Integer.class);
         itemsTable.addItems(Data.getInstance().getItemDetails());
 
@@ -52,13 +52,29 @@ public class Inventory extends HBox {
         stockTableContainer.addColumn("date", String.class);
         stockTableContainer.addColumn("name", String.class);
         stockTableContainer.addItems(Data.getInstance().getStocks());
-        stockTableContainer.setOnAddItem(new TableContainerInterface() {
+        stockTableContainer.setOnActionPerformed(new TableContainerInterface<Stock>() {
             @Override
-            public void execute() {
-                AddNewStock addNewStock = new AddNewStock();
+            public void addItem() {
+                AddNewStock addNewStock = new AddNewStock(null);
                 addNewStock.show();
-//                System.out.println("Add items to the stock table");
             }
+
+            @Override
+            public void refresh() {
+
+            }
+
+            @Override
+            public void update(Stock item) {
+                AddNewStock addNewStock = new AddNewStock(item);
+                addNewStock.show();
+            }
+
+            @Override
+            public void delete(Stock item) {
+
+            }
+
         });
 
         TableContainer<Color> colorTableContainer = new TableContainer<>();
