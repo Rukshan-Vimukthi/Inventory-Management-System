@@ -23,10 +23,6 @@ public class Inventory extends HBox {
         // this contains the form to search item (filter) and the table of items and item preview component
         VBox itemTableContainer = new VBox();
 
-        HBox itemTableToolContainer = new HBox();
-        TextField itemSearchBox = new TextField();
-        Button searchButton = new Button("search");
-        itemTableToolContainer.getChildren().addAll(itemSearchBox, searchButton);
 
         TableContainer<ItemDetail> itemsTable = new TableContainer<>();
         itemsTable.addColumn("id", Integer.class);
@@ -42,7 +38,7 @@ public class Inventory extends HBox {
 
         ItemPreview itemPreview = new ItemPreview(null);
 
-        itemTableContainer.getChildren().addAll(itemTableToolContainer, itemsTable, itemPreview);
+        itemTableContainer.getChildren().addAll(itemsTable, itemPreview);
         HBox.setHgrow(itemTableContainer, Priority.ALWAYS);
 
         // this contains other tables which are connected to item like, color, stock, size

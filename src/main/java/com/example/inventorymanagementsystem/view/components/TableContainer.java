@@ -8,9 +8,11 @@ import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
 import javafx.util.Callback;
 
 
@@ -27,18 +29,40 @@ public class TableContainer<T> extends VBox {
     public TableContainer(){
         this.setPadding(new Insets(5.0D));
 
+        VBox toolBarContainer = new VBox();
+        toolBarContainer.setFillWidth(true);
+
+        HBox searchBarContainer = new HBox();
         HBox toolBar = new HBox();
+        toolBar.setSpacing(10.0D);
+
+        TextField searchTextField = new TextField();
+        HBox.setHgrow(searchTextField, Priority.ALWAYS);
+        Button search = new Button("Search");
+
         Button addItemButton = new Button("Add");
         addItemButton.setOnAction((actionEvent) -> {
             addItemInterface.execute();
         });
-        toolBar.getChildren().add(addItemButton);
+
+        Button refresh = new Button("Refresh");
+        Button delete = new Button("Delete");
+        Button update = new Button("Update");
+
+        HBox.setHgrow(addItemButton, Priority.ALWAYS);
+        HBox.setHgrow(refresh, Priority.ALWAYS);
+        HBox.setHgrow(delete, Priority.ALWAYS);
+        HBox.setHgrow(update, Priority.ALWAYS);
+
+        searchBarContainer.getChildren().addAll(searchTextField, search);
+        toolBar.getChildren().addAll(addItemButton, refresh, delete, update);
+        toolBarContainer.getChildren().addAll(searchBarContainer, toolBar);
         toolBar.setPadding(new Insets(2.5D, 0.0D, 2.5D, 0.0D));
 
         tableView = new TableView<>();
 
 //        tableView.getColumns().addAll(tableColumns);
-        this.getChildren().addAll(toolBar, tableView);
+        this.getChildren().addAll(toolBarContainer, tableView);
     }
 
     public <DT> void addColumn(String name, DT dataType){
