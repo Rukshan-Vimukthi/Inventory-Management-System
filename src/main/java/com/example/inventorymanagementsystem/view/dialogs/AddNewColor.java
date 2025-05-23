@@ -1,5 +1,6 @@
 package com.example.inventorymanagementsystem.view.dialogs;
 
+import com.example.inventorymanagementsystem.db.Connection;
 import com.example.inventorymanagementsystem.models.Color;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -16,35 +17,33 @@ public class AddNewColor extends Dialog<Boolean> {
         DialogPane dialogPane = new DialogPane();
         VBox vBox = new VBox();
 
-        Label nameLabel = new Label("Name");
+        Label colorCodeLabel = new Label("Color Code");
         codeField = new TextField();
-
-        Label dateLabel = new Label("Date");
 
         if(color != null){
             codeField.setText(color.getColor());
-            this.setTitle("Update a new stock");
+            this.setTitle("Update the color");
         }else{
-            this.setTitle("Add a new stock");
+            this.setTitle("Add a new color");
         }
 
         HBox footer = new HBox();
         footer.setPadding(new Insets(10.0D, 0.0D, 0.0D, 0.0D));
         Button addButton = new Button("ADD");
         addButton.setOnAction(event -> {
-            String name = codeField.getText();
+            String colorCode = codeField.getText();
+            Connection.getInstance().addNewColor(colorCode);
             AddNewColor.this.setResult(true);
         });
 
         Button cancelButton = new Button("CANCEL");
         cancelButton.setOnAction(event -> AddNewColor.this.setResult(false));
 
-
         footer.getChildren().addAll(addButton, cancelButton);
         footer.setAlignment(Pos.CENTER_RIGHT);
         footer.setSpacing(10.0D);
 
-        vBox.getChildren().addAll(nameLabel, dateLabel, footer);
+        vBox.getChildren().addAll(colorCodeLabel, codeField, footer);
         dialogPane.setContent(vBox);
         this.setDialogPane(dialogPane);
     }
