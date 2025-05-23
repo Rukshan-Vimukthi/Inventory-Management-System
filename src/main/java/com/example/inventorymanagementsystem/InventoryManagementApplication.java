@@ -23,13 +23,23 @@ public class InventoryManagementApplication extends Application {
 
         TabPane rootLayout = (TabPane) root;
 
-        Scene scene = new Scene(rootLayout, 1400, 820);
+
+        Checkout checkoutLayout = new Checkout();
+        BorderPane checkoutContainer = checkoutLayout.getLayout();
+
+        Tab checkOutTab = new Tab("Checkout");
+        checkOutTab.setContent(checkoutContainer);
+
+        rootLayout.getTabs().add(checkOutTab);
+
+        Scene scene = new Scene(rootLayout);
 
         scene.getStylesheets().add(
             String.valueOf(InventoryManagementApplication.class.getResource("css/style.css"))
         );
 
         stage.setTitle("SFC Inventory Management System with Integrated POS Features");
+        stage.setMaximized(true);
         stage.setScene(scene);
         stage.show();
     }

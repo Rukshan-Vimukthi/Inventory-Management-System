@@ -1,11 +1,11 @@
 package com.example.inventorymanagementsystem.view.dialogs;
 
-import com.example.inventorymanagementsystem.models.ItemDetail;
+import com.example.inventorymanagementsystem.models.Size;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.DialogPane;
 
-public class AddNewItem extends Dialog<Boolean> {
-    public AddNewItem(ItemDetail itemDetail){
+public class AddNewSize extends Dialog<Boolean> {
+    public AddNewSize(Size size){
         DialogPane dialogPane = new DialogPane();
         this.setDialogPane(dialogPane);
     }

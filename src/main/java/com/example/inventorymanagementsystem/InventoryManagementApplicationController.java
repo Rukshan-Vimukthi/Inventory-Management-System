@@ -3,9 +3,13 @@ package com.example.inventorymanagementsystem;
 import com.example.inventorymanagementsystem.view.Checkout;
 import com.example.inventorymanagementsystem.view.Inventory;
 import com.example.inventorymanagementsystem.view.Stock;
+
 import com.example.inventorymanagementsystem.view.components.TabBuilder;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.control.Button;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.Border;
@@ -50,6 +54,7 @@ public class InventoryManagementApplicationController {
         Stock stockView = new Stock();
         BorderPane stockViewContainer = stockView.getLayout();
         stocksTab.setContent(stockViewContainer);
+
 
         // Add tabs to the tabPane
         tabPane.getTabs().add(checkoutTab);

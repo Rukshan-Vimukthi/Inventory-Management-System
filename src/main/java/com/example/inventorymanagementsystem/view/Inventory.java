@@ -3,9 +3,11 @@ package com.example.inventorymanagementsystem.view;
 import com.example.inventorymanagementsystem.db.Connection;
 import com.example.inventorymanagementsystem.models.*;
 import com.example.inventorymanagementsystem.models.Stock;
+import com.example.inventorymanagementsystem.services.interfaces.TableContainerInterface;
 import com.example.inventorymanagementsystem.state.Data;
 import com.example.inventorymanagementsystem.view.components.ItemPreview;
 import com.example.inventorymanagementsystem.view.components.TableContainer;
+import com.example.inventorymanagementsystem.view.dialogs.AddNewStock;
 import javafx.scene.control.Button;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -21,10 +23,6 @@ public class Inventory extends HBox {
         // this contains the form to search item (filter) and the table of items and item preview component
         VBox itemTableContainer = new VBox();
 
-        HBox itemTableToolContainer = new HBox();
-        TextField itemSearchBox = new TextField();
-        Button searchButton = new Button("search");
-        itemTableToolContainer.getChildren().addAll(itemSearchBox, searchButton);
 
         TableContainer<ItemDetail> itemsTable = new TableContainer<>();
         itemsTable.addColumn("id", Integer.class);
@@ -33,14 +31,14 @@ public class Inventory extends HBox {
         itemsTable.addColumn("sellingPrice", Double.class);
         itemsTable.addColumn("stockDate", Integer.class);
         itemsTable.addColumn("stockName", Integer.class);
-        itemsTable.addColumn("itemSize", Integer.class);
+        itemsTable.addColumn("size", Integer.class);
         itemsTable.addColumn("itemColor", Integer.class);
         itemsTable.addItems(Data.getInstance().getItemDetails());
 
 
         ItemPreview itemPreview = new ItemPreview(null);
 
-        itemTableContainer.getChildren().addAll(itemTableToolContainer, itemsTable, itemPreview);
+        itemTableContainer.getChildren().addAll(itemsTable, itemPreview);
         HBox.setHgrow(itemTableContainer, Priority.ALWAYS);
 
         // this contains other tables which are connected to item like, color, stock, size
@@ -54,6 +52,30 @@ public class Inventory extends HBox {
         stockTableContainer.addColumn("date", String.class);
         stockTableContainer.addColumn("name", String.class);
         stockTableContainer.addItems(Data.getInstance().getStocks());
+        stockTableContainer.setOnActionPerformed(new TableContainerInterface<Stock>() {
+            @Override
+            public void addItem() {
+                AddNewStock addNewStock = new AddNewStock(null);
+                addNewStock.show();
+            }
+
+            @Override
+            public void refresh() {
+
+            }
+
+            @Override
+            public void update(Stock item) {
+                AddNewStock addNewStock = new AddNewStock(item);
+                addNewStock.show();
+            }
+
+            @Override
+            public void delete(Stock item) {
+
+            }
+
+        });
 
         TableContainer<Color> colorTableContainer = new TableContainer<>();
         colorTableContainer.addColumn("id", Integer.class);

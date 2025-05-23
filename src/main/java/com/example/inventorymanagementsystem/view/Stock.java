@@ -17,4 +17,9 @@ public class Stock {
     public BorderPane getLayout() {
         return mainLayout;
     }
+
+import javafx.scene.layout.VBox;
+
+public class Stock extends VBox {
+
 }
