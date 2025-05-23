@@ -3,9 +3,11 @@ package com.example.inventorymanagementsystem.view;
 import com.example.inventorymanagementsystem.db.Connection;
 import com.example.inventorymanagementsystem.models.*;
 import com.example.inventorymanagementsystem.models.Stock;
+import com.example.inventorymanagementsystem.services.interfaces.TableContainerInterface;
 import com.example.inventorymanagementsystem.state.Data;
 import com.example.inventorymanagementsystem.view.components.ItemPreview;
 import com.example.inventorymanagementsystem.view.components.TableContainer;
+import com.example.inventorymanagementsystem.view.dialogs.AddNewStock;
 import javafx.scene.control.Button;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -54,6 +56,14 @@ public class Inventory extends HBox {
         stockTableContainer.addColumn("date", String.class);
         stockTableContainer.addColumn("name", String.class);
         stockTableContainer.addItems(Data.getInstance().getStocks());
+        stockTableContainer.setOnAddItem(new TableContainerInterface() {
+            @Override
+            public void execute() {
+                AddNewStock addNewStock = new AddNewStock();
+                addNewStock.show();
+//                System.out.println("Add items to the stock table");
+            }
+        });
 
         TableContainer<Color> colorTableContainer = new TableContainer<>();
         colorTableContainer.addColumn("id", Integer.class);

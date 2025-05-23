@@ -1,5 +1,6 @@
 package com.example.inventorymanagementsystem.view.components;
 
+import com.example.inventorymanagementsystem.services.interfaces.TableContainerInterface;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -16,12 +17,21 @@ import javafx.util.Callback;
 public class TableContainer<T> extends VBox {
     private T model;
     private TableView<T> tableView;
+
+    private TableContainerInterface addItemInterface;
+    private TableContainerInterface refreshInterface;
+    private TableContainerInterface updateInterface;
+    private TableContainerInterface deleteInterface;
+
 //    private final ObservableList<TableColumn<T, ?>> tableColumns = FXCollections.observableArrayList();
     public TableContainer(){
         this.setPadding(new Insets(5.0D));
 
         HBox toolBar = new HBox();
         Button addItemButton = new Button("Add");
+        addItemButton.setOnAction((actionEvent) -> {
+            addItemInterface.execute();
+        });
         toolBar.getChildren().add(addItemButton);
         toolBar.setPadding(new Insets(2.5D, 0.0D, 2.5D, 0.0D));
 
@@ -39,5 +49,9 @@ public class TableContainer<T> extends VBox {
 
     public void addItems(ObservableList<T> data){
         tableView.getItems().addAll(data);
+    }
+
+    public void setOnAddItem(TableContainerInterface item){
+        this.addItemInterface = item;
     }
 }
