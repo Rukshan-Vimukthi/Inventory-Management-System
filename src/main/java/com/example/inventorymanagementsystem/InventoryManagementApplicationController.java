@@ -1,8 +1,9 @@
 package com.example.inventorymanagementsystem;
 
+import com.example.inventorymanagementsystem.view.Checkout;
 import com.example.inventorymanagementsystem.view.Inventory;
 import com.example.inventorymanagementsystem.view.Stock;
-import com.example.inventorymanagementsystem.view.components.Card;
+
 import com.example.inventorymanagementsystem.view.components.TabBuilder;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -11,6 +12,8 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Button;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+import javafx.scene.layout.Border;
+import javafx.scene.layout.BorderPane;
 
 import java.io.IOException;
 
@@ -42,21 +45,16 @@ public class InventoryManagementApplicationController {
         // set the custom view as the content of the tab created for inventory (inventory)
         inventory.setContent(inventoryView);
 
-        Stock stockPageContent = new Stock();
+        // The checkout Section
+        Checkout checkoutLayout = new Checkout();
+        BorderPane checkoutContainer = checkoutLayout.getLayout();
+        checkoutTab.setContent(checkoutContainer);
 
-        Card card = new Card("Title", "Body", "Footer");
+        // The Stock Section
+        Stock stockView = new Stock();
+        BorderPane stockViewContainer = stockView.getLayout();
+        stocksTab.setContent(stockViewContainer);
 
-        Card card2 = new Card("Title2", "Body2", "Footer2");
-
-        Button changeContent = new Button("CHANGE FIRST CARD CONTENT");
-        changeContent.setOnAction((actionEvent) -> {
-            card.setTitle("New Title");
-            card.setBody("New Body");
-            card.setFooter("New Footer");
-        });
-
-        stockPageContent.getChildren().addAll(card, card2, changeContent);
-        stocksTab.setContent(stockPageContent);
 
         // Add tabs to the tabPane
         tabPane.getTabs().add(checkoutTab);

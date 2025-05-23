@@ -3,6 +3,7 @@ package com.example.inventorymanagementsystem;
 import com.example.inventorymanagementsystem.state.Data;
 
 import com.example.inventorymanagementsystem.view.Checkout;
+import com.example.inventorymanagementsystem.view.components.TabBuilder;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
