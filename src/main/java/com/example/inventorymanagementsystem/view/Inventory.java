@@ -2,6 +2,7 @@ package com.example.inventorymanagementsystem.view;
 
 import com.example.inventorymanagementsystem.db.Connection;
 import com.example.inventorymanagementsystem.models.*;
+import com.example.inventorymanagementsystem.models.Stock;
 import com.example.inventorymanagementsystem.state.Data;
 import com.example.inventorymanagementsystem.view.components.ItemPreview;
 import com.example.inventorymanagementsystem.view.components.TableContainer;
