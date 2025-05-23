@@ -1,9 +1,14 @@
 package com.example.inventorymanagementsystem;
 
 import com.example.inventorymanagementsystem.view.Inventory;
+import com.example.inventorymanagementsystem.view.Stock;
+import com.example.inventorymanagementsystem.view.components.Card;
 import com.example.inventorymanagementsystem.view.components.TabBuilder;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.control.Button;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 
@@ -36,6 +41,22 @@ public class InventoryManagementApplicationController {
         Inventory inventoryView = new Inventory();
         // set the custom view as the content of the tab created for inventory (inventory)
         inventory.setContent(inventoryView);
+
+        Stock stockPageContent = new Stock();
+
+        Card card = new Card("Title", "Body", "Footer");
+
+        Card card2 = new Card("Title2", "Body2", "Footer2");
+
+        Button changeContent = new Button("CHANGE FIRST CARD CONTENT");
+        changeContent.setOnAction((actionEvent) -> {
+            card.setTitle("New Title");
+            card.setBody("New Body");
+            card.setFooter("New Footer");
+        });
+
+        stockPageContent.getChildren().addAll(card, card2, changeContent);
+        stocksTab.setContent(stockPageContent);
 
         // Add tabs to the tabPane
         tabPane.getTabs().add(checkoutTab);

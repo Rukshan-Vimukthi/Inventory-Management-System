@@ -1,9 +1,6 @@
 package com.example.inventorymanagementsystem.db;
 
-import com.example.inventorymanagementsystem.models.Color;
-import com.example.inventorymanagementsystem.models.ItemDetail;
-import com.example.inventorymanagementsystem.models.Size;
-import com.example.inventorymanagementsystem.models.Stock;
+import com.example.inventorymanagementsystem.models.*;
 
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -99,6 +96,10 @@ public class Connection {
         return false;
     }
 
+    /**
+     * Gets all the details related to each item in the database.
+     * @return List of type ItemDetail which holds all the information related to each item
+     */
     public List<ItemDetail> getItemDetails(){
         ArrayList<ItemDetail> itemDetails = new ArrayList<>();
         try{
@@ -164,6 +165,10 @@ public class Connection {
         return false;
     }
 
+    /**
+     * Gets all the sizes from the database and return them
+     * @return list of Size objects
+     */
     public List<Size> getSizes(){
         ArrayList<Size> rows = new ArrayList<>();
         try {
@@ -181,6 +186,14 @@ public class Connection {
         return rows;
     }
 
+    /**
+     * Add a new user
+     * @param firstName - first name of the user
+     * @param lastName - last name of the user
+     * @param email - email of the user
+     * @param roleID - roleID - call getRoleIDs() method to get the roles available
+     * @return boolean - true if the user is successfully added. false otherwise
+     */
     public boolean addNewUser(String firstName, String lastName, String email, int roleID){
         try{
             statement = connection.createStatement();
@@ -212,6 +225,27 @@ public class Connection {
      */
     public void getCustomers(){
 
+    }
+
+    /**
+     * Get user roles from the database
+     * @return List of type Role which contains role id and the role type (ex. Admin, User)
+     */
+    public List<Role> getRoles(){
+        ArrayList<Role> roles = new ArrayList<>();
+        try{
+            statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM `role`");
+            while (resultSet.next()){
+                int roleID = resultSet.getInt(1);
+                String roleType = resultSet.getString(2);
+                Role role = new Role(roleID, roleType);
+                roles.add(role);
+            }
+        }catch(SQLException sqlException){
+            sqlException.printStackTrace();
+        }
+        return roles;
     }
 
     /**

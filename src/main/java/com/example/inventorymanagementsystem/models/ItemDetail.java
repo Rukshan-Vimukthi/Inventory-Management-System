@@ -22,6 +22,7 @@ public class ItemDetail {
     private IntegerProperty itemColorID;
     private StringProperty itemColor;
 
+
     public ItemDetail(int id, String name, Double price,
                       Double sellingPrice, int stockID,
                       String stockDate,

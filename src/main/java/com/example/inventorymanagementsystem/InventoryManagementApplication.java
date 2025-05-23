@@ -22,11 +22,13 @@ public class InventoryManagementApplication extends Application {
 
         TabPane rootLayout = (TabPane) root;
 
+
         Checkout checkoutLayout = new Checkout();
         BorderPane checkoutContainer = checkoutLayout.getLayout();
 
         Tab checkOutTab = new Tab("Checkout");
         checkOutTab.setContent(checkoutContainer);
+
         rootLayout.getTabs().add(checkOutTab);
 
         Scene scene = new Scene(rootLayout, 1100, 820);
