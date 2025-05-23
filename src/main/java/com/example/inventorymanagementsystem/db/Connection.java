@@ -25,7 +25,7 @@ public class Connection {
 
     private Connection(){
         try {
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/sandyafashioncorner", "root", "root@techlix2002");
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/sandyafashioncorner", "root", "Sandun@2008.sd");
         }catch(SQLException e){
             e.printStackTrace();
         }
@@ -193,15 +193,24 @@ public class Connection {
         return false;
     }
 
+    /**
+     * Get and returns all the users from the database
+     */
     public void getUsers(){
 
     }
 
+    /**
+     * Add new customer
+     */
     public void addNewCustomer(){
 
     }
 
-    public void getNewCustomer(){
+    /**
+     * Gets customers from the database and return the result
+     */
+    public void getCustomers(){
 
     }
 
