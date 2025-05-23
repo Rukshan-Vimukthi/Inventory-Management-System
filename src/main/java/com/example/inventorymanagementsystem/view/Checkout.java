@@ -2,6 +2,9 @@ package com.example.inventorymanagementsystem.view;
 import com.example.inventorymanagementsystem.db.Connection;
 import com.example.inventorymanagementsystem.models.ItemDetail;
 import com.example.inventorymanagementsystem.state.Data;
+import com.mysql.cj.x.protobuf.MysqlxPrepare;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -14,13 +17,20 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
+import javafx.util.Duration;
 import javafx.util.StringConverter;
 
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 
 public class Checkout {
     private BorderPane mainLayout;
+    ComboBox<ItemDetail> itemComboBox;// The main container
 
     public Checkout () {
         // The main container
@@ -29,24 +39,34 @@ public class Checkout {
 
         // The header container
         VBox headerSection = new VBox(5);
-        headerSection.setSpacing(10);
-        headerSection.setAlignment(Pos.TOP_CENTER);
+
+        // The Navbar section
+        HBox navbar = new HBox();
+        navbar.setSpacing(30);
+        navbar.setPadding(new Insets(18.0, 0, 18.0, 0));
+        navbar.setMaxWidth(Double.MAX_VALUE);
+        navbar.setAlignment(Pos.CENTER);
+        navbar.setStyle("-fx-background-color: darkGray;");
+        VBox.setMargin(navbar, new Insets(2, 0, 15, 0));
+
         Label heading = new Label("Checkout Panel");
         heading.setFont(Font.font("Verdana", FontWeight.BOLD, 25));
-        HBox.setHgrow(heading, Priority.ALWAYS);
-        heading.setPadding(new Insets(20, 0, 0, 0));
-        heading.setMaxWidth(Double.MAX_VALUE);
-        heading.setAlignment(Pos.CENTER);
 
-        // The Date
-        AnchorPane dateHolder = new AnchorPane();
-        dateHolder.setPrefHeight(30);
-        dateHolder.setMaxWidth(Double.MAX_VALUE);
-        Text dateTime = new Text("20/05/2025 - 09:00A.M");
-        AnchorPane.setTopAnchor(dateTime, 0.0);
-        AnchorPane.setRightAnchor(dateTime, 0.0);
-        dateHolder.setMaxWidth(Double.MAX_VALUE);
-        dateHolder.getChildren().add(dateTime);
+        Text dateTime = new Text();
+        dateTime.setStyle("-fx-font-size: 15px;");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        Timeline clock = new Timeline(
+                new KeyFrame(Duration.ZERO, e -> {
+                    LocalDateTime now = LocalDateTime.now();
+                    dateTime.setText(now.format(formatter));
+                }),
+                new KeyFrame(Duration.seconds(1))
+        );
+
+        navbar.getChildren().addAll(heading, dateTime);
+
+        clock.setCycleCount(Timeline.INDEFINITE);
+        clock.play();
 
         // Input area
         VBox inputVerticalSec = new VBox();
@@ -54,11 +74,24 @@ public class Checkout {
 
         Text itemTxt = new Text("Item Information");
 
-        ComboBox itemComboBox = new ComboBox<>();
-        List<ItemDetail> allItems = Data.getInstance().getItemDetails();
-        for (ItemDetail item : allItems) {
-            itemComboBox.getItems().add(item.nameProperty().get());
-        }
+        itemComboBox = new ComboBox<>();
+        itemComboBox.getItems().addAll(Data.getInstance().getItemDetails());
+
+        itemComboBox.setCellFactory(lv -> new ListCell<>() {
+            @Override
+            protected void updateItem(ItemDetail item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : item.nameProperty().get());
+            }
+        });
+        itemComboBox.setButtonCell(new ListCell<>() {
+            @Override
+            protected void updateItem(ItemDetail item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : item.nameProperty().get());
+            }
+        });
+
         itemComboBox.setMaxWidth(Double.MAX_VALUE);
         itemComboBox.setPromptText("Select The Item");
 
@@ -68,10 +101,25 @@ public class Checkout {
         discount.setPromptText("Type the discount");
         Button addButton = new Button("Add to List");
 
+        addButton.setOnAction(e -> {
+            ItemDetail selectedItem = itemComboBox.getValue();
+            String quantity = amount.getText();
+
+            if (selectedItem == null || quantity.isEmpty()) {
+                System.out.println("Please fill all the fields");
+                return;
+            }
+
+            int itemId = selectedItem.idProperty().get();
+            double price = selectedItem.priceProperty().get();
+            String currentDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+
+        });
+
         Region theSpace = new Region();
         theSpace.setMinHeight(15);
 
-        Text userTxt = new Text("User Information");
+        Text customerTxt = new Text("Customer Information");
         TextField firstName = new TextField();
         firstName.setPromptText("First Name");
         TextField lastName = new TextField();
@@ -81,7 +129,36 @@ public class Checkout {
         TextField eMail = new TextField();
         eMail.setPromptText("E-Mail");
 
+        HBox addCustomerSec = new HBox();
+        addCustomerSec.setSpacing(5.5);
         Button clearForm = new Button("Clear Form");
+        clearForm.setOnAction(actionEvent -> {
+            amount.clear();
+            discount.clear();
+            firstName.clear();
+            lastName.clear();
+            phone.clear();
+            eMail.clear();
+        });
+        Button addCustomer = new Button("Add Customer");
+
+        addCustomer.setOnAction(e -> {
+            String firstNameField = firstName.getText();
+            String lastNameField = lastName.getText();
+            String phoneField = phone.getText();
+            String emailField = eMail.getText();
+
+            Connection connection = new Connection(); // Your DB connection class
+            connection.addCustomers(firstNameField, lastNameField, phoneField, emailField);
+
+            // Clear input fields
+            firstName.clear();
+            lastName.clear();
+            phone.clear();
+            eMail.clear();
+        });
+
+        addCustomerSec.getChildren().addAll(addCustomer, clearForm);
 
         // For the adding items section
         VBox inputSection = new VBox();
@@ -122,7 +199,11 @@ public class Checkout {
         mainTable.prefWidthProperty().bind(mainLayout.widthProperty());
 
         // Bottom Section
-        TextField discountForAll = new TextField("Apply Discount to All");
+        TextField discountForAll = new TextField();
+        discountForAll.setPromptText("Apply discount for all");
+
+        TextField receivedFund = new TextField();
+        receivedFund.setPromptText("Received Fund");
 
         Text totalCostTxt = new Text("Total Cost:");
         Label totalCost = new Label("$40");
@@ -132,9 +213,6 @@ public class Checkout {
 
         Text grandTotalTxt = new Text("Grand Total:");
         Label grandTotal = new Label("$40");
-
-        Text fundTxt = new Text("Received Fund:");
-        Label fund = new Label("$40");
 
         Text balanceTxt = new Text("Due Balance:");
         Label balance = new Label("$40");
@@ -149,7 +227,7 @@ public class Checkout {
         actionSection.setPrefWidth(200);
         actionSection.setAlignment(Pos.TOP_RIGHT);
         actionSection.setPadding(new Insets(0, 0, 10, 0));
-        actionSection.getChildren().addAll(remove, clearForm, goBack);
+        actionSection.getChildren().addAll(remove, goBack);
 
         AnchorPane floatingContainer = new AnchorPane();
         AnchorPane.setBottomAnchor(actionSection, 0.0);
@@ -178,12 +256,12 @@ public class Checkout {
         balanceSec.setStyle("-fx-font-weight: bold;");
         balanceSec.getChildren().addAll(balanceTxt, balance);
 
-        bottomSection.getChildren().addAll(discountForAll, totalCostTxt, totalCost, totalDiscountTxt, totalDiscount, grandTotalTxt, grandTotal, fundTxt, fund);
+        bottomSection.getChildren().addAll(discountForAll, receivedFund, totalCostTxt, totalCost, totalDiscountTxt, totalDiscount, grandTotalTxt, grandTotal);
         mainFooterSec.getChildren().addAll(bottomSection, balanceSec, completeBtn);
         wholeBottomSec.getChildren().addAll(floatingContainer, mainFooterSec);
 
-        headerSection.getChildren().addAll(heading, dateHolder, inputVerticalSec);
-        inputSection.getChildren().addAll(itemTxt, itemComboBox, amount, discount, addButton, theSpace, userTxt, firstName, lastName, phone, eMail, clearForm);
+        headerSection.getChildren().addAll(navbar, inputVerticalSec);
+        inputSection.getChildren().addAll(itemTxt, itemComboBox, amount, discount, addButton, theSpace, customerTxt, firstName, lastName, phone, eMail, addCustomerSec);
         inputVerticalSec.getChildren().addAll(inputSection);
 
         centerContainer.getChildren().addAll(inputVerticalSec, mainTable);

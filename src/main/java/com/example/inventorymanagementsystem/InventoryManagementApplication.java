@@ -3,6 +3,7 @@ package com.example.inventorymanagementsystem;
 import com.example.inventorymanagementsystem.state.Data;
 
 import com.example.inventorymanagementsystem.view.Checkout;
+import com.example.inventorymanagementsystem.view.components.TabBuilder;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -22,14 +23,7 @@ public class InventoryManagementApplication extends Application {
 
         TabPane rootLayout = (TabPane) root;
 
-        Checkout checkoutLayout = new Checkout();
-        BorderPane checkoutContainer = checkoutLayout.getLayout();
-
-        Tab checkOutTab = new Tab("Checkout");
-        checkOutTab.setContent(checkoutContainer);
-        rootLayout.getTabs().add(checkOutTab);
-
-        Scene scene = new Scene(rootLayout, 1100, 820);
+        Scene scene = new Scene(rootLayout, 1400, 820);
 
         scene.getStylesheets().add(
             String.valueOf(InventoryManagementApplication.class.getResource("css/style.css"))

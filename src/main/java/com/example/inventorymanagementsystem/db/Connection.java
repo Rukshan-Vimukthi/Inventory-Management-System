@@ -5,10 +5,7 @@ import com.example.inventorymanagementsystem.models.ItemDetail;
 import com.example.inventorymanagementsystem.models.Size;
 import com.example.inventorymanagementsystem.models.Stock;
 
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -23,7 +20,7 @@ public class Connection {
     private static Connection connectionObject;
     private Statement statement;
 
-    private Connection(){
+    public Connection(){
         try {
             connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/sandyafashioncorner", "root", "Sandun@2008.sd");
         }catch(SQLException e){
@@ -99,6 +96,25 @@ public class Connection {
         return false;
     }
 
+    public boolean insertCustomerItem(int id, int customer_id, int amount, double price, String date) {
+        try {
+            PreparedStatement ps = connection.prepareStatement(
+                    "INSERT INTO customer_has_item_has_size (id, customer_id, amount, price, date) VALUES (?, ?, ?, ?)"
+            );
+            ps.setInt(1, id);
+            ps.setInt(2, customer_id);
+            ps.setInt(3, amount);
+            ps.setDouble(4, price);
+            ps.setString(4, date);
+
+            int rowsInserted = ps.executeUpdate();
+            return rowsInserted > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     public List<ItemDetail> getItemDetails(){
         ArrayList<ItemDetail> itemDetails = new ArrayList<>();
         try{
@@ -138,6 +154,8 @@ public class Connection {
                         itemColorID,
                         itemColor
                 );
+
+
 
                 System.out.println(name);
 
@@ -210,14 +228,27 @@ public class Connection {
     /**
      * Gets customers from the database and return the result
      */
-    public void getCustomers(){
+    public void addCustomers(String first_name, String last_name, String phone, String email){
+        try {
+            PreparedStatement ps = connection.prepareStatement(
+                    "INSERT INTO customer (first_name, last_name, phone, email) VALUES (?, ?, ?, ?)"
+            );
+            ps.setString(1, first_name);
+            ps.setString(2, last_name);
+            ps.setString(3, phone);
+            ps.setString(4, email);
+            ps.executeUpdate();
 
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
      * Retrieves and return the records in the stock table in the database
      * @return ArrayList that stores Stocks retrieved from the database
      */
+
     public ArrayList<Stock> getStocks(){
         ArrayList<Stock> rows = new ArrayList<>();
         try {
