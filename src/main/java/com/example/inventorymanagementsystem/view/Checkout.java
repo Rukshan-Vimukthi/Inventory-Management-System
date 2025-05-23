@@ -192,7 +192,6 @@ public class Checkout {
         mainLayout.setTop(headerSection);
         mainLayout.setCenter(centerContainer);
         mainLayout.setBottom(wholeBottomSec);
-
     }
 
     public BorderPane getLayout() {
