@@ -1,5 +1,6 @@
 package com.example.inventorymanagementsystem.view;
 
+import com.example.inventorymanagementsystem.controllers.dialogs.AddNewItemController;
 import com.example.inventorymanagementsystem.db.Connection;
 import com.example.inventorymanagementsystem.models.*;
 import com.example.inventorymanagementsystem.models.Stock;
@@ -8,6 +9,7 @@ import com.example.inventorymanagementsystem.state.Data;
 import com.example.inventorymanagementsystem.view.components.ItemPreview;
 import com.example.inventorymanagementsystem.view.components.TableContainer;
 import com.example.inventorymanagementsystem.view.dialogs.AddNewColor;
+import com.example.inventorymanagementsystem.view.dialogs.AddNewItem;
 import com.example.inventorymanagementsystem.view.dialogs.AddNewSize;
 import com.example.inventorymanagementsystem.view.dialogs.AddNewStock;
 import javafx.scene.control.Button;
@@ -36,6 +38,28 @@ public class Inventory extends HBox {
         itemsTable.addColumn("size", Integer.class);
         itemsTable.addColumn("itemColor", Integer.class);
         itemsTable.addItems(Data.getInstance().getItemDetails());
+        itemsTable.setOnActionPerformed(new TableContainerInterface() {
+            @Override
+            public void addItem() {
+                AddNewItem addNewItem = new AddNewItem(null);
+                addNewItem.show();
+            }
+
+            @Override
+            public void refresh() {
+
+            }
+
+            @Override
+            public void update(Object itemDetail) {
+
+            }
+
+            @Override
+            public void delete(Object itemDetail) {
+
+            }
+        });
 
 
         ItemPreview itemPreview = new ItemPreview(null);

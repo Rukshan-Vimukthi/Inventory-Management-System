@@ -2,6 +2,7 @@ package com.example.inventorymanagementsystem.db;
 
 import com.example.inventorymanagementsystem.models.*;
 
+import javax.xml.transform.Result;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Date;
@@ -50,6 +51,16 @@ public class Connection {
     }
 
     /**
+     * Update the color
+     * @param id - color id
+     * @param colorCode - new color code
+     * @return boolean - true if update is successful. false otherwise
+     */
+    public boolean updateNewColor(int id, String colorCode){
+        return false;
+    }
+
+    /**
      * Gets colors from the database and return an instance of Lost of colors
      * @return List of Color instances
      */
@@ -70,18 +81,20 @@ public class Connection {
         return rows;
     }
 
-    public boolean addNewItem(String name, Double price, Double sellingPrice, int stockID, int sizeID, int colorID){
+    public boolean addNewItem(String name, Integer qty, Double price, Double sellingPrice, int stockID, int sizeID, int colorID){
         try{
             statement = connection.createStatement();
             boolean isExecuted = statement.execute(
-                    "INSERT INTO `item` (`name`, `price`, " +
+                    "INSERT INTO `item` (`name`, " +
                             "`selling_price`, `stock_id`)" +
-                            "VALUES('%s', '%f', '%f', '%d')".formatted(
-                                    name, price, sellingPrice, stockID
+                            "VALUES('%s', '%f', '%d')".formatted(
+                                    name, sellingPrice, stockID
                             ));
             if (isExecuted){
                 isExecuted = statement.execute("INSERT INTO `item_has_size` (" +
-                        "`item_id`, `size_id`) ('%d', '%d')".formatted(1, sizeID));
+                        ("`item_id`, `item_stock_id`, `size_id`, `ordered_qty`, `cost`) " +
+                                "('%d', '%d', '%d', '%d', '%f')").formatted(
+                                        1, stockID, sizeID, qty, price));
 
                 if (isExecuted){
                     isExecuted = statement.execute("INSERT INTO `color_has_item_has_size` (" +
@@ -236,6 +249,30 @@ public class Connection {
      */
     public void getUsers(){
 
+    }
+
+    public ResultSet getUser(String userName, String password){
+        try{
+            statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery(
+                    ("SELECT * " +
+                            "FROM `user` " +
+                            "WHERE `username` = '%s' " +
+                            "AND `password` = '%s'"
+                    ).formatted(userName, password));
+            resultSet.next();
+            try {
+                System.out.println(resultSet.getString("username"));
+                return resultSet;
+            }catch(SQLException e){
+                e.printStackTrace();
+                return null;
+            }
+//            System.out.println(resultSet.getFetchSize());
+        }catch(SQLException sqlException){
+            sqlException.printStackTrace();
+        }
+        return null;
     }
 
     /**

@@ -1,11 +1,12 @@
 package com.example.inventorymanagementsystem.models;
 
+import com.example.inventorymanagementsystem.services.interfaces.DataModel;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
-public class Role {
+public class Role implements DataModel {
     private IntegerProperty id;
     private StringProperty role;
 
@@ -33,6 +34,11 @@ public class Role {
     }
 
     public String getRole() {
+        return role.get();
+    }
+
+    @Override
+    public String getValue(){
         return role.get();
     }
 }

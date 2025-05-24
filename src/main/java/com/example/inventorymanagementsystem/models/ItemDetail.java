@@ -1,12 +1,13 @@
 package com.example.inventorymanagementsystem.models;
 
+import com.example.inventorymanagementsystem.services.interfaces.DataModel;
 import javafx.beans.property.*;
 
 /**
  * This class is used to get all the information related to a single item in the item table.
  * Recommended for using when showing all the item data and loading items in a checkout page.
  */
-public class ItemDetail {
+public class ItemDetail implements DataModel {
     private IntegerProperty id;
     private StringProperty name;
     private DoubleProperty price;
@@ -169,5 +170,10 @@ public class ItemDetail {
 
     public int getItemHasSizeID() {
         return itemHasSizeID.get();
+    }
+
+    @Override
+    public String getValue(){
+        return name.get();
     }
 }
