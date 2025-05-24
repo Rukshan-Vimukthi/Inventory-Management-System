@@ -1,11 +1,12 @@
 package com.example.inventorymanagementsystem.models;
 
+import com.example.inventorymanagementsystem.services.interfaces.DataModel;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
-public class Customer {
+public class Customer implements DataModel {
     private IntegerProperty id;
     private StringProperty firstName;
     private StringProperty lastName;
@@ -66,5 +67,30 @@ public class Customer {
 
     public void setPhone(String phone){
         phoneProperty().setValue(phone);
+    }
+
+    public int getId() {
+        return id.get();
+    }
+
+    public String getFirstName() {
+        return firstName.get();
+    }
+
+    public String getLastName() {
+        return lastName.get();
+    }
+
+    public String getPhone() {
+        return phone.get();
+    }
+
+    public String getEmail() {
+        return email.get();
+    }
+
+    @Override
+    public String getValue() {
+        return getFirstName() + ' ' + getLastName();
     }
 }

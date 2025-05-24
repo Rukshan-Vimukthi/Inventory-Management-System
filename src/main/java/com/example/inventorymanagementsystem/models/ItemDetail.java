@@ -1,12 +1,13 @@
 package com.example.inventorymanagementsystem.models;
 
+import com.example.inventorymanagementsystem.services.interfaces.DataModel;
 import javafx.beans.property.*;
 
 /**
  * This class is used to get all the information related to a single item in the item table.
  * Recommended for using when showing all the item data and loading items in a checkout page.
  */
-public class ItemDetail {
+public class ItemDetail implements DataModel {
     private IntegerProperty id;
     private StringProperty name;
     private DoubleProperty price;
@@ -16,11 +17,14 @@ public class ItemDetail {
     private StringProperty stockDate;
     private StringProperty stockName;
 
-    private IntegerProperty itemSizeID;
-    private StringProperty itemSize;
+    private IntegerProperty sizeID;
+    private StringProperty size;
 
     private IntegerProperty itemColorID;
     private StringProperty itemColor;
+
+    private IntegerProperty itemHasSizeID;
+
 
     public ItemDetail(int id, String name, Double price,
                       Double sellingPrice, int stockID,
@@ -29,7 +33,8 @@ public class ItemDetail {
                       int itemSizeID,
                       String itemSize,
                       int itemColorID,
-                      String itemColor){
+                      String itemColor,
+                      int itemHasSizeID){
         idProperty().setValue(id);
         nameProperty().setValue(name);
         priceProperty().setValue(price);
@@ -37,10 +42,11 @@ public class ItemDetail {
         stockIDProperty().setValue(stockID);
         stockDateProperty().setValue(stockDate);
         stockNameProperty().setValue(stockName);
-        itemSizeIDProperty().setValue(itemSizeID);
-        itemSizeProperty().setValue(itemSize);
+        sizeIDProperty().setValue(itemSizeID);
+        sizeProperty().setValue(itemSize);
         itemColorIDProperty().setValue(itemColorID);
         itemColorProperty().setValue(itemColor);
+        itemHasSizeIDProperty().setValue(itemHasSizeID);
     }
 
     public IntegerProperty idProperty(){
@@ -85,17 +91,18 @@ public class ItemDetail {
         }
         return stockName;
     }
-    public IntegerProperty itemSizeIDProperty(){
-        if (itemSizeID == null) {
-            itemSizeID = new SimpleIntegerProperty(this, "itemSizeID");
+    public IntegerProperty sizeIDProperty(){
+        if (sizeID == null) {
+            sizeID = new SimpleIntegerProperty(this, "itemSizeID");
         }
-        return itemSizeID;
+        return sizeID;
     }
-    public StringProperty itemSizeProperty(){
-        if (itemSize == null) {
-            itemSize = new SimpleStringProperty(this, "itemSize");
+
+    public StringProperty sizeProperty(){
+        if (size == null) {
+            size = new SimpleStringProperty(this, "itemSize");
         }
-        return itemSize;
+        return size;
     }
     public IntegerProperty itemColorIDProperty(){
         if (itemColorID == null) {
@@ -109,10 +116,63 @@ public class ItemDetail {
         }
         return itemColor;
     }
+
     public double getPrice() {
         return priceProperty().get(); // Correctly retrieves the price value
     }
     public int getId() {
         return id.get();
+    }
+
+    public IntegerProperty itemHasSizeIDProperty(){
+        if (itemHasSizeID == null) {
+            itemHasSizeID = new SimpleIntegerProperty(this, "itemHasID");
+        }
+        return itemHasSizeID;
+    }
+
+    public String getName() {
+        return name.get();
+    }
+
+    public double getSellingPrice() {
+        return sellingPrice.get();
+    }
+
+    public int getStockID() {
+        return stockID.get();
+    }
+
+    public String getStockDate() {
+        return stockDate.get();
+    }
+
+    public String getStockName() {
+        return stockName.get();
+    }
+
+    public int getSizeID() {
+        return sizeID.get();
+    }
+
+    public String getSize() {
+        return size.get();
+    }
+
+    public int getItemColorID() {
+        return itemColorID.get();
+    }
+
+    public String getItemColor() {
+        return itemColor.get();
+    }
+
+    public int getItemHasSizeID() {
+        return itemHasSizeID.get();
+    }
+
+    @Override
+    public String getValue(){
+        return name.get();
     }
 }

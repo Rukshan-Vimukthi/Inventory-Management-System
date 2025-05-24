@@ -3,9 +3,14 @@ package com.example.inventorymanagementsystem;
 import com.example.inventorymanagementsystem.view.Checkout;
 import com.example.inventorymanagementsystem.view.Inventory;
 import com.example.inventorymanagementsystem.view.Stock;
+
+import com.example.inventorymanagementsystem.view.Users;
 import com.example.inventorymanagementsystem.view.components.TabBuilder;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.control.Button;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.Border;
@@ -35,7 +40,7 @@ public class InventoryManagementApplicationController {
         Tab checkoutTab = TabBuilder.buildTab("Checkout");
         Tab stocksTab = TabBuilder.buildTab("Stock");
         Tab inventory = TabBuilder.buildTab("Inventory");
-        Tab administratorTab = TabBuilder.buildTab("Admininstrator");
+        Tab users = TabBuilder.buildTab("Users");
 
         // create the inventory view (custom javaFX layout container ex. HBox, VBox)
         Inventory inventoryView = new Inventory();
@@ -49,12 +54,20 @@ public class InventoryManagementApplicationController {
 
         // The Stock Section
         Stock stockView = new Stock();
+
         VBox stockViewContainer = stockView.getLayout();
         stocksTab.setContent(stockViewContainer);
 
+
+        Users userTabView = new Users();
+        users.setContent(userTabView);
+
         // Add tabs to the tabPane
-        tabPane.getTabs().add(checkoutTab);
-        tabPane.getTabs().add(stocksTab);
-        tabPane.getTabs().add(inventory);
+        tabPane.getTabs().addAll(
+                checkoutTab,
+                stocksTab,
+                inventory,
+                users
+        );
     }
 }

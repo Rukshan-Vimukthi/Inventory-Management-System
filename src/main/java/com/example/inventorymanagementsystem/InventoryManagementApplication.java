@@ -4,7 +4,9 @@ import com.example.inventorymanagementsystem.state.Data;
 
 import com.example.inventorymanagementsystem.view.Checkout;
 import com.example.inventorymanagementsystem.view.components.TabBuilder;
+import com.example.inventorymanagementsystem.view.dialogs.SignIn;
 import javafx.application.Application;
+import javafx.beans.binding.BooleanBinding;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -23,15 +25,28 @@ public class InventoryManagementApplication extends Application {
 
         TabPane rootLayout = (TabPane) root;
 
-        Scene scene = new Scene(rootLayout, 1400, 820);
+
+//        Checkout checkoutLayout = new Checkout();
+//        BorderPane checkoutContainer = checkoutLayout.getLayout();
+
+//        Tab checkOutTab = new Tab("Checkout");
+//        checkOutTab.setContent(checkoutContainer);
+
+//        rootLayout.getTabs().add(checkOutTab);
+
+        Scene scene = new Scene(rootLayout);
 
         scene.getStylesheets().add(
             String.valueOf(InventoryManagementApplication.class.getResource("css/style.css"))
         );
 
         stage.setTitle("SFC Inventory Management System with Integrated POS Features");
+        stage.setMaximized(true);
         stage.setScene(scene);
         stage.show();
+
+        SignIn signIn = new SignIn(stage);
+        signIn.show();
     }
 
     public static void main(String[] args) {
