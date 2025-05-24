@@ -10,6 +10,7 @@ import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.Border;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.VBox;
 
 import java.io.IOException;
 
@@ -48,7 +49,7 @@ public class InventoryManagementApplicationController {
 
         // The Stock Section
         Stock stockView = new Stock();
-        BorderPane stockViewContainer = stockView.getLayout();
+        VBox stockViewContainer = stockView.getLayout();
         stocksTab.setContent(stockViewContainer);
 
         // Add tabs to the tabPane

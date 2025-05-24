@@ -28,6 +28,10 @@ public class Size {
         return size;
     }
 
+    public int getId() {
+        return id.get();
+    }
+
     public void setId(int id){
         idProperty().setValue(id);
     }

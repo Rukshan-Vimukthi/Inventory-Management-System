@@ -1,11 +1,9 @@
 package com.example.inventorymanagementsystem.db;
 
-import com.example.inventorymanagementsystem.models.Color;
-import com.example.inventorymanagementsystem.models.ItemDetail;
-import com.example.inventorymanagementsystem.models.Size;
-import com.example.inventorymanagementsystem.models.Stock;
+import com.example.inventorymanagementsystem.models.*;
 
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -19,6 +17,7 @@ public class Connection {
     private java.sql.Connection connection;
     private static Connection connectionObject;
     private Statement statement;
+    private double price;
 
     public Connection(){
         try {
@@ -155,8 +154,6 @@ public class Connection {
                         itemColor
                 );
 
-
-
                 System.out.println(name);
 
                 itemDetails.add(itemDetail);
@@ -182,18 +179,38 @@ public class Connection {
         return false;
     }
 
-    public List<Size> getSizes(){
-        ArrayList<Size> rows = new ArrayList<>();
-        try {
-            statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery("SELECT * FROM `size`");
-            while (resultSet.next()){
-                int id = resultSet.getInt(1);
-                String sizeText = resultSet.getString(2);
-                Size size = new Size(id, sizeText);
-                rows.add(size);
+    public List<Size> getSizes() {
+        List<Size> rows = new ArrayList<>();
+        String query = "SELECT * FROM `size`"; // Ensure table name matches your DB
+
+        try (PreparedStatement stmt = connection.prepareStatement(query);
+             ResultSet resultSet = stmt.executeQuery()) {
+
+            while (resultSet.next()) {
+                int id = resultSet.getInt("id");
+                String sizeText = resultSet.getString("size");
+                rows.add(new Size(id, sizeText));
             }
-        }catch(SQLException sqlException){
+        } catch (SQLException sqlException) {
+            sqlException.printStackTrace();
+        }
+        return rows;
+    }
+
+    // Fetch all Item Statuses from the Database
+    public List<ItemStatus> getStatus() {
+        List<ItemStatus> rows = new ArrayList<>();
+        String query = "SELECT * FROM item_status";
+
+        try (PreparedStatement stmt = connection.prepareStatement(query);
+             ResultSet resultSet = stmt.executeQuery()) {
+
+            while (resultSet.next()) {
+                int id = resultSet.getInt("id");
+                String statusText = resultSet.getString("status");
+                rows.add(new ItemStatus(id, statusText));
+            }
+        } catch (SQLException sqlException) {
             sqlException.printStackTrace();
         }
         return rows;
@@ -241,6 +258,28 @@ public class Connection {
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public void storeSales (int customerId, int itemHasSizeId, int amount, int price, int item_status_id) {
+        String theCurrentDate = LocalDate.now().toString();
+
+        try {
+            PreparedStatement stmt = connection.prepareStatement(
+                    "INSERT INTO customer_has_item_has_size (customer_id, item_has_size_id, amount, price, date, item_Status_id) VALUES (?, ?, ?, ?, ?, ?)"
+            );
+            stmt.setInt(1, customerId);
+            stmt.setInt(2, itemHasSizeId);
+            stmt.setInt(3, amount);
+            stmt.setInt(4, price);
+            stmt.setString(5, theCurrentDate);
+            stmt.setInt(6, item_status_id);
+
+            stmt.executeUpdate();
+            System.out.println("sale recorded successfully");
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 

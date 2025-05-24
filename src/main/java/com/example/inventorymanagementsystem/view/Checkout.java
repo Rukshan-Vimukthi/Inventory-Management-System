@@ -5,6 +5,7 @@ import com.example.inventorymanagementsystem.state.Data;
 import com.mysql.cj.x.protobuf.MysqlxPrepare;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.beans.property.DoubleProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -30,9 +31,21 @@ import java.util.List;
 
 public class Checkout {
     private BorderPane mainLayout;
-    ComboBox<ItemDetail> itemComboBox;// The main container
+    private Connection dbConnection;// The main container
+    ComboBox<ItemDetail> itemComboBox;
+    private Label totalCost = new Label();
+//  For the calculations
+    private double selectedItmPrice = 0.0;
+    private int quantityValue;
+    private double discountValue;
+    private double totalCostValue = 0.0;
+    private double cumulativeTotalCost = 0;
+    private double cumulativeTotalDiscount = 0;
+    private double cumulativeGrandTotal = 0;
+    private double cumulativeReceivedFund = 0;
 
     public Checkout () {
+        dbConnection = Connection.getInstance(); // Get the database instance
         // The main container
         mainLayout = new BorderPane();
         mainLayout.setPadding(new Insets(10, 20, 0, 10));
@@ -75,7 +88,7 @@ public class Checkout {
         Text itemTxt = new Text("Item Information");
 
         itemComboBox = new ComboBox<>();
-        itemComboBox.getItems().addAll(Data.getInstance().getItemDetails());
+        itemComboBox.getItems().addAll(dbConnection.getItemDetails());
 
         itemComboBox.setCellFactory(lv -> new ListCell<>() {
             @Override
@@ -92,6 +105,18 @@ public class Checkout {
             }
         });
 
+        itemComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) { // Ensure an item is selected
+                int sizeId = dbConnection.getSizes().get(0).getId();
+                int statusId = dbConnection.getStatus().get(0).getId();
+                double selectedItemPrice = newValue.getPrice();
+                System.out.println("Selected item price: " + selectedItemPrice);
+
+                // Store price in a variable for future calculations
+                selectedItmPrice = selectedItemPrice;
+            }
+        });
+
         itemComboBox.setMaxWidth(Double.MAX_VALUE);
         itemComboBox.setPromptText("Select The Item");
 
@@ -100,21 +125,7 @@ public class Checkout {
         TextField discount = new TextField();
         discount.setPromptText("Type the discount");
         Button addButton = new Button("Add to List");
-
-        addButton.setOnAction(e -> {
-            ItemDetail selectedItem = itemComboBox.getValue();
-            String quantity = amount.getText();
-
-            if (selectedItem == null || quantity.isEmpty()) {
-                System.out.println("Please fill all the fields");
-                return;
-            }
-
-            int itemId = selectedItem.idProperty().get();
-            double price = selectedItem.priceProperty().get();
-            String currentDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-
-        });
+//      The action for this button is after the bottom section and also the reason is there
 
         Region theSpace = new Region();
         theSpace.setMinHeight(15);
@@ -148,7 +159,7 @@ public class Checkout {
             String phoneField = phone.getText();
             String emailField = eMail.getText();
 
-            Connection connection = new Connection(); // Your DB connection class
+            Connection connection = new Connection();
             connection.addCustomers(firstNameField, lastNameField, phoneField, emailField);
 
             // Clear input fields
@@ -206,17 +217,71 @@ public class Checkout {
         receivedFund.setPromptText("Received Fund");
 
         Text totalCostTxt = new Text("Total Cost:");
-        Label totalCost = new Label("$40");
+        Label totalCost = new Label();
 
         Text totalDiscountTxt = new Text("Total Discount:");
-        Label totalDiscount = new Label("$40");
+        Label totalDiscount = new Label();
 
         Text grandTotalTxt = new Text("Grand Total:");
         Label grandTotal = new Label("$40");
 
         Text balanceTxt = new Text("Due Balance:");
-        Label balance = new Label("$40");
-        Button completeBtn = new Button("Complete Sales");
+        Label balance = new Label();
+        Button checkOutButton = new Button("Check Out");
+
+        /*
+        *   This is the action of the adding button for items and this piece of code is here
+        *   cause, to access for all the values in the above code.
+        * */
+        addButton.setOnAction(e -> {
+            try {
+                int quantityValue = Integer.parseInt(amount.getText().trim());
+                double discountValue = Double.parseDouble(discount.getText().trim());
+                double receivedFundValue = Double.parseDouble(receivedFund.getText().trim());
+
+                double totalCostValue = selectedItmPrice * quantityValue ;
+                double totalDiscountValue = quantityValue * discountValue;
+                double grandTotalValue = totalCostValue - totalDiscountValue;
+
+                // Accumulate values,
+                cumulativeTotalCost += totalCostValue;
+                cumulativeTotalDiscount += totalDiscountValue;
+                cumulativeGrandTotal += grandTotalValue;
+                cumulativeReceivedFund += receivedFundValue;
+
+                double dueBalanceValue = cumulativeReceivedFund - cumulativeGrandTotal;
+
+                totalCost.setText("$" + cumulativeTotalCost);
+                totalDiscount.setText("$" + cumulativeTotalDiscount);
+                grandTotal.setText("$" + cumulativeGrandTotal);
+                balance.setText("$" + dueBalanceValue);
+
+            } catch (NumberFormatException ex) {
+                System.out.println("Please enter valid numbers!");
+            }
+        });
+
+        checkOutButton.setOnAction(e -> {
+            ItemDetail selectedItem = itemComboBox.getValue();
+            String quantity = amount.getText();
+            String discountText = discount.getText();
+
+            if (selectedItem == null || quantity.isEmpty() || discountText.isEmpty()){
+                System.out.println("Please fill all the fields");
+                return;
+            }
+            int itemId = selectedItem.getId();
+            int sizeId = dbConnection.getSizes().get(0).getId();
+            int statusId = dbConnection.getStatus().get(0).getId();
+            double price = selectedItem.priceProperty().get();
+            String currentDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            int quantityDetail = Integer.parseInt(quantity.trim());
+            double discountDetail = Double.parseDouble(discountText.trim());
+
+            // Sending the details to the table
+            // Fetch additional IDs required for database insertion
+            dbConnection.storeSales(1, sizeId, quantityDetail, (int) price, statusId);
+        });
 
         // The floating section in the right_side
         Button remove = new Button("Remove All");
@@ -257,7 +322,7 @@ public class Checkout {
         balanceSec.getChildren().addAll(balanceTxt, balance);
 
         bottomSection.getChildren().addAll(discountForAll, receivedFund, totalCostTxt, totalCost, totalDiscountTxt, totalDiscount, grandTotalTxt, grandTotal);
-        mainFooterSec.getChildren().addAll(bottomSection, balanceSec, completeBtn);
+        mainFooterSec.getChildren().addAll(bottomSection, balanceSec, checkOutButton);
         wholeBottomSec.getChildren().addAll(floatingContainer, mainFooterSec);
 
         headerSection.getChildren().addAll(navbar, inputVerticalSec);
@@ -270,12 +335,9 @@ public class Checkout {
         mainLayout.setTop(headerSection);
         mainLayout.setCenter(centerContainer);
         mainLayout.setBottom(wholeBottomSec);
-
     }
 
     public BorderPane getLayout() {
         return mainLayout;
     }
-
 }
-

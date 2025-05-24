@@ -109,5 +109,10 @@ public class ItemDetail {
         }
         return itemColor;
     }
-
+    public double getPrice() {
+        return priceProperty().get(); // Correctly retrieves the price value
+    }
+    public int getId() {
+        return id.get();
+    }
 }
