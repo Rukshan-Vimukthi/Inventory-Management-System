@@ -41,10 +41,6 @@ public class Size implements DataModel {
         sizeProperty().setValue(color);
     }
 
-    public int getId() {
-        return id.get();
-    }
-
     public String getSize() {
         return size.get();
     }
