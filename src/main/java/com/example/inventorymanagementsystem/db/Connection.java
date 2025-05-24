@@ -4,6 +4,7 @@ import com.example.inventorymanagementsystem.models.*;
 
 import javax.xml.transform.Result;
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -17,6 +18,7 @@ public class Connection {
     private java.sql.Connection connection;
     private static Connection connectionObject;
     private Statement statement;
+    private double price;
 
     public Connection(){
         try {
@@ -176,8 +178,6 @@ public class Connection {
                         itemHasSizeID
                 );
 
-
-
                 System.out.println(name);
 
                 itemDetails.add(itemDetail);
@@ -218,7 +218,26 @@ public class Connection {
                 Size size = new Size(id, sizeText);
                 rows.add(size);
             }
-        }catch(SQLException sqlException){
+        } catch (SQLException sqlException) {
+            sqlException.printStackTrace();
+        }
+        return rows;
+    }
+
+    // Fetch all Item Statuses from the Database
+    public List<ItemStatus> getStatus() {
+        List<ItemStatus> rows = new ArrayList<>();
+        String query = "SELECT * FROM item_status";
+
+        try (PreparedStatement stmt = connection.prepareStatement(query);
+             ResultSet resultSet = stmt.executeQuery()) {
+
+            while (resultSet.next()) {
+                int id = resultSet.getInt("id");
+                String statusText = resultSet.getString("status");
+                rows.add(new ItemStatus(id, statusText));
+            }
+        } catch (SQLException sqlException) {
             sqlException.printStackTrace();
         }
         return rows;
@@ -298,6 +317,28 @@ public class Connection {
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public void storeSales (int customerId, int itemHasSizeId, int amount, int price, int item_status_id) {
+        String theCurrentDate = LocalDate.now().toString();
+
+        try {
+            PreparedStatement stmt = connection.prepareStatement(
+                    "INSERT INTO customer_has_item_has_size (customer_id, item_has_size_id, amount, price, date, item_Status_id) VALUES (?, ?, ?, ?, ?, ?)"
+            );
+            stmt.setInt(1, customerId);
+            stmt.setInt(2, itemHasSizeId);
+            stmt.setInt(3, amount);
+            stmt.setInt(4, price);
+            stmt.setString(5, theCurrentDate);
+            stmt.setInt(6, item_status_id);
+
+            stmt.executeUpdate();
+            System.out.println("sale recorded successfully");
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 

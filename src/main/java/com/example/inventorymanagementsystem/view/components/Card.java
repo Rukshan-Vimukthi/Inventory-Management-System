@@ -118,5 +118,4 @@ public class Card extends VBox {
     public void setStyles(String style){
         this.setStyle(this.getStyle() + " " + style);
     }
-
 }

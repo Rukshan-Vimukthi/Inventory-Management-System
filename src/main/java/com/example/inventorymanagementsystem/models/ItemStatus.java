@@ -3,8 +3,10 @@ package com.example.inventorymanagementsystem.models;
 import com.example.inventorymanagementsystem.services.interfaces.DataModel;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.beans.property.SimpleStringProperty;
+
+import java.util.Map;
 
 public class ItemStatus implements DataModel {
     private IntegerProperty id;
@@ -33,6 +35,14 @@ public class ItemStatus implements DataModel {
         return id.get();
     }
 
+    public void setId(int id) {
+        idProperty().setValue(id);
+    }
+
+    public void setStatus(String statusText) {
+        statusProperty().setValue(statusText);
+    }
+
     public String getStatus() {
         return status.get();
     }
@@ -42,3 +52,4 @@ public class ItemStatus implements DataModel {
         return status.get();
     }
 }
+

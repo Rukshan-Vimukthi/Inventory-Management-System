@@ -117,6 +117,13 @@ public class ItemDetail implements DataModel {
         return itemColor;
     }
 
+    public double getPrice() {
+        return priceProperty().get(); // Correctly retrieves the price value
+    }
+    public int getId() {
+        return id.get();
+    }
+
     public IntegerProperty itemHasSizeIDProperty(){
         if (itemHasSizeID == null) {
             itemHasSizeID = new SimpleIntegerProperty(this, "itemHasID");
@@ -124,16 +131,8 @@ public class ItemDetail implements DataModel {
         return itemHasSizeID;
     }
 
-    public int getId() {
-        return id.get();
-    }
-
     public String getName() {
         return name.get();
-    }
-
-    public double getPrice() {
-        return price.get();
     }
 
     public double getSellingPrice() {
