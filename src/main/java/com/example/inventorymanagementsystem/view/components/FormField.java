@@ -45,6 +45,24 @@ public class FormField<C extends Control, M> extends VBox {
         }
     }
 
+    public FormField(String labelText, Class<C> nodeClass, ObservableList<M> items, M selectedItem){
+        try {
+            Label label = new Label(labelText);
+
+            if (nodeClass == TextField.class){
+                buildTextField();
+            }else if(nodeClass == ComboBox.class){
+                buildComboBox(items, selectedItem);
+            }else if(nodeClass == ColorPicker.class){
+                buildColorPicker();
+            }
+
+            this.getChildren().addAll(label, node);
+        }catch (Exception exception){
+            exception.printStackTrace();
+        }
+    }
+
     public Object getValue(){
         if (node != null) {
             if (node instanceof TextField textField){
@@ -106,7 +124,26 @@ public class FormField<C extends Control, M> extends VBox {
                 };
             }
         });
+        node = comboBox;
+    }
 
+    private void buildComboBox(ObservableList<M> data, M selectedItem){
+        ComboBox<M> comboBox = new ComboBox<M>(data);
+        comboBox.getSelectionModel().select(selectedItem);
+        comboBox.setCellFactory(new Callback<ListView<M>, ListCell<M>>() {
+            @Override
+            public ListCell<M> call(ListView<M> param) {
+                return new ListCell<M>(){
+                    @Override
+                    protected void updateItem(M item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (item != null){
+                            setText(((DataModel)item).getValue());
+                        }
+                    }
+                };
+            }
+        });
         node = comboBox;
     }
 }

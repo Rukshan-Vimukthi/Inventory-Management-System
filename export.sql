@@ -139,7 +139,6 @@ CREATE TABLE `item` (
   `id` int NOT NULL,
   `name` varchar(45) DEFAULT NULL,
   `price` double DEFAULT NULL,
-  `selling_price` double DEFAULT NULL,
   `stock_id` int NOT NULL,
   PRIMARY KEY (`id`,`stock_id`),
   KEY `fk_item_stock1_idx` (`stock_id`),
@@ -153,7 +152,7 @@ CREATE TABLE `item` (
 
 LOCK TABLES `item` WRITE;
 /*!40000 ALTER TABLE `item` DISABLE KEYS */;
-INSERT INTO `item` VALUES (1,'Blue T-Shirt',10,15,1),(2,'Black Jeans',25,35,1),(3,'Leather Jacket',50,75,1),(4,'White Sneakers',30,45,1),(5,'Baseball Cap',5,10,1),(6,'Denim Shorts',20,28,1),(7,'Graphic Hoodie',35,50,1),(8,'Sports Watch',40,60,1),(9,'Sunglasses',15,22,1),(10,'Leather Belt',12,18,1);
+INSERT INTO `item` VALUES (1,'Blue T-Shirt',10,1),(2,'Black Jeans',25,1),(3,'Leather Jacket',50,1),(4,'White Sneakers',30,1),(5,'Baseball Cap',5,1),(6,'Denim Shorts',20,1),(7,'Graphic Hoodie',35,1),(8,'Sports Watch',40,1),(9,'Sunglasses',15,1),(10,'Leather Belt',12,1);
 /*!40000 ALTER TABLE `item` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -169,6 +168,8 @@ CREATE TABLE `item_has_size` (
   `item_id` int NOT NULL,
   `item_stock_id` int NOT NULL,
   `size_id` int NOT NULL,
+  `ordered_qty` int DEFAULT NULL,
+  `cost` double DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `fk_item_has_size_size1_idx` (`size_id`),
   KEY `fk_item_has_size_item1_idx` (`item_id`,`item_stock_id`),
@@ -183,7 +184,7 @@ CREATE TABLE `item_has_size` (
 
 LOCK TABLES `item_has_size` WRITE;
 /*!40000 ALTER TABLE `item_has_size` DISABLE KEYS */;
-INSERT INTO `item_has_size` VALUES (1,1,1,1),(2,1,1,2),(3,1,1,3),(4,2,1,2),(5,2,1,3),(6,2,1,4),(7,3,1,3),(8,3,1,4),(9,3,1,5),(10,4,1,2),(11,4,1,3),(12,5,1,1),(13,5,1,2),(14,6,1,2),(15,6,1,3),(16,7,1,3),(17,7,1,4),(18,8,1,2),(19,9,1,2),(20,10,1,3);
+INSERT INTO `item_has_size` VALUES (1,1,1,1,100,10),(2,1,1,2,100,10),(3,1,1,3,100,10),(4,2,1,2,100,30),(5,2,1,3,100,30),(6,2,1,4,100,30),(7,3,1,3,100,70),(8,3,1,4,100,70),(9,3,1,5,100,70),(10,4,1,2,100,40),(11,4,1,3,100,40),(12,5,1,1,100,5),(13,5,1,2,100,5),(14,6,1,2,100,23),(15,6,1,3,100,23),(16,7,1,3,100,45),(17,7,1,4,100,45),(18,8,1,2,100,55),(19,9,1,2,100,17),(20,10,1,3,100,13);
 /*!40000 ALTER TABLE `item_has_size` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -295,7 +296,9 @@ CREATE TABLE `user` (
   `id` int NOT NULL AUTO_INCREMENT,
   `firstName` varchar(20) DEFAULT NULL,
   `lastName` varchar(20) DEFAULT NULL,
+  `username` varchar(45) NOT NULL,
   `email` varchar(50) DEFAULT NULL,
+  `password` varchar(45) DEFAULT NULL,
   `role_id` int NOT NULL,
   PRIMARY KEY (`id`,`role_id`),
   KEY `fk_user_role_idx` (`role_id`),
@@ -309,7 +312,7 @@ CREATE TABLE `user` (
 
 LOCK TABLES `user` WRITE;
 /*!40000 ALTER TABLE `user` DISABLE KEYS */;
-INSERT INTO `user` VALUES (1,'Sandun','Jayalath','sandun@gmail.com',1),(2,'Rukshan','Dissanayake','rukshan@gmail.com',1);
+INSERT INTO `user` VALUES (1,'Sandun','Jayalath','sandun','sandun@gmail.com','123',1),(2,'Rukshan','Dissanayake','rukshan','rukshan@gmail.com','123',1);
 /*!40000 ALTER TABLE `user` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -322,4 +325,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-05-21 14:29:46
+-- Dump completed on 2025-05-24 21:02:18

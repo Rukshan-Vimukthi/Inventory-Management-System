@@ -6,16 +6,14 @@ import com.example.inventorymanagementsystem.models.*;
 import com.example.inventorymanagementsystem.models.Stock;
 import com.example.inventorymanagementsystem.services.interfaces.TableContainerInterface;
 import com.example.inventorymanagementsystem.state.Data;
+import com.example.inventorymanagementsystem.view.components.FormField;
 import com.example.inventorymanagementsystem.view.components.ItemPreview;
 import com.example.inventorymanagementsystem.view.components.TableContainer;
 import com.example.inventorymanagementsystem.view.dialogs.AddNewColor;
 import com.example.inventorymanagementsystem.view.dialogs.AddNewItem;
 import com.example.inventorymanagementsystem.view.dialogs.AddNewSize;
 import com.example.inventorymanagementsystem.view.dialogs.AddNewStock;
-import javafx.scene.control.Button;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -28,7 +26,7 @@ public class Inventory extends HBox {
         VBox itemTableContainer = new VBox();
 
 
-        TableContainer<ItemDetail> itemsTable = new TableContainer<>();
+        TableContainer<ItemDetail> itemsTable = new TableContainer<>(true, "Item Name", null);
         itemsTable.addColumn("id", Integer.class);
         itemsTable.addColumn("name", String.class);
         itemsTable.addColumn("price", Double.class);
@@ -38,6 +36,21 @@ public class Inventory extends HBox {
         itemsTable.addColumn("size", Integer.class);
         itemsTable.addColumn("itemColor", Integer.class);
         itemsTable.addItems(Data.getInstance().getItemDetails());
+
+        FormField<ComboBox, Size> sizeFilter = new FormField<>("Size", ComboBox.class, Data.getInstance().getSize());
+        sizeFilter.setMaxWidth(50.0D);
+        FormField<ColorPicker, String> colorFilter = new FormField<>("Color", ColorPicker.class);
+        FormField<ComboBox, Stock> stockFilter = new FormField<>("Stock", ComboBox.class, Data.getInstance().getStocks());
+        FormField<TextField, Double> costFilter = new FormField<>("Cost", TextField.class);
+        costFilter.setMaxWidth(100.0D);
+        FormField<TextField, Double> priceFilter = new FormField<>("Price", TextField.class);
+        priceFilter.setMaxWidth(100.0D);
+
+        itemsTable.addFilter(sizeFilter);
+        itemsTable.addFilter(colorFilter);
+        itemsTable.addFilter(stockFilter);
+        itemsTable.addFilter(costFilter);
+        itemsTable.addFilter(priceFilter);
         itemsTable.setOnActionPerformed(new TableContainerInterface() {
             @Override
             public void addItem() {
@@ -47,7 +60,7 @@ public class Inventory extends HBox {
 
             @Override
             public void refresh() {
-
+                Data.getInstance().refreshItemDetails();
             }
 
             @Override
@@ -59,6 +72,7 @@ public class Inventory extends HBox {
             public void delete(Object itemDetail) {
 
             }
+
         });
 
 
@@ -73,7 +87,7 @@ public class Inventory extends HBox {
 
         HBox.setHgrow(otherTablesContainer, Priority.NEVER);
 
-        TableContainer<Stock> stockTableContainer = new TableContainer<>();
+        TableContainer<Stock> stockTableContainer = new TableContainer<>(false, null, "Enter stock date or name");
         stockTableContainer.addColumn("id", Integer.class);
         stockTableContainer.addColumn("date", String.class);
         stockTableContainer.addColumn("name", String.class);
@@ -87,7 +101,7 @@ public class Inventory extends HBox {
 
             @Override
             public void refresh() {
-
+                Data.getInstance().refreshStock();
             }
 
             @Override
@@ -98,12 +112,12 @@ public class Inventory extends HBox {
 
             @Override
             public void delete(Stock item) {
-
+                Connection.getInstance().deleteStock(item.getId());
             }
 
         });
 
-        TableContainer<Color> colorTableContainer = new TableContainer<>();
+        TableContainer<Color> colorTableContainer = new TableContainer<>(false, null, "Enter color code");
         colorTableContainer.addColumn("id", Integer.class);
         colorTableContainer.addColumn("color", String.class);
         colorTableContainer.addItems(Data.getInstance().getColors());
@@ -116,7 +130,7 @@ public class Inventory extends HBox {
 
             @Override
             public void refresh() {
-
+                Data.getInstance().refreshColors();
             }
 
             @Override
@@ -127,12 +141,12 @@ public class Inventory extends HBox {
 
             @Override
             public void delete(Color item) {
-
+                Connection.getInstance().deleteColor(item.getId());
             }
 
         });
 
-        TableContainer<Size> itemSizeTableContainer = new TableContainer<>();
+        TableContainer<Size> itemSizeTableContainer = new TableContainer<>(false, null, "Enter Size");
         itemSizeTableContainer.addColumn("id", Integer.class);
         itemSizeTableContainer.addColumn("size", String.class);
         itemSizeTableContainer.addItems(Data.getInstance().getSize());
@@ -145,7 +159,7 @@ public class Inventory extends HBox {
 
             @Override
             public void refresh() {
-
+                Data.getInstance().refreshSize();
             }
 
             @Override
@@ -156,7 +170,7 @@ public class Inventory extends HBox {
 
             @Override
             public void delete(Size item) {
-
+                Connection.getInstance().deleteSize(item.getId());
             }
 
         });

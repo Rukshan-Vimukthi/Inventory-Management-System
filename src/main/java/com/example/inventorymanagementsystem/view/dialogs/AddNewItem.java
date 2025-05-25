@@ -15,6 +15,13 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 public class AddNewItem extends Dialog<Boolean> {
+    private FormField<TextField, String> itemName;
+    private FormField<TextField, String> itemQty;
+    private FormField<TextField, String> itemOrderedPrice;
+    private FormField<TextField, String> itemSellingPrice;
+    private FormField<ColorPicker, String> itemColor;
+    private FormField<ComboBox, Size> itemSize;
+    private FormField<ComboBox, Stock> itemStock;
     public AddNewItem(ItemDetail itemDetail){
         DialogPane dialogPane = new DialogPane();
         dialogPane.setMaxWidth(330.0D);
@@ -28,13 +35,27 @@ public class AddNewItem extends Dialog<Boolean> {
         flowPane.setVgap(10.0D);
         flowPane.setHgap(10.0D);
 
-        FormField<TextField, String> itemName = new FormField<>("Item Name", TextField.class);
-        FormField<TextField, String> itemQty = new FormField<>("Item Qty", TextField.class);
-        FormField<TextField, String> itemOrderedPrice = new FormField<>("Bought Price", TextField.class);
-        FormField<TextField, String> itemSellingPrice = new FormField<>("Selling Price", TextField.class);
-        FormField<ColorPicker, String> itemColor = new FormField<>("Color", ColorPicker.class);
-        FormField<ComboBox, Size> itemSize = new FormField<>("Size", ComboBox.class, Data.getInstance().getSize());
-        FormField<ComboBox, Stock> itemStock = new FormField<>("Stock", ComboBox.class, Data.getInstance().getStocks());
+        itemName = new FormField<>("Item Name", TextField.class);
+        itemQty = new FormField<>("Item Qty", TextField.class);
+        itemOrderedPrice = new FormField<>("Bought Price", TextField.class);
+        itemSellingPrice = new FormField<>("Selling Price", TextField.class);
+        itemColor = new FormField<>("Color", ColorPicker.class);
+        if (itemDetail == null) {
+            itemSize = new FormField<>("Size", ComboBox.class, Data.getInstance().getSize());
+            itemStock = new FormField<>("Stock", ComboBox.class, Data.getInstance().getStocks());
+        }else{
+            itemSize = new FormField<>(
+                    "Size",
+                    ComboBox.class,
+                    Data.getInstance().getSize(),
+                    null);
+
+            itemStock = new FormField<>(
+                    "Stock",
+                    ComboBox.class,
+                    Data.getInstance().getStocks(),
+                    null);
+        }
 
         flowPane.getChildren().addAll(
                 itemName,

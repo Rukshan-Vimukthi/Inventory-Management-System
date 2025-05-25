@@ -5,6 +5,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import javax.xml.transform.Result;
+import java.io.IOException;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -24,7 +25,7 @@ public class Connection {
 
     public Connection(){
         try {
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/sandyafashioncorner", "root", "Sandun@2008.sd");
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/sandyafashioncorner", "root", "root@techlix2002");
         }catch(SQLException e){
             e.printStackTrace();
         }
@@ -41,13 +42,45 @@ public class Connection {
         return connectionObject;
     }
 
+    /**
+     * Get the items in the item_has_size table
+     * @param itemHasSizeID
+     * @return ItemHasSize object that contains all the information for the specified item
+     */
+    public ItemHasSize getItemHasSize(int itemHasSizeID){
+        ItemHasSize itemHasSize = null;
+        try{
+            statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM `item_has_size` WHERE `id` = %d".formatted(itemHasSizeID));
+            while (resultSet.next()){
+                int id = resultSet.getInt("id");
+                int itemID = resultSet.getInt("item_id");
+                int stockID = resultSet.getInt("item_stock_id");
+                int itemSizeID = resultSet.getInt("size_id");
+                int orderQuantity = resultSet.getInt("ordered_qty");
+                int cost = resultSet.getInt("cost");
+                int price = resultSet.getInt("price");
+                itemHasSize = new ItemHasSize(id, itemID, stockID, itemSizeID, orderQuantity, cost, price);
+            }
+            return itemHasSize;
+        }catch(SQLException exception){
+            exception.printStackTrace();
+        }
+        return itemHasSize;
+    }
+
     public boolean addNewColor(String colorCode){
         try {
             // create the statement
             statement = connection.createStatement();
 
             // write the SQL query to insert color into the color table
-            return statement.execute("INSERT INTO `color` (`color`) VALUES(`%s`)".formatted(colorCode));
+            boolean success = statement.execute("INSERT INTO `color` (`color`) VALUES('%s')".formatted(colorCode), Statement.RETURN_GENERATED_KEYS);
+            ResultSet generatedKeys = statement.getGeneratedKeys();
+            generatedKeys.next();
+            int id = generatedKeys.getInt(1);
+            System.out.println("New Color ID: " + id);
+            return success;
         }catch(SQLException sqlException){
             sqlException.printStackTrace();
         }
@@ -85,6 +118,16 @@ public class Connection {
         return rows;
     }
 
+    public boolean deleteColor(int id){
+        try{
+            statement = connection.createStatement();
+            return statement.execute("DELETE FROM `color` WHERE `id` = %d".formatted(id));
+        }catch(SQLException e){
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     public boolean addNewItem(String name, Integer qty, Double price, Double sellingPrice, int stockID, int sizeID, int colorID){
         try{
             statement = connection.createStatement();
@@ -94,6 +137,10 @@ public class Connection {
                             "VALUES('%s', '%f', '%d')".formatted(
                                     name, sellingPrice, stockID
                             ));
+            ResultSet generatedKeys = statement.getGeneratedKeys();
+            generatedKeys.next();
+            int id = generatedKeys.getInt(1);
+
             if (isExecuted){
                 isExecuted = statement.execute("INSERT INTO `item_has_size` (" +
                         ("`item_id`, `item_stock_id`, `size_id`, `ordered_qty`, `cost`) " +
@@ -155,7 +202,7 @@ public class Connection {
                 int itemID = resultSet.getInt("item.id");
                 String name = resultSet.getString("item.name");
                 Double price = resultSet.getDouble("item_has_size.cost");
-                Double sellingPrice = resultSet.getDouble("item_has_size.selling_price");
+                Double sellingPrice = resultSet.getDouble("item_has_size.price");
                 int stockID = resultSet.getInt("stock.id");
                 String stockDate = resultSet.getString("stock.date");
                 String stockName = resultSet.getString("stock.name");
@@ -190,9 +237,37 @@ public class Connection {
         return itemDetails;
     }
 
+    public void filterItems(String color, String size, Stock stock, double price, String name, double sellingPrice){
+        try{
+            statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM `item` " +
+                    "INNER JOIN `item_has_size` " +
+                    "ON `item`.`id` = `item_has_size`.`item_id`" +
+                    "INNER JOIN `stock` ON `item`.`stock_id` = `stock`.`id` " +
+                    "INNER JOIN `size` ON `size`.`id` = `item_has_size`.`size_id` " +
+                    "INNER JOIN `color_has_item_has_size` " +
+                    "ON `item_has_size`.`id` = `color_has_item_has_size`.`item_has_size_id` " +
+                    "INNER JOIN `color` ON `color_has_item_has_size`.`color_id` = `color`.`id` WHERE " +
+                    "`color`.`color` = '%%s%' OR " +
+                    "`size`.`size` = '%%s%' OR " +
+                    "`item`.`name` = '%%s%' OR " +
+                    "`stock`.`date` = '%%s%' OR " +
+                    "`stock`.`name` = '%%s%' OR " +
+                    "`item_has_size`.`cost` LIKE %f OR " +
+                    "`item_has_size`.`price` LIKE %f".formatted(color, size, name, stock.getDate(), stock.getName(), price, sellingPrice
+                    ));
+
+            while (resultSet.next()){
+                System.out.println(resultSet.getString("item.name"));
+            }
+        }catch(SQLException exception){
+            exception.printStackTrace();
+        }
+    }
+
     /**
      * Insert a new size value to the size table
-     * @param size
+     * @param size - Size of the item
      * @return boolean - true if the item is added successfully to the table. false otherwise
      */
     public boolean addNewSize(String size){
@@ -224,6 +299,16 @@ public class Connection {
             sqlException.printStackTrace();
         }
         return rows;
+    }
+
+    public boolean deleteSize(int id){
+        try{
+            statement = connection.createStatement();
+            return statement.execute("DELETE FROM `size` WHERE `id` = %d".formatted(id));
+        }catch(SQLException e){
+            e.printStackTrace();
+        }
+        return false;
     }
 
     // Fetch all Item Statuses from the Database
@@ -431,5 +516,53 @@ public class Connection {
             sqlException.printStackTrace();
         }
         return rows;
+    }
+
+    public boolean deleteStock(int id){
+        try{
+            statement = connection.createStatement();
+            return statement.execute("DELETE FROM `stock` WHERE `id` = %d".formatted(id));
+        }catch(SQLException e){
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public UserAnalytics getUserAnalyticsResult(){
+        UserAnalytics userAnalytics = null;
+        try{
+            statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM `user` INNER JOIN `role` ON `role`.`id` = `user`.`id`");
+            int totalUsers = 0;
+            int totalAdminUsers = 0;
+            int totalStaffMembers = 0;
+
+            while (resultSet.next()){
+                String role = resultSet.getString("role.role");
+                System.out.println(role);
+                System.out.println(resultSet.getString("role.role"));
+                if (role.equals("Admin")){
+                    totalAdminUsers += 1;
+                }else if(role.equals("Cashier")){
+                    totalStaffMembers += 1;
+                }
+                totalUsers += 1;
+            }
+
+            resultSet = statement.executeQuery("SELECT * FROM `customer` " +
+                    "INNER JOIN `customer_has_item_has_size` " +
+                    "ON `customer_has_item_has_size`.`customer_id` = `customer`.`id`");
+
+            int totalCustomers = 0;
+            while (resultSet.next()){
+                totalCustomers += 1;
+            }
+
+            userAnalytics = new UserAnalytics(totalUsers, totalAdminUsers, totalStaffMembers, totalCustomers, 0, new String[]{});
+
+        }catch (SQLException exception){
+            exception.printStackTrace();
+        }
+        return userAnalytics;
     }
 }
