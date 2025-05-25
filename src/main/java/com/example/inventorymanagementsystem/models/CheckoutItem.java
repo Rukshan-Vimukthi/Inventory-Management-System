@@ -1,39 +1,87 @@
 package com.example.inventorymanagementsystem.models;
+
 import javafx.beans.property.*;
 
+/**
+ * Represents a single item entry in the checkout table.
+ */
 public class CheckoutItem {
-    private final IntegerProperty id;
-    private final IntegerProperty customerId;
-    private final SimpleIntegerProperty itemHasSizeId;
+    private final StringProperty name;
+    private final StringProperty itemSize;
+    private final StringProperty itemColor;
     private final IntegerProperty amount;
-    private final DoubleProperty price;
-    private final StringProperty date;
-    private final SimpleIntegerProperty itemStatusId;
+    private final IntegerProperty price;
+    private final DoubleProperty sellingPrice;
+    private final StringProperty itemTotalCost;
 
-    public CheckoutItem(int id, int customerId, int itemHasSizeId , int amount, double price, String date, int itemStatusId) {
-        this.id = new SimpleIntegerProperty(id);
-        this.customerId = new SimpleIntegerProperty(customerId);
-        this.itemHasSizeId = new SimpleIntegerProperty(itemHasSizeId);
+    public CheckoutItem(String name, String itemSize, String itemColor,
+                        int amount, int price, double sellingPrice, String itemTotalCost) {
+        this.name = new SimpleStringProperty(name);
+        this.itemSize = new SimpleStringProperty(itemSize);
+        this.itemColor = new SimpleStringProperty(itemColor);
         this.amount = new SimpleIntegerProperty(amount);
-        this.price = new SimpleDoubleProperty(price);
-        this.date = new SimpleStringProperty(date);
-        this.itemStatusId = new SimpleIntegerProperty(itemStatusId);
+        this.price = new SimpleIntegerProperty(price);
+        this.sellingPrice = new SimpleDoubleProperty(sellingPrice);
+        this.itemTotalCost = new SimpleStringProperty(itemTotalCost);
     }
 
-    public int getId() { return id.get(); }
-    public int getCustomerId() { return customerId.get(); }
-    public int getItemHasSizeId() { return itemHasSizeId.get(); }
-    public int getAmount() { return amount.get(); }
-    public double getPrice() { return price.get(); }
-    public String getDate() { return date.get(); }
-    public int getItemStatusId() { return itemStatusId.get(); }
+    // Getters for TableView
+    public String getName() {
+        return name.get();
+    }
 
-    public IntegerProperty idProperty() { return id; }
-    public IntegerProperty customerIdProperty() { return customerId; }
-    public IntegerProperty itemHasSizeIdProperty() { return itemHasSizeId; }
-    public IntegerProperty amountProperty() { return amount; }
-    public DoubleProperty priceProperty() { return price; }
-    public StringProperty dateProperty() { return date; }
-    public IntegerProperty itemStatusIdProperty() { return itemStatusId; }
+    public StringProperty nameProperty() {
+        return name;
+    }
 
+    public String getItemSize() {
+        return itemSize.get();
+    }
+
+    public StringProperty itemSizeProperty() {
+        return itemSize;
+    }
+
+    public String getItemColor() {
+        return itemColor.get();
+    }
+
+    public StringProperty itemColorProperty() {
+        return itemColor;
+    }
+
+    public int getAmount() {
+        return amount.get();
+    }
+
+    public IntegerProperty amountProperty() {
+        return amount;
+    }
+
+    public int getPrice() {
+        return price.get();
+    }
+
+    public IntegerProperty priceProperty() {
+        return price;
+    }
+
+    public double getSellingPrice() {
+        return sellingPrice.get();
+    }
+
+    public DoubleProperty sellingPriceProperty() {
+        return sellingPrice;
+    }
+    public String getItemTotalCost() {
+        return itemTotalCost.get();
+    }
+
+    public void setItemTotalCost(String itemTotalCost) {
+        this.itemTotalCost.set(itemTotalCost);
+    }
+
+    public StringProperty itemTotalCostProperty() {
+        return itemTotalCost;
+    }
 }

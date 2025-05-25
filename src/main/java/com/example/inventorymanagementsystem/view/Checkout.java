@@ -196,14 +196,14 @@ public class Checkout {
         HBox centerContainer = new HBox();
         TableView mainTable = new TableView();
 
-        TableColumn<CheckoutItem, Integer> idCol = new TableColumn<>("ID");
-        idCol.setCellValueFactory(new PropertyValueFactory<>("id"));
+        TableColumn<CheckoutItem, String> nameCol = new TableColumn<>("Name");
+        nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
 
-        TableColumn<CheckoutItem, Integer> customerIdCol = new TableColumn<>("Customer");
-        customerIdCol.setCellValueFactory(new PropertyValueFactory<>("customerId"));
+        TableColumn<CheckoutItem, String> sizeCol = new TableColumn<>("Item Size");
+        sizeCol.setCellValueFactory(new PropertyValueFactory<>("itemSize"));
 
-        TableColumn<CheckoutItem, Integer> itemHasSizeIdCol = new TableColumn<>("Item Has Size ID");
-        itemHasSizeIdCol.setCellValueFactory(new PropertyValueFactory<>("itemHasSizeId"));
+        TableColumn<CheckoutItem, String> colorCol = new TableColumn<>("Item Color");
+        colorCol.setCellValueFactory(new PropertyValueFactory<>("itemColor"));
 
         TableColumn<CheckoutItem, Integer> amountCol = new TableColumn<>("Amount");
         amountCol.setCellValueFactory(new PropertyValueFactory<>("amount"));
@@ -211,16 +211,16 @@ public class Checkout {
         TableColumn<CheckoutItem, Integer> priceCol = new TableColumn<>("Price");
         priceCol.setCellValueFactory(new PropertyValueFactory<>("price"));
 
-        TableColumn<CheckoutItem, String> dateCol = new TableColumn<>("Date");
-        dateCol.setCellValueFactory(new PropertyValueFactory<>("date"));
+        TableColumn<CheckoutItem, Integer> sellingPriceCol = new TableColumn<>("Selling Price");
+        sellingPriceCol.setCellValueFactory(new PropertyValueFactory<>("sellingPrice"));
 
-        TableColumn<CheckoutItem, Integer> statusCol = new TableColumn<>("Item Status ID");
-        statusCol.setCellValueFactory(new PropertyValueFactory<>("itemStatusId"));
+        TableColumn<CheckoutItem, String> totalCostCol = new TableColumn<>("Total Cost");
+        totalCostCol.setCellValueFactory(new PropertyValueFactory<>("itemTotalCost"));
 
-        mainTable.getColumns().addAll(idCol, customerIdCol, itemHasSizeIdCol, amountCol, priceCol, dateCol, statusCol);
-        ObservableList<CheckoutItem> itemList = FXCollections.observableArrayList(
-                dbConnection.getCheckoutItems()
-        );
+        mainTable.getColumns().addAll(nameCol, sizeCol, colorCol, amountCol, priceCol, sellingPriceCol, totalCostCol);
+        mainTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        ObservableList<CheckoutItem> itemList = dbConnection.getCheckoutItems();
+
         mainTable.setItems(itemList);
 
         mainTable.setMaxWidth(Double.MAX_VALUE);
@@ -241,7 +241,7 @@ public class Checkout {
         Label totalDiscount = new Label();
 
         Text grandTotalTxt = new Text("Grand Total:");
-        Label grandTotal = new Label("$40");
+        Label grandTotal = new Label();
 
         Text balanceTxt = new Text("Due Balance:");
         Label balance = new Label();
@@ -253,46 +253,48 @@ public class Checkout {
 
         addButton.setOnAction(e -> {
             ItemDetail selectedItemDetail = itemComboBox.getSelectionModel().getSelectedItem();
+
+            if (selectedItemDetail == null || amount.getText().isEmpty()) {
+                System.out.println("Please select an item and enter the quantity.");
+                return;
+            }
+            if (selectedItemDetail != null) {
+                int itemTotalCost = selectedItemDetail.getPrice() * quantityValue;
+                selectedItemDetail.setItemTotalCost(String.valueOf(itemTotalCost));
+            }
+
             try {
-                if (selectedItemDetail == null) {
-                    System.out.println("No item selected!");
-                    return;
-                }
-
                 int quantityValue = Integer.parseInt(amount.getText().trim());
-                double discountValue = Double.parseDouble(discount.getText().trim());
-                double totalCostValue = selectedItmPrice * quantityValue ;
-                double totalDiscountValue = quantityValue * discountValue;
+                int discountValue = Integer.parseInt(discount.getText().trim());
+                int price = selectedItemDetail.getPrice();
+                double sellingPrice = selectedItemDetail.getSellingPrice();
+                double totalCostValue = selectedItemDetail.getPrice() * quantityValue ;
+                double totalDiscountValue = totalCostValue * ((double) discountValue / 100);
                 double grandTotalValue = totalCostValue - totalDiscountValue;
-                String date = LocalDate.now().toString();
 
-                ItemStatus matchedStatus = dbConnection.getStatus().stream()
-                        .filter(status -> status.getId() == selectedItemDetail.getId())
-                        .findFirst().orElse(null);
-
-                if (matchedStatus == null) {
-                    System.out.println("Matching item status not found.");
-                    return;
-                }
-
-                dbConnection.storeSales(selectedItemDetail.getId(), selectedItemDetail.getItemHasSizeID(), quantityValue,
-                        selectedItemDetail.getPrice(), matchedStatus.getId());
-
-                CheckoutItem newItem = new CheckoutItem(
+                dbConnection.storeSales(
                         selectedItemDetail.getId(),
-                        1,
                         selectedItemDetail.getItemHasSizeID(),
                         quantityValue,
-                        selectedItemDetail.getPrice(),
-                        date,
-                        matchedStatus.getId()
+                        price,
+                        1
+                );
+                String itemTotalCostStr = String.valueOf(selectedItemDetail.getPrice() * quantityValue);
+
+                CheckoutItem newItem = new CheckoutItem(
+                        selectedItemDetail.getName(),
+                        selectedItemDetail.getSize(),
+                        selectedItemDetail.getItemColor(),
+                        quantityValue,
+                        price,
+                        sellingPrice,
+                        itemTotalCostStr
                 );
 
                 itemList.add(newItem);
                 mainTable.refresh();
                 itemComboBox.getSelectionModel().clearSelection();
 
-                // Accumulate values,
                 cumulativeTotalCost += totalCostValue;
                 cumulativeTotalDiscount += totalDiscountValue;
                 cumulativeGrandTotal += grandTotalValue;
@@ -302,28 +304,8 @@ public class Checkout {
                 grandTotal.setText("$" + cumulativeGrandTotal);
 
             } catch (NumberFormatException ex) {
-                System.out.println("Please enter valid numbers!");
+                System.out.println("Invalid quantity entered.");
             }
-
-            // Adding data to the table
-            String quantity = amount.getText();
-            String discountText = discount.getText();
-
-            if (selectedItemDetail == null || quantity.isEmpty() || discountText.isEmpty()){
-                System.out.println("Please fill all the fields");
-                return;
-            }
-            int itemId = selectedItemDetail.getId();
-            int sizeId = dbConnection.getSizes().get(0).getId();
-            int statusId = dbConnection.getStatus().get(0).getId();
-            double price = selectedItemDetail.priceProperty().get();
-            String currentDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            int quantityDetail = Integer.parseInt(quantity.trim());
-            double discountDetail = Double.parseDouble(discountText.trim());
-
-            // Sending the details to the table
-            // Fetch additional IDs required for database insertion
-            dbConnection.storeSales(1, sizeId, quantityDetail, (int) price, statusId);
         });
 
         checkOutButton.setOnAction(e -> {
@@ -332,26 +314,6 @@ public class Checkout {
 
             double dueBalanceValue = cumulativeReceivedFund - cumulativeGrandTotal;
             balance.setText("$" + dueBalanceValue);
-
-//            ItemDetail selectedItem = itemComboBox.getValue();
-//            String quantity = amount.getText();
-//            String discountText = discount.getText();
-//
-//            if (selectedItem == null || quantity.isEmpty() || discountText.isEmpty()){
-//                System.out.println("Please fill all the fields");
-//                return;
-//            }
-//            int itemId = selectedItem.getId();
-//            int sizeId = dbConnection.getSizes().get(0).getId();
-//            int statusId = dbConnection.getStatus().get(0).getId();
-//            double price = selectedItem.priceProperty().get();
-//            String currentDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-//            int quantityDetail = Integer.parseInt(quantity.trim());
-//            double discountDetail = Double.parseDouble(discountText.trim());
-//
-//            // Sending the details to the table
-//            // Fetch additional IDs required for database insertion
-//            dbConnection.storeSales(1, sizeId, quantityDetail, (int) price, statusId);
         });
 
         // The floating section in the right_side

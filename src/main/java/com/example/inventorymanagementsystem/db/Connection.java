@@ -25,7 +25,7 @@ public class Connection {
 
     public Connection(){
         try {
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/sandyafashioncorner", "root", "root@techlix2002");
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/sandyafashioncorner", "root", "Sandun@2008.sd");
         }catch(SQLException e){
             e.printStackTrace();
         }
@@ -44,30 +44,32 @@ public class Connection {
 
     /**
      * Get the items in the item_has_size table
-     * @param itemHasSizeID
-     * @return ItemHasSize object that contains all the information for the specified item
+     * @param
+//     * @return ItemHasSize object that contains all the information for the specified item
      */
-    public ItemHasSize getItemHasSize(int itemHasSizeID){
-        ItemHasSize itemHasSize = null;
-        try{
+    public ArrayList<ItemHasSize> getAllItemHasSizes() {
+        ArrayList<ItemHasSize> items = new ArrayList<>();
+        try {
             statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery("SELECT * FROM `item_has_size` WHERE `id` = %d".formatted(itemHasSizeID));
-            while (resultSet.next()){
-                int id = resultSet.getInt("id");
-                int itemID = resultSet.getInt("item_id");
-                int stockID = resultSet.getInt("item_stock_id");
-                int itemSizeID = resultSet.getInt("size_id");
-                int orderQuantity = resultSet.getInt("ordered_qty");
-                int cost = resultSet.getInt("cost");
-                int price = resultSet.getInt("price");
-                itemHasSize = new ItemHasSize(id, itemID, stockID, itemSizeID, orderQuantity, cost, price);
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM `item_has_size`");
+            while (resultSet.next()) {
+                items.add(new ItemHasSize(
+                        resultSet.getInt("id"),
+                        resultSet.getInt("item_id"),
+                        resultSet.getInt("item_stock_id"),
+                        resultSet.getInt("size_id"),
+                        resultSet.getInt("ordered_qty"),
+                        resultSet.getDouble("cost"),
+                        resultSet.getDouble("price"),
+                        resultSet.getInt("remaining_qty")
+                ));
             }
-            return itemHasSize;
-        }catch(SQLException exception){
+        } catch (SQLException exception) {
             exception.printStackTrace();
         }
-        return itemHasSize;
+        return items;
     }
+
 
     public boolean addNewColor(String colorCode){
         try {
@@ -226,11 +228,11 @@ public class Connection {
                         itemColor,
                         itemHasSizeID
                 );
-
                 System.out.println(name);
 
                 itemDetails.add(itemDetail);
             }
+
         }catch(SQLException exception){
             exception.printStackTrace();
         }
@@ -370,7 +372,7 @@ public class Connection {
             try {
                 System.out.println(resultSet.getString("username"));
                 return resultSet;
-            }catch(SQLException e){
+            } catch(SQLException e){
                 e.printStackTrace();
                 return null;
             }
@@ -434,20 +436,27 @@ public class Connection {
 
         try {
             PreparedStatement stmt = connection.prepareStatement(
-                    "SELECT id, customer_id, item_has_size_id, amount, price, date, item_status_id FROM customer_has_item_has_size"
+                    "SELECT i.name AS item_name, s.size AS item_size, c.color AS item_color, " +
+                            "chs.amount, chs.price, chs.date " +
+                            "FROM customer_has_item_has_size chs " +
+                            "JOIN item_has_size ihs ON chs.item_has_size_id = ihs.id " +
+                            "JOIN item i ON ihs.item_id = i.id " +
+                            "JOIN size s ON ihs.size_id = s.id " +
+                            "JOIN color c ON i.color_id = c.id"
             );
+
             ResultSet rs = stmt.executeQuery();
 
             while (rs.next()) {
-                int id = rs.getInt("id");
-                int customerId = rs.getInt("customer_id");
-                int itemHasSizeId = rs.getInt("item_has_size_id");
+                String name = rs.getString("item_name");
+                String size = rs.getString("item_size");
+                String color = rs.getString("item_color");
                 int amount = rs.getInt("amount");
                 int price = rs.getInt("price");
+                double sellingPrice = rs.getDouble("selling_price");
                 String date = rs.getString("date");
-                int itemStatusId = rs.getInt("item_status_id");
 
-                CheckoutItem item = new CheckoutItem(id, customerId, itemHasSizeId, amount, price, date, itemStatusId);
+                CheckoutItem item = new CheckoutItem(name, size, color, amount, price, sellingPrice, date);
                 itemList.add(item);
             }
 
@@ -457,6 +466,7 @@ public class Connection {
 
         return itemList;
     }
+
 
 
     /**

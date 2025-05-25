@@ -12,6 +12,7 @@ public class ItemDetail implements DataModel {
     private StringProperty name;
     private DoubleProperty price;
     private DoubleProperty sellingPrice;
+    private StringProperty itemTotalCost = new SimpleStringProperty();
 
     private IntegerProperty stockID;
     private StringProperty stockDate;
@@ -174,5 +175,15 @@ public class ItemDetail implements DataModel {
     @Override
     public String getValue(){
         return name.get();
+    }
+
+    public String getITemTotalCost() {
+        return itemTotalCost.get();
+    }
+    public void setItemTotalCost (String value) {
+        itemTotalCost.set(value);
+    }
+    public StringProperty itemTotalCostProperty () {
+        return itemTotalCost;
     }
 }

@@ -3,6 +3,7 @@ package com.example.inventorymanagementsystem.view;
 import com.example.inventorymanagementsystem.InventoryManagementApplication;
 import com.example.inventorymanagementsystem.db.Connection;
 import com.example.inventorymanagementsystem.models.CheckoutItem;
+import com.example.inventorymanagementsystem.models.ItemHasSize;
 import com.example.inventorymanagementsystem.models.Stock;
 import com.example.inventorymanagementsystem.view.components.Card;
 import javafx.collections.FXCollections;
@@ -39,7 +40,7 @@ public class Analytics {
 
         VBox navbar = new VBox();
         navbar.setMaxWidth(Double.MAX_VALUE);
-        navbar.setPadding(new Insets(20, 0, 10, 0));
+        navbar.setPadding(new Insets(20, 0, 20, 0));
         navbar.setSpacing(5.5);
         navbar.setStyle("-fx-background-color: lightGray;");
         navbar.setAlignment(Pos.CENTER);
@@ -146,9 +147,6 @@ public class Analytics {
 
         VBox stockAnalytics = new VBox();
         stockAnalytics.setMaxWidth(Double.MAX_VALUE);
-        Text stockHeading = new Text("Stock Analytics");
-        stockHeading.setStyle("-fx-font-size: 25; -fx-font-weight: bold;");
-        stockHeading.setTextAlignment(TextAlignment.CENTER);
 
         stockAnalytics.setAlignment(Pos.TOP_CENTER);
         stockAnalytics.setPadding(new Insets(40, 0, 20, 30));
@@ -159,6 +157,7 @@ public class Analytics {
         // Current Stock Section
         Text currentStockTxt = new Text("Current Stock Levels");
         currentStockTxt.setStyle("-fx-font-size: 25; -fx-font-weight: bold;");
+        currentStockTxt.setFill(Color.web("#333333"));
 
         CategoryAxis xAxis = new CategoryAxis();
         NumberAxis yAxis = new NumberAxis();
@@ -167,52 +166,51 @@ public class Analytics {
 
         BarChart<String, Number> columnChart = new BarChart<>(xAxis, yAxis);
         columnChart.setTitle("Product Stock Level");
+        columnChart.setBarGap(10);
+        columnChart.setCategoryGap(20);
 
         Connection connection = Connection.getInstance();
-        ArrayList<Stock> stocks = connection.getStocks();
+        ArrayList<ItemHasSize> items = connection.getAllItemHasSizes();
 
-        XYChart.Series<String, Number> stockSeries = new XYChart.Series<>();
-        stockSeries.setName("Stocks");
+        XYChart.Series<String, Number> itemHasSizeStock = new XYChart.Series<>();
+        itemHasSizeStock.setName("Stocks");
 
-        if (stocks.isEmpty()) {
+        if (items.isEmpty()) {
             System.out.println("No stock data found in the database!");
         } else {
             // Add stock details to the chart
-            for (Stock stock : stocks) {
-                stockSeries.getData().add(new XYChart.Data<>(stock.getName(), stock.getId())); // Ensure correct properties
+            for (ItemHasSize item : items) {
+                System.out.println("Product: " + item.getItemID() + ", Remaining Qty: " + item.getRemainingQuantity());
+                itemHasSizeStock.getData().add(new XYChart.Data<>(String.valueOf(item.getItemID()), item.getRemainingQuantity()));
             }
         }
 
-        for (Stock stock : stocks) {
-            stockSeries.getData().add(new XYChart.Data<>(stock.getName(), stock.getId()));
-        }
-
-        columnChart.getData().add(stockSeries);
-
+        columnChart.getData().add(itemHasSizeStock);
         Text reorderTxt = new Text("Reorder Alerts");
-        reorderTxt.setStyle("-fx-font-size: 25; -fx-font-weight: bold;");
+        reorderTxt.setStyle("-fx-font-size: 18; -fx-font-weight: bold;");
 
         stockContainer.setHgap(10);
         stockContainer.setVgap(10);
         ColumnConstraints currentStocks = new ColumnConstraints();
         currentStocks.setPercentWidth(50);
+        currentStocks.setMaxWidth(Double.MAX_VALUE);
         VBox stockMainContainer = new VBox();
-        stockMainContainer.getChildren().addAll(stockHeading, columnChart);
+        stockMainContainer.getChildren().addAll(columnChart);
 
         ColumnConstraints reorderSec = new ColumnConstraints();
         reorderSec.setPercentWidth(50);
 
-        stockContainer.getColumnConstraints().addAll(currentStocks, reorderSec);
+        stockContainer.getColumnConstraints().addAll(reorderSec);
 
         GridPane.setHgrow(currentStockTxt, Priority.ALWAYS);
         GridPane.setHgrow(reorderTxt, Priority.ALWAYS);
 
         stockContainer.add(stockMainContainer, 0, 0);
         stockContainer.add(reorderTxt, 1, 0);
-        currentStockTxt.setTextAlignment(TextAlignment.RIGHT);
-        reorderTxt.setTextAlignment(TextAlignment.RIGHT);
+        currentStockTxt.setTextAlignment(TextAlignment.CENTER);
+        reorderTxt.setTextAlignment(TextAlignment.CENTER);
 
-        stockAnalytics.getChildren().addAll(stockContainer);
+        stockAnalytics.getChildren().addAll(currentStockTxt, stockContainer);
 
         headerContainer.getChildren().addAll(category, dateRange, export, refresh);
         navbar.getChildren().addAll(heading, subHeading, headerContainer);

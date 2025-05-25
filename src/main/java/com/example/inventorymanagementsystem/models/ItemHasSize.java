@@ -13,8 +13,9 @@ public class ItemHasSize {
     IntegerProperty orderQuantity;
     DoubleProperty cost;
     DoubleProperty price;
+    IntegerProperty remainingQuantity;
 
-    public ItemHasSize(int id, int itemID, int stockID, int itemSizeID, int orderQuantity, double cost, double price) {
+    public ItemHasSize(int id, int itemID, int stockID, int itemSizeID, int orderQuantity, double cost, double price, int remainingQuantity) {
         idProperty().setValue(id);
         itemIDProperty().setValue(itemID);
         stockIDProperty().setValue(stockID);
@@ -22,6 +23,7 @@ public class ItemHasSize {
         orderQuantityProperty().setValue(orderQuantity);
         costProperty().setValue(cost);
         priceProperty().setValue(price);
+        remainingQtyProperty().setValue(remainingQuantity);
     }
 
     public IntegerProperty idProperty(){
@@ -67,6 +69,13 @@ public class ItemHasSize {
         return price;
     }
 
+    public IntegerProperty remainingQtyProperty(){
+        if (remainingQuantity == null){
+            remainingQuantity = new SimpleIntegerProperty(this, "remainingQuantity");
+        }
+        return remainingQuantity;
+    }
+
     public int getId() {
         return id.get();
     }
@@ -93,5 +102,9 @@ public class ItemHasSize {
 
     public double getPrice() {
         return price.get();
+    }
+
+    public int getRemainingQuantity() {
+        return remainingQuantity.get();
     }
 }

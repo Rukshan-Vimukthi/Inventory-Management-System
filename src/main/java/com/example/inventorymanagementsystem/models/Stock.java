@@ -41,9 +41,7 @@ public class Stock implements DataModel {
         return name;
     }
 
-    public int getId() {
-        return id.get();
-    }
+    public int getId() { return id.get(); }
 
     public String getDate() {
         return date.get();
