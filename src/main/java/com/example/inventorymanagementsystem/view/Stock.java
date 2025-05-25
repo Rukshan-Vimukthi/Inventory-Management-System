@@ -40,17 +40,19 @@ public class Stock {
 
         HBox headerContainer = new HBox();
         headerContainer.setPadding(new Insets(20, 0, 0, 0));
-        headerContainer.setSpacing(10);
+        headerContainer.setSpacing(30);
         headerContainer.setAlignment(Pos.CENTER);
 
+        HBox filterContainer = new HBox();
+        filterContainer.setSpacing(20);
         HBox searchContainer = new HBox();
         TextField searchBar = new TextField();
         searchBar.setPromptText("Search Item by Name");
-        Button searchBtn = new Button("Search");
+        Button searchBtn = new Button("🔎 Search");
         searchContainer.getChildren().addAll(searchBar, searchBtn);
 
-        Text filterTxt = new Text("Filters:");
-        filterTxt.setStyle("-fx-font-size: 17px;");
+        Text filterTxt = new Text("FILTER:");
+        filterTxt.setStyle("-fx-font-size: 17px; -fx-font-weight: bold;");
 
         ComboBox<String> category = new ComboBox<>(
                 FXCollections.observableArrayList(
@@ -82,44 +84,63 @@ public class Stock {
 
         availability.setPromptText("Select Availability");
 
-        Button addStock = new Button("+ Add New Stock");
+        HBox sortContainer = new HBox();
+        sortContainer.setSpacing(20);
 
-    //  The lightbox for adding items
-        HBox lightBoxContainer = new HBox();
-        lightBoxContainer.maxHeight(Double.MAX_VALUE);
-        lightBoxContainer.maxWidth(Double.MAX_VALUE);
-        lightBoxContainer.setAlignment(Pos.CENTER);
+        Text sortTxt = new Text("SORT");
+        sortTxt.setStyle("-fx-font-size: 17px; -fx-font-weight: bold;");
+        sortTxt.setFill(Color.web("#FFA85B"));
 
-        VBox stockLightBox = new VBox(15);
-        stockLightBox.setMaxWidth(800);
-        stockLightBox.maxHeight(500);
-        stockLightBox.minHeight(400);
-        stockLightBox.setSpacing(40);
-        Button closeBtn = new Button("Close");
+        ComboBox<String> quantitySort = new ComboBox<>(
+                FXCollections.observableArrayList(
+                        Arrays.asList(
+                                "Ascending", "Descending")
+                )
+        );
+        quantitySort.setPromptText("Quantity");
 
-        stockLightBox.setStyle("-fx-background-color: lightGray; -fx-border-width :2px; -fx-border-color: black; -fx-padding: 20");
-        stockLightBox.setAlignment(Pos.CENTER);
-        stockLightBox.getChildren().addAll(closeBtn);
-        stockLightBox.setVisible(false);
-        lightBoxContainer.getChildren().addAll(stockLightBox);
+        ComboBox<String> nameSort = new ComboBox<>(
+                FXCollections.observableArrayList(
+                        Arrays.asList(
+                                "A → Z", "Z → A"
+                        )
+                )
+        );
+        nameSort.setPromptText("Name");
 
-        addStock.setOnAction(e -> {
-            stockLightBox.setVisible(true);
-        });
-        closeBtn.setOnAction(e -> {
-            stockLightBox.setVisible(false);
-        });
+        ComboBox<String> dateSort = new ComboBox<>(
+                FXCollections.observableArrayList(
+                        Arrays.asList(
+                                "Newest First", "Oldest First"
+                        )
+                )
+        );
+        dateSort.setPromptText("Date");
 
-        Rectangle overlay = new Rectangle(400, 300, Color.rgb(0, 0, 0, 0.5));
-        overlay.setArcWidth(20);
-        overlay.setArcHeight(20);
+        ComboBox<String> priceSort = new ComboBox<>(
+                FXCollections.observableArrayList(
+                        Arrays.asList(
+                                "Low → High", "High → Low"
+                        )
+                )
+        );
+        priceSort.setPromptText("Price");
 
-        headerContainer.getChildren().addAll(searchContainer, filterTxt, category, brand, availability);
-        navbar.getChildren().addAll(heading, headerContainer, addStock);
+        HBox sortFilterSEc = new HBox();
+        sortFilterSEc.setAlignment(Pos.TOP_CENTER);
+        sortFilterSEc.setMaxWidth(Double.MAX_VALUE);
+        sortFilterSEc.getChildren().addAll(filterContainer, sortContainer);
+        sortFilterSEc.setSpacing(20);
+        sortFilterSEc.setPadding(new Insets(20, 0, 0, 0));
+
+        filterContainer.getChildren().addAll(filterTxt, category, brand, availability);
+        sortContainer.getChildren().addAll(sortTxt, quantitySort, nameSort, dateSort, priceSort);
+
+        headerContainer.getChildren().addAll(searchContainer);
+        navbar.getChildren().addAll(heading, sortFilterSEc, headerContainer);
         
-        mainLayout.getChildren().addAll(navbar, lightBoxContainer);
+        mainLayout.getChildren().addAll(navbar);
     }
-
     public VBox getLayout() {
         return mainLayout;
     }

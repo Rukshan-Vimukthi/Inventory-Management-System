@@ -54,7 +54,6 @@ public class InventoryManagementApplicationController {
 
         // The Stock Section
         Stock stockView = new Stock();
-
         VBox stockViewContainer = stockView.getLayout();
         stocksTab.setContent(stockViewContainer);
 

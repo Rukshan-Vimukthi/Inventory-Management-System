@@ -1,6 +1,8 @@
 package com.example.inventorymanagementsystem.db;
 
 import com.example.inventorymanagementsystem.models.*;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 import javax.xml.transform.Result;
 import java.sql.*;
@@ -22,7 +24,7 @@ public class Connection {
 
     public Connection(){
         try {
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/sandyafashioncorner", "root", "root@techlix2002");
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/sandyafashioncorner", "root", "Sandun@2008.sd");
         }catch(SQLException e){
             e.printStackTrace();
         }
@@ -121,7 +123,7 @@ public class Connection {
             ps.setInt(2, customer_id);
             ps.setInt(3, amount);
             ps.setDouble(4, price);
-            ps.setString(4, date);
+            ps.setString(5, date);
 
             int rowsInserted = ps.executeUpdate();
             return rowsInserted > 0;
@@ -152,8 +154,8 @@ public class Connection {
             while (resultSet.next()){
                 int itemID = resultSet.getInt("item.id");
                 String name = resultSet.getString("item.name");
-                Double price = resultSet.getDouble("item.price");
-                Double sellingPrice = resultSet.getDouble("item.selling_price");
+                Double price = resultSet.getDouble("item_has_size.cost");
+                Double sellingPrice = resultSet.getDouble("item_has_size.selling_price");
                 int stockID = resultSet.getInt("stock.id");
                 String stockDate = resultSet.getString("stock.date");
                 String stockName = resultSet.getString("stock.name");
@@ -341,6 +343,36 @@ public class Connection {
             e.printStackTrace();
         }
     }
+
+    public ObservableList<CheckoutItem> getCheckoutItems() {
+        ObservableList<CheckoutItem> itemList = FXCollections.observableArrayList();
+
+        try {
+            PreparedStatement stmt = connection.prepareStatement(
+                    "SELECT id, customer_id, item_has_size_id, amount, price, date, item_status_id FROM customer_has_item_has_size"
+            );
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                int id = rs.getInt("id");
+                int customerId = rs.getInt("customer_id");
+                int itemHasSizeId = rs.getInt("item_has_size_id");
+                int amount = rs.getInt("amount");
+                int price = rs.getInt("price");
+                String date = rs.getString("date");
+                int itemStatusId = rs.getInt("item_status_id");
+
+                CheckoutItem item = new CheckoutItem(id, customerId, itemHasSizeId, amount, price, date, itemStatusId);
+                itemList.add(item);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return itemList;
+    }
+
 
     /**
      * Get user roles from the database
