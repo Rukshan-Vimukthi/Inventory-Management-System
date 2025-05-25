@@ -117,8 +117,8 @@ public class ItemDetail implements DataModel {
         return itemColor;
     }
 
-    public double getPrice() {
-        return priceProperty().get(); // Correctly retrieves the price value
+    public int getPrice() {
+        return (int) priceProperty().get(); // Correctly retrieves the price value
     }
     public int getId() {
         return id.get();

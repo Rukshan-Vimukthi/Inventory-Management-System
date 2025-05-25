@@ -12,6 +12,7 @@ public class Stock implements DataModel {
     private IntegerProperty id;
     private StringProperty date;
     private StringProperty name;
+
     public Stock(int id, String date, String name){
         idProperty().setValue(id);
         dateProperty().setValue(date);

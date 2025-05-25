@@ -2,22 +2,15 @@ package com.example.inventorymanagementsystem;
 
 import com.example.inventorymanagementsystem.view.Checkout;
 import com.example.inventorymanagementsystem.view.Inventory;
-import com.example.inventorymanagementsystem.view.Stock;
+import com.example.inventorymanagementsystem.view.Analytics;
 
 import com.example.inventorymanagementsystem.view.Users;
 import com.example.inventorymanagementsystem.view.components.TabBuilder;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.control.Button;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
-import javafx.scene.layout.Border;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
-
-import java.io.IOException;
 
 public class InventoryManagementApplicationController {
     @FXML
@@ -38,7 +31,7 @@ public class InventoryManagementApplicationController {
 
         // tabs in the main UI
         Tab checkoutTab = TabBuilder.buildTab("Checkout");
-        Tab stocksTab = TabBuilder.buildTab("Stock");
+        Tab stocksTab = TabBuilder.buildTab("Analytics");
         Tab inventory = TabBuilder.buildTab("Inventory");
         Tab users = TabBuilder.buildTab("Users");
 
@@ -53,8 +46,7 @@ public class InventoryManagementApplicationController {
         checkoutTab.setContent(checkoutContainer);
 
         // The Stock Section
-        Stock stockView = new Stock();
-
+        Analytics stockView = new Analytics();
         VBox stockViewContainer = stockView.getLayout();
         stocksTab.setContent(stockViewContainer);
 
