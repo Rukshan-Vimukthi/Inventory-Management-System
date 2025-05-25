@@ -7,4 +7,6 @@ public interface TableContainerInterface<T> {
     void refresh();
     void update(T itemDetail);
     void delete(T itemDetail);
+
+    void onSelectItem(T item);
 }

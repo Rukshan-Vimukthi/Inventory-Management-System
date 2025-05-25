@@ -2,6 +2,7 @@ package com.example.inventorymanagementsystem.view.components;
 
 import com.example.inventorymanagementsystem.models.ItemDetail;
 import com.example.inventorymanagementsystem.services.interfaces.TableContainerInterface;
+import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -90,6 +91,8 @@ public class TableContainer<T> extends VBox {
         update.setOnAction(event -> {
             tableContainerInterface.update(tableView.getSelectionModel().getSelectedItem());
         });
+        update.setDisable(true);
+        delete.setDisable(true);
 
         HBox.setHgrow(addItemButton, Priority.ALWAYS);
         HBox.setHgrow(refresh, Priority.ALWAYS);
@@ -105,6 +108,14 @@ public class TableContainer<T> extends VBox {
         toolBar.setPadding(new Insets(2.5D, 0.0D, 2.5D, 0.0D));
 
         tableView = new TableView<>();
+        tableView.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<T>() {
+            @Override
+            public void changed(ObservableValue<? extends T> observable, T oldValue, T newValue) {
+                update.setDisable(false);
+                delete.setDisable(false);
+                tableContainerInterface.onSelectItem(newValue);
+            }
+        });
 
 //        tableView.getColumns().addAll(tableColumns);
         this.getChildren().addAll(toolBarContainer, tableView);
@@ -117,10 +128,10 @@ public class TableContainer<T> extends VBox {
     }
 
     public void addItems(ObservableList<T> data){
-        tableView.getItems().addAll(data);
+        tableView.setItems(data);
     }
 
-    public void setOnActionPerformed(TableContainerInterface item){
+    public void setOnActionPerformed(TableContainerInterface<T> item){
         this.tableContainerInterface = item;
     }
 

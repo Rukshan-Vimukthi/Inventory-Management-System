@@ -19,12 +19,12 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
 public class Inventory extends HBox {
+    ItemPreview itemPreview;
     public Inventory(){
         super();
 
         // this contains the form to search item (filter) and the table of items and item preview component
         VBox itemTableContainer = new VBox();
-
 
         TableContainer<ItemDetail> itemsTable = new TableContainer<>(true, "Item Name", null);
         itemsTable.addColumn("id", Integer.class);
@@ -51,7 +51,7 @@ public class Inventory extends HBox {
         itemsTable.addFilter(stockFilter);
         itemsTable.addFilter(costFilter);
         itemsTable.addFilter(priceFilter);
-        itemsTable.setOnActionPerformed(new TableContainerInterface() {
+        itemsTable.setOnActionPerformed(new TableContainerInterface<ItemDetail>() {
             @Override
             public void addItem() {
                 AddNewItem addNewItem = new AddNewItem(null);
@@ -64,19 +64,27 @@ public class Inventory extends HBox {
             }
 
             @Override
-            public void update(Object itemDetail) {
+            public void update(ItemDetail itemDetail) {
 
             }
 
             @Override
-            public void delete(Object itemDetail) {
+            public void delete(ItemDetail itemDetail) {
 
+            }
+
+            @Override
+            public void onSelectItem(ItemDetail item) {
+//                System.out.println(item.getName());
+                if (itemPreview != null){
+                    itemPreview.update(item);
+                }
             }
 
         });
 
 
-        ItemPreview itemPreview = new ItemPreview(null);
+        itemPreview = new ItemPreview();
 
         itemTableContainer.getChildren().addAll(itemsTable, itemPreview);
         HBox.setHgrow(itemTableContainer, Priority.ALWAYS);
@@ -115,6 +123,11 @@ public class Inventory extends HBox {
                 Connection.getInstance().deleteStock(item.getId());
             }
 
+            @Override
+            public void onSelectItem(Stock item) {
+
+            }
+
         });
 
         TableContainer<Color> colorTableContainer = new TableContainer<>(false, null, "Enter color code");
@@ -144,6 +157,10 @@ public class Inventory extends HBox {
                 Connection.getInstance().deleteColor(item.getId());
             }
 
+            @Override
+            public void onSelectItem(Color item) {
+
+            }
         });
 
         TableContainer<Size> itemSizeTableContainer = new TableContainer<>(false, null, "Enter Size");
@@ -171,6 +188,11 @@ public class Inventory extends HBox {
             @Override
             public void delete(Size item) {
                 Connection.getInstance().deleteSize(item.getId());
+            }
+
+            @Override
+            public void onSelectItem(Size item) {
+
             }
 
         });

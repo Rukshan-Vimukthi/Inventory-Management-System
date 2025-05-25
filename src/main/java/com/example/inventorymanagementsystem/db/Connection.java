@@ -1,6 +1,7 @@
 package com.example.inventorymanagementsystem.db;
 
 import com.example.inventorymanagementsystem.models.*;
+import com.example.inventorymanagementsystem.state.Data;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
@@ -82,6 +83,7 @@ public class Connection {
             generatedKeys.next();
             int id = generatedKeys.getInt(1);
             System.out.println("New Color ID: " + id);
+            Data.getInstance().refreshColors();
             return success;
         }catch(SQLException sqlException){
             sqlException.printStackTrace();
@@ -123,7 +125,9 @@ public class Connection {
     public boolean deleteColor(int id){
         try{
             statement = connection.createStatement();
-            return statement.execute("DELETE FROM `color` WHERE `id` = %d".formatted(id));
+            boolean isDeleted = statement.execute("DELETE FROM `color` WHERE `id` = %d".formatted(id));
+            Data.getInstance().refreshColors();
+            return isDeleted;
         }catch(SQLException e){
             e.printStackTrace();
         }
@@ -275,7 +279,8 @@ public class Connection {
     public boolean addNewSize(String size){
         try {
             statement = connection.createStatement();
-            return statement.execute("INSERT INTO `size` (`size`) VALUES ('%s')".formatted(size));
+            boolean isAdded = statement.execute("INSERT INTO `size` (`size`) VALUES ('%s')".formatted(size));
+            Data.getInstance().refreshSize();
         }catch(SQLException e){
             e.printStackTrace();
         }
@@ -306,7 +311,9 @@ public class Connection {
     public boolean deleteSize(int id){
         try{
             statement = connection.createStatement();
-            return statement.execute("DELETE FROM `size` WHERE `id` = %d".formatted(id));
+            boolean isDeleted = statement.execute("DELETE FROM `size` WHERE `id` = %d".formatted(id));
+            Data.getInstance().refreshSize();
+            return isDeleted;
         }catch(SQLException e){
             e.printStackTrace();
         }
@@ -343,9 +350,11 @@ public class Connection {
     public boolean addNewUser(String firstName, String lastName, String email, int roleID){
         try{
             statement = connection.createStatement();
-            return statement.execute("INSERT INTO `user` " +
+            boolean isUserAdded = statement.execute("INSERT INTO `user` " +
                     "(`firstName`, `lastName`, `email`, `role_id`) " +
                     "VALUES('%s', '%s', '%s')".formatted(firstName, lastName, email, roleID));
+//            Data.getInstance().refreshUsers();
+            return isUserAdded;
         }catch(SQLException exception){
             exception.printStackTrace();
         }
@@ -497,7 +506,9 @@ public class Connection {
     public boolean addNewStock(String date, String name){
         try{
             statement = connection.createStatement();
-            return statement.execute("INSERT INTO `stock` (`date`, `name`) VALUES('%s', '%s)".formatted(date, name));
+            boolean isStockAdded = statement.execute("INSERT INTO `stock` (`date`, `name`) VALUES('%s', '%s')".formatted(date, name));
+            Data.getInstance().refreshStock();
+            return isStockAdded;
         }catch(SQLException e){
             e.printStackTrace();
         }
@@ -531,7 +542,9 @@ public class Connection {
     public boolean deleteStock(int id){
         try{
             statement = connection.createStatement();
-            return statement.execute("DELETE FROM `stock` WHERE `id` = %d".formatted(id));
+            boolean isDeleted = statement.execute("DELETE FROM `stock` WHERE `id` = %d".formatted(id));
+            Data.getInstance().refreshStock();
+            return isDeleted;
         }catch(SQLException e){
             e.printStackTrace();
         }
