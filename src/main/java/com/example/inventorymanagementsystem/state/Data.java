@@ -1,10 +1,7 @@
 package com.example.inventorymanagementsystem.state;
 
 import com.example.inventorymanagementsystem.db.Connection;
-import com.example.inventorymanagementsystem.models.Color;
-import com.example.inventorymanagementsystem.models.ItemDetail;
-import com.example.inventorymanagementsystem.models.Size;
-import com.example.inventorymanagementsystem.models.Stock;
+import com.example.inventorymanagementsystem.models.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
@@ -15,6 +12,10 @@ public class Data {
     private ObservableList<Size> size;
     private ObservableList<ItemDetail> itemDetails;
 
+    private Connection connection;
+
+    private UserAnalytics userAnalytics;
+
     /**
      * initializes the Data object instance when the class get loaded
      */
@@ -24,11 +25,33 @@ public class Data {
     }
 
     private Data(){
-        Connection connection = Connection.getInstance();
+        connection = Connection.getInstance();
         stocks = FXCollections.observableArrayList(connection.getStocks());
         colors = FXCollections.observableArrayList(connection.getColors());
         size = FXCollections.observableArrayList(connection.getSizes());
         itemDetails = FXCollections.observableArrayList(connection.getItemDetails());
+
+        userAnalytics = connection.getUserAnalyticsResult();
+    }
+
+    public void refreshStock(){
+        stocks.clear();
+        stocks.addAll(connection.getStocks());
+    }
+
+    public void refreshColors(){
+        colors.clear();
+        colors.addAll(connection.getColors());
+    }
+
+    public void refreshSize(){
+        size.clear();
+        size.addAll(connection.getSizes());
+    }
+
+    public void refreshItemDetails(){
+        itemDetails.clear();
+        itemDetails.addAll(connection.getItemDetails());
     }
 
     public static Data getInstance(){
@@ -52,5 +75,9 @@ public class Data {
 
     public ObservableList<ItemDetail> getItemDetails() {
         return itemDetails;
+    }
+
+    public UserAnalytics getUserAnalytics(){
+        return userAnalytics;
     }
 }
