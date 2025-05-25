@@ -56,7 +56,7 @@ public class Checkout {
     private double cumulativeReceivedFund = 0;
 
     public Checkout () {
-        dbConnection = Connection.getInstance(); // Get the database instance
+        dbConnection = Connection.getInstance();
         // The main container
         mainLayout = new BorderPane();
         mainLayout.setPadding(new Insets(10, 20, 0, 10));
