@@ -33,22 +33,26 @@ public class AddNewStock extends Dialog<Boolean> {
         Label dateLabel = new Label("Date");
         picker = new DatePicker();
 
-        if(stock != null){
-            nameField.setText(stock.getName());
-            picker.setValue(LocalDate.parse(stock.getDate().split(" ")[0]));
-            this.setTitle("Update the stock");
-        }else{
-            this.setTitle("Add a new stock");
-        }
-
         HBox footer = new HBox();
         footer.setPadding(new Insets(10.0D, 0.0D, 0.0D, 0.0D));
 
         Button addButton = new Button("ADD");
+        if(stock != null){
+            nameField.setText(stock.getName());
+            picker.setValue(LocalDate.parse(stock.getDate().split(" ")[0]));
+            addButton.setText("UPDATE");
+            this.setTitle("Update the stock");
+        }else{
+            this.setTitle("Add a new stock");
+        }
         addButton.setOnAction(event -> {
             String name = nameField.getText();
             String date = picker.getValue().toString();
-            Connection.getInstance().addNewStock(date, name);
+            if (stock != null){
+                Connection.getInstance().updateStock(stock.getId(), date, name);
+            }else {
+                Connection.getInstance().addNewStock(date, name);
+            }
             AddNewStock.this.setResult(true);
         });
 

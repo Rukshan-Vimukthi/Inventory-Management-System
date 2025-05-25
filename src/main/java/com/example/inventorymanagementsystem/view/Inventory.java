@@ -13,6 +13,7 @@ import com.example.inventorymanagementsystem.view.dialogs.AddNewColor;
 import com.example.inventorymanagementsystem.view.dialogs.AddNewItem;
 import com.example.inventorymanagementsystem.view.dialogs.AddNewSize;
 import com.example.inventorymanagementsystem.view.dialogs.AddNewStock;
+import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -25,6 +26,8 @@ public class Inventory extends HBox {
 
         // this contains the form to search item (filter) and the table of items and item preview component
         VBox itemTableContainer = new VBox();
+        itemTableContainer.setSpacing(10.0D);
+        itemTableContainer.setPadding(new Insets(10.0D));
 
         TableContainer<ItemDetail> itemsTable = new TableContainer<>(true, "Item Name", null);
         itemsTable.addColumn("id", Integer.class);
@@ -51,7 +54,9 @@ public class Inventory extends HBox {
         itemsTable.addFilter(stockFilter);
         itemsTable.addFilter(costFilter);
         itemsTable.addFilter(priceFilter);
+
         itemsTable.setOnActionPerformed(new TableContainerInterface<ItemDetail>() {
+
             @Override
             public void addItem() {
                 AddNewItem addNewItem = new AddNewItem(null);
@@ -65,7 +70,8 @@ public class Inventory extends HBox {
 
             @Override
             public void update(ItemDetail itemDetail) {
-
+                AddNewItem addNewItem = new AddNewItem(itemDetail);
+                addNewItem.show();
             }
 
             @Override

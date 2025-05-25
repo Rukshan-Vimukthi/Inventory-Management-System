@@ -20,19 +20,25 @@ public class AddNewColor extends Dialog<Boolean> {
         Label colorCodeLabel = new Label("Color Code");
         codeField = new TextField();
 
+        HBox footer = new HBox();
+        footer.setPadding(new Insets(10.0D, 0.0D, 0.0D, 0.0D));
+        Button addButton = new Button("ADD");
+
         if(color != null){
             codeField.setText(color.getColor());
+            addButton.setText("UPDATE");
             this.setTitle("Update the color");
         }else{
             this.setTitle("Add a new color");
         }
 
-        HBox footer = new HBox();
-        footer.setPadding(new Insets(10.0D, 0.0D, 0.0D, 0.0D));
-        Button addButton = new Button("ADD");
         addButton.setOnAction(event -> {
             String colorCode = codeField.getText();
-            Connection.getInstance().addNewColor(colorCode);
+            if (color != null){
+                Connection.getInstance().updateNewColor(color.getId(), colorCode);
+            }else {
+                Connection.getInstance().addNewColor(colorCode);
+            }
             AddNewColor.this.setResult(true);
         });
 

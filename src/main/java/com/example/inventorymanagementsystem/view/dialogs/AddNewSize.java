@@ -17,19 +17,23 @@ public class AddNewSize extends Dialog<Boolean> {
         Label sizeLabel = new Label("Size");
         sizeField = new TextField();
 
+        HBox footer = new HBox();
+        footer.setPadding(new Insets(10.0D, 0.0D, 0.0D, 0.0D));
+        Button addButton = new Button("ADD");
         if(size != null){
             sizeField.setText(size.getSize());
+            addButton.setText("UPDATE");
             this.setTitle("Update the size");
         }else{
             this.setTitle("Add a new size");
         }
-
-        HBox footer = new HBox();
-        footer.setPadding(new Insets(10.0D, 0.0D, 0.0D, 0.0D));
-        Button addButton = new Button("ADD");
         addButton.setOnAction(event -> {
             String sizeFieldText = sizeField.getText();
-            Connection.getInstance().addNewSize(sizeFieldText);
+            if (size != null){
+                Connection.getInstance().updateSize(size.getId(), sizeFieldText);
+            }else {
+                Connection.getInstance().addNewSize(sizeFieldText);
+            }
             AddNewSize.this.setResult(true);
         });
 

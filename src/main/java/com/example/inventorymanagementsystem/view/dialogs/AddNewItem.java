@@ -29,6 +29,12 @@ public class AddNewItem extends Dialog<Boolean> {
         dialogPane.setMaxHeight(280.0D);
         dialogPane.setMinHeight(280.0D);
 
+        if(itemDetail == null){
+            this.setTitle("Add a new item");
+        }else{
+            this.setTitle("Update item");
+        }
+
         VBox mainContainer = new VBox();
 
         FlowPane flowPane = new FlowPane();
@@ -48,13 +54,13 @@ public class AddNewItem extends Dialog<Boolean> {
                     "Size",
                     ComboBox.class,
                     Data.getInstance().getSize(),
-                    null);
+                    Connection.getInstance().getSize(itemDetail.getSizeID()));
 
             itemStock = new FormField<>(
                     "Stock",
                     ComboBox.class,
                     Data.getInstance().getStocks(),
-                    null);
+                    Connection.getInstance().getStock(itemDetail.getSizeID()));
         }
 
         flowPane.getChildren().addAll(

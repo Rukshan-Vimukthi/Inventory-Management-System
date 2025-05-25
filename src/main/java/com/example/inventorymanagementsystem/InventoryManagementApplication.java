@@ -45,7 +45,6 @@ public class InventoryManagementApplication extends Application {
         stage.setScene(scene);
         stage.show();
 
-
 //        SignIn signIn = new SignIn(stage);
 //        signIn.show();
     }

@@ -26,7 +26,7 @@ public class Connection {
 
     public Connection(){
         try {
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/sandyafashioncorner", "root", "Sandun@2008.sd");
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/sandyafashioncorner", "root", "root@techlix2002");
         }catch(SQLException e){
             e.printStackTrace();
         }
@@ -43,10 +43,34 @@ public class Connection {
         return connectionObject;
     }
 
+    public ItemHasSize getItemHasSize(ItemDetail itemDetail){
+        ItemHasSize itemHasSize = null;
+        try{
+            statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery(
+                    "SELECT *  FROM `item_has_size` " +
+                            "WHERE `item_id` = %d AND `size_id` = %d".formatted(itemDetail.getId(), itemDetail.getSizeID()));
+            while (resultSet.next()){
+                int id = resultSet.getInt("id");
+                int itemID = resultSet.getInt("item_id");
+                int stockID = resultSet.getInt("item_stock_id");
+                int sizeID = resultSet.getInt("size_id");
+                int orderedQty = resultSet.getInt("ordered_qty");
+                int remainingQty = resultSet.getInt("remaining_qty");
+                double cost = resultSet.getDouble("cost");
+                double sellingPrice = resultSet.getDouble("price");
+                itemHasSize = new ItemHasSize(id, itemID, stockID, sizeID, orderedQty, cost, sellingPrice,  remainingQty);
+            }
+        }catch(SQLException exception){
+            exception.printStackTrace();
+        }
+        return itemHasSize;
+    }
+
     /**
      * Get the items in the item_has_size table
      * @param
-//     * @return ItemHasSize object that contains all the information for the specified item
+     * @return ItemHasSize object that contains all the information for the specified item
      */
     public ArrayList<ItemHasSize> getAllItemHasSizes() {
         ArrayList<ItemHasSize> items = new ArrayList<>();
@@ -98,6 +122,15 @@ public class Connection {
      * @return boolean - true if update is successful. false otherwise
      */
     public boolean updateNewColor(int id, String colorCode){
+        try{
+            statement = connection.createStatement();
+            int result = statement.executeUpdate("UPDATE `color` SET `color` = '%s' WHERE `id` = %d".formatted(colorCode, id));
+            System.out.println(result);
+            Data.getInstance().refreshColors();
+            return result > 0;
+        }catch(SQLException exception){
+            exception.printStackTrace();
+        }
         return false;
     }
 
@@ -308,6 +341,35 @@ public class Connection {
         return rows;
     }
 
+    public Size getSize(int sizeID){
+        Size size = null;
+        try {
+            statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM `size` WHERE `id` = %d".formatted(sizeID));
+            while (resultSet.next()){
+                int id = resultSet.getInt(1);
+                String sizeText = resultSet.getString(2);
+                size = new Size(id, sizeText);
+            }
+        } catch (SQLException sqlException) {
+            sqlException.printStackTrace();
+        }
+        return size;
+    }
+
+    public boolean updateSize(int id, String newSize){
+        try{
+            statement = connection.createStatement();
+            int result = statement.executeUpdate("UPDATE `size` SET `size` = '%s' WHERE `id` = %d".formatted(newSize, id));
+            System.out.println(result);
+            Data.getInstance().refreshSize();
+            return result > 0;
+        }catch(SQLException exception){
+            exception.printStackTrace();
+        }
+        return false;
+    }
+
     public boolean deleteSize(int id){
         try{
             statement = connection.createStatement();
@@ -513,6 +575,37 @@ public class Connection {
             e.printStackTrace();
         }
         return false;
+    }
+
+    public boolean updateStock(int id, String date, String newName){
+        try{
+            statement = connection.createStatement();
+            int result = statement.executeUpdate("UPDATE `stock` SET `name` = '%s', `date` = '%s' WHERE `id` = %d".formatted(newName, date, id));
+            System.out.println(result);
+            Data.getInstance().refreshStock();
+            return result > 0;
+        }catch(SQLException exception){
+            exception.printStackTrace();
+        }
+        return false;
+    }
+
+    public Stock getStock(int stockId){
+        Stock stock = null;
+        try {
+            statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM `stock` WHERE `id` = %d".formatted(stockId));
+            while (resultSet.next()){
+                int id = resultSet.getInt(1);
+                String date = resultSet.getString(2);
+                String name = resultSet.getString(3);
+                System.out.println(id + " " + date + " " + name);
+                stock = new Stock(id, date, name);
+            }
+        }catch(SQLException sqlException){
+            sqlException.printStackTrace();
+        }
+        return stock;
     }
 
     /**
