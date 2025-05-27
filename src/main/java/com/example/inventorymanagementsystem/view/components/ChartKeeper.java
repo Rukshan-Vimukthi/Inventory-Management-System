@@ -14,6 +14,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -61,6 +62,7 @@ public class ChartKeeper {
         }
 
         columnChart.getData().add(itemHasSizeStock);
+        columnChart.setStyle("-fx-font-size: 17px;");
 
         return columnChart;
     }
@@ -103,7 +105,7 @@ public class ChartKeeper {
     }
 
     // Shows the sales
-    public static LineChart<String, Number> getSalesChart(Connection connection) {
+    public static LineChart<String, Number> getSalesChart(Connection connection, String filter) {
         CategoryAxis salesXAxis = new CategoryAxis();
         NumberAxis salesYAxis = new NumberAxis();
         salesXAxis.setLabel("Date");
@@ -127,6 +129,11 @@ public class ChartKeeper {
             while (rs.next()) {
                 int itemId = rs.getInt("item_has_size_id");
                 String date = rs.getString("date");
+
+                if (date == null || date.isBlank()) {
+                    System.err.println("Warning: No date filter applied, skipping or returning empty data.");
+
+                }
 
                 String itemName = connection.getItemNameById(itemId);
                 if (!itemNameToIndex.containsKey(itemName)) {
@@ -152,7 +159,6 @@ public class ChartKeeper {
         }
 
         salesYAxis.setTickLabelFormatter(new StringConverter<Number>() {
-
             public String toString(Number object) {
                 return indexToName.getOrDefault(object.intValue(), "Unknown");
             }

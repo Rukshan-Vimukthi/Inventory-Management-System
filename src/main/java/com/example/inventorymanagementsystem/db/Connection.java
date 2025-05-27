@@ -10,9 +10,8 @@ import javax.xml.transform.Result;
 import java.io.IOException;
 import java.sql.*;
 import java.time.LocalDate;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.Date;
-import java.util.List;
 
 /**
  * This is a singleton class. Use to do insert, update, delete, retrieve items from the database. to use methods to do those tasks with the
@@ -72,14 +71,16 @@ public class Connection {
         return itemHasSize;
     }
 
-    public int getOrderedQuantityTotal() {
-        int orderedQuantity = 0;
+    public int getTotalSoldQuantity() {
+        int soldQuantity = 0;
         try {
             statement = connection.createStatement();
-            ResultSet query = statement.executeQuery("SELECT SUM(ordered_qty) AS total FROM item_has_size");
+            ResultSet query = statement.executeQuery(
+                    "SELECT SUM(ordered_qty - remaining_qty) AS total_sold FROM item_has_size"
+            );
 
             if (query.next()) {
-                orderedQuantity = query.getInt("total");
+                soldQuantity = query.getInt("total_sold");
             }
             query.close();
             statement.close();
@@ -87,7 +88,24 @@ public class Connection {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return orderedQuantity;
+        return soldQuantity;
+    }
+
+    public int getOrderedQuantityValue() {
+        int orderedItemsValue = 0;
+        try {
+            statement = connection.createStatement();
+            ResultSet query = statement.executeQuery("SELECT SUM(price) AS totalPrice FROM item_has_size");
+
+            if (query.next()) {
+                orderedItemsValue = query.getInt("totalPrice");
+            }
+            query.close();
+            statement.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return orderedItemsValue;
     }
 
     public int getTotalProducts() {
@@ -145,37 +163,51 @@ public class Connection {
         return totalRemainingProducts;
     }
 
-    public List<ItemHasSize> getTopThreeOrderedItems() {
-        List<ItemHasSize> topItems = new ArrayList<>();
+    public static int getLowStockItemCount(Connection connection) {
+        List<ItemHasSize> allItems = connection.getAllItemHasSizes();
+        int count = 0;
 
-        try {
-            statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery(
-                    "SELECT ihs.*, i.name " +
-                            "FROM item_has_size ihs " +
-                            "JOIN item i ON ihs.item_id = i.id " +
-                            "ORDER BY ihs.ordered_qty DESC " +
-                            "LIMIT 3;"
-            );
-
-            while (resultSet.next()) {
-                int id = resultSet.getInt("id");
-                int itemID = resultSet.getInt("item_id");
-                int stockID = resultSet.getInt("item_stock_id");
-                int sizeID = resultSet.getInt("size_id");
-                int orderedQty = resultSet.getInt("ordered_qty");
-                int remainingQty = resultSet.getInt("remaining_qty");
-                double cost = resultSet.getDouble("cost");
-                double price = resultSet.getDouble("price");
-
-                ItemHasSize item = new ItemHasSize(id, itemID, stockID, sizeID, orderedQty, cost, price, remainingQty);
-                topItems.add(item);
+        for (ItemHasSize item : allItems) {
+            if (item.getRemainingQuantity() < 20) {
+                count++;
             }
+        }
+
+        return count;
+    }
+
+    public Map<String, List<SoldProducts>> getTopAndBottomSellingProducts() {
+        Map<String, List<SoldProducts>> soldResult = new HashMap<>();
+        List<SoldProducts> topSelling = new ArrayList<>();
+        List<SoldProducts> bottomSelling = new ArrayList<>();
+
+        String topQuery =  "SELECT item_id, SUM(ordered_qty - remaining_qty) AS total_sold " +
+                "FROM item_has_size GROUP BY item_id " +
+                "ORDER BY total_sold DESC LIMIT 3";
+
+        String bottomQuery = "SELECT item_id, SUM(ordered_qty - remaining_qty) AS total_sold " +
+                "FROM item_has_size GROUP BY item_id " +
+                "ORDER BY total_sold ASC LIMIT 3";
+
+        try (Statement stmt = connection.createStatement()){
+            ResultSet rsTop = stmt.executeQuery(topQuery);
+            while (rsTop.next()) {
+                topSelling.add(new SoldProducts(rsTop.getInt("item_id"), rsTop.getInt("total_sold")));
+            }
+
+            // Bottom 3
+            ResultSet rsBottom = stmt.executeQuery(bottomQuery);
+            while (rsBottom.next()) {
+                bottomSelling.add(new SoldProducts(rsBottom.getInt("item_id"), rsBottom.getInt("total_sold")));
+            }
+
+            soldResult.put("top", topSelling);
+            soldResult.put("bottom", bottomSelling);
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return topItems;
-    }
+        return soldResult;
+    };
 
     public String getItemNameById(int itemId) {
         String name = "Unknown";
@@ -220,7 +252,6 @@ public class Connection {
         }
         return items;
     }
-
 
     public boolean addNewColor(String colorCode){
         try {
@@ -400,6 +431,44 @@ public class Connection {
             exception.printStackTrace();
         }
         return itemDetails;
+    }
+
+    // For setting the dates as filters for showing the sales
+    public ResultSet getFilteredSalesData (String filter) throws SQLException {
+        String query =  "SELECT chs.date, chs.item_has_size_id FROM customer_has_item_has_size chs WHERE ";
+
+        if (filter == null) {
+            filter = "";
+        }
+
+        switch (filter) {
+            case "Today":
+                query += "DATE(chs.date) = CURDATE()";
+                break;
+            case "Yesterday":
+                query += "DATE(chs.date) = CURDATE() - INTERVAL 1 DAY";
+                break;
+            case "Last 7 Days":
+                query += "chs.date >= CURDATE() - INTERVAL 7 DAY";
+                break;
+            case "This Month":
+                query += "MONTH(chs.date) = MONTH(CURDATE()) AND YEAR(chs.date) = YEAR(CURDATE())";
+                break;
+            case "Last Month":
+                query += "MONTH(chs.date) = MONTH(CURDATE() - INTERVAL 1 MONTH) AND YEAR(chs.date) = YEAR(CURDATE() - INTERVAL 1 MONTH)";
+                break;
+            case "This Year":
+                query += "YEAR(chs.date) = YEAR(CURDATE())";
+                break;
+            case "Last Year":
+                query += "YEAR(chs.date) = YEAR(CURDATE() - INTERVAL 1 YEAR)";
+                break;
+            default:
+                query = "SELECT chs.date, chs.item_has_size_id FROM customer_has_item_has_size chs";
+                break;
+        }
+        PreparedStatement stmt = connection.prepareStatement(query);
+        return stmt.executeQuery();
     }
 
     public void filterItems(String color, String size, Stock stock, double price, String name, double sellingPrice){
