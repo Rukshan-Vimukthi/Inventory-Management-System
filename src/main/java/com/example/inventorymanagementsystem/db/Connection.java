@@ -4,6 +4,7 @@ import com.example.inventorymanagementsystem.models.*;
 import com.example.inventorymanagementsystem.state.Data;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.scene.chart.XYChart;
 
 import javax.xml.transform.Result;
 import java.io.IOException;
@@ -26,7 +27,7 @@ public class Connection {
 
     public Connection(){
         try {
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/sandyafashioncorner", "root", "root@techlix2002");
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/sandyafashioncorner", "root", "Sandun@2008.sd");
         }catch(SQLException e){
             e.printStackTrace();
         }
@@ -41,6 +42,10 @@ public class Connection {
             connectionObject = new Connection();
         }
         return connectionObject;
+    }
+
+    public java.sql.Connection getJdbcConnection() {
+        return connection;
     }
 
     public ItemHasSize getItemHasSize(ItemDetail itemDetail){
@@ -65,6 +70,127 @@ public class Connection {
             exception.printStackTrace();
         }
         return itemHasSize;
+    }
+
+    public int getOrderedQuantityTotal() {
+        int orderedQuantity = 0;
+        try {
+            statement = connection.createStatement();
+            ResultSet query = statement.executeQuery("SELECT SUM(ordered_qty) AS total FROM item_has_size");
+
+            if (query.next()) {
+                orderedQuantity = query.getInt("total");
+            }
+            query.close();
+            statement.close();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return orderedQuantity;
+    }
+
+    public int getTotalProducts() {
+        int totalProducts = 0;
+        try {
+            statement = connection.createStatement();
+            ResultSet query = statement.executeQuery("SELECT SUM(remaining_qty) AS totalProducts FROM item_has_size");
+
+            if (query.next()) {
+                totalProducts = query.getInt("totalProducts");
+            }
+            query.close();
+            statement.close();
+
+
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+        return totalProducts;
+    }
+
+    public int getTotalProductValue() {
+        int totalProductValue = 0;
+        try {
+            statement = connection.createStatement();
+            ResultSet query = statement.executeQuery("SELECT SUM(price) AS totalPrice FROM item_has_size");
+
+            if (query.next()) {
+                totalProductValue = query.getInt("totalPrice");
+            }
+            query.close();
+            statement.close();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return totalProductValue;
+    }
+
+    public int getRemainingProductsSum() {
+        int totalRemainingProducts = 0;
+        try {
+            statement = connection.createStatement();
+            ResultSet query = statement.executeQuery("SELECT SUM(remaining_qty) AS remainingAmount FROM item_has_size");
+
+            if (query.next()) {
+                totalRemainingProducts = query.getInt("remainingAmount");
+            }
+            query.close();
+            statement.close();
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return totalRemainingProducts;
+    }
+
+    public List<ItemHasSize> getTopThreeOrderedItems() {
+        List<ItemHasSize> topItems = new ArrayList<>();
+
+        try {
+            statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery(
+                    "SELECT ihs.*, i.name " +
+                            "FROM item_has_size ihs " +
+                            "JOIN item i ON ihs.item_id = i.id " +
+                            "ORDER BY ihs.ordered_qty DESC " +
+                            "LIMIT 3;"
+            );
+
+            while (resultSet.next()) {
+                int id = resultSet.getInt("id");
+                int itemID = resultSet.getInt("item_id");
+                int stockID = resultSet.getInt("item_stock_id");
+                int sizeID = resultSet.getInt("size_id");
+                int orderedQty = resultSet.getInt("ordered_qty");
+                int remainingQty = resultSet.getInt("remaining_qty");
+                double cost = resultSet.getDouble("cost");
+                double price = resultSet.getDouble("price");
+
+                ItemHasSize item = new ItemHasSize(id, itemID, stockID, sizeID, orderedQty, cost, price, remainingQty);
+                topItems.add(item);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return topItems;
+    }
+
+    public String getItemNameById(int itemId) {
+        String name = "Unknown";
+        try {
+            Statement stmt = connection.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT name FROM item WHERE id = " + itemId);
+            if (rs.next()) {
+                name = rs.getString("name");
+            }
+            rs.close();
+            stmt.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return name;
     }
 
     /**
@@ -454,6 +580,35 @@ public class Connection {
         return null;
     }
 
+    /*
+    * Get the details of all the users and show the details
+    * */
+    public ObservableList<User> getUserDetail() {
+        ObservableList<User> userList = FXCollections.observableArrayList();
+
+        String query = "SELECT `id`, `firstName`, `lastName`, `username`, `email`, `password` FROM user";
+
+        try (PreparedStatement stmt = connection.prepareStatement(query);
+             ResultSet resultSet = stmt.executeQuery()) {
+
+            while (resultSet.next()) {
+                User user = new User(
+                        resultSet.getInt("id"),
+                        resultSet.getString("firstName"),
+                        resultSet.getString("lastName"),
+                        resultSet.getString("username"),
+                        resultSet.getString("email"),
+                        resultSet.getString("password")
+                );
+                userList.add(user);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return userList;
+    }
+
     /**
      * Add new customer
      */
@@ -478,6 +633,27 @@ public class Connection {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /*
+    * Gets the customers who has bought stuffs
+    * */
+    public int getTotalCustomers() {
+        int totalCustomers = 0;
+        try {
+            statement = connection.createStatement();
+            ResultSet query = statement.executeQuery("SELECT COUNT(*) AS totalCustomers FROM customer");
+
+            if (query.next()) {
+                totalCustomers = query.getInt("totalCustomers");
+            }
+            query.close();
+            statement.close();
+
+        } catch (SQLException e){
+            e.printStackTrace();
+        }
+        return totalCustomers;
     }
 
     public void storeSales (int customerId, int itemHasSizeId, int amount, int price, int item_status_id) {
@@ -508,7 +684,7 @@ public class Connection {
         try {
             PreparedStatement stmt = connection.prepareStatement(
                     "SELECT i.name AS item_name, s.size AS item_size, c.color AS item_color, " +
-                            "chs.amount, chs.price, chs.date " +
+                            "chs.amount, chs.price AS checkout_price, chs.date, ihs.price AS selling_price " +  // <-- FIXED
                             "FROM customer_has_item_has_size chs " +
                             "JOIN item_has_size ihs ON chs.item_has_size_id = ihs.id " +
                             "JOIN item i ON ihs.item_id = i.id " +
@@ -538,7 +714,37 @@ public class Connection {
         return itemList;
     }
 
+    public ObservableList<CheckoutItem> getCheckoutItemWithoutColor() {
+        ObservableList<CheckoutItem> itemList = FXCollections.observableArrayList();
 
+        try {
+            PreparedStatement stmt = connection.prepareStatement(
+                    "SELECT i.name AS item_name, s.size AS item_size, " +
+                            "chs.amount, chs.price AS checkout_price, chs.date, ihs.price AS selling_price " +
+                            "FROM customer_has_item_has_size chs " +
+                            "JOIN item_has_size ihs ON chs.item_has_size_id = ihs.id " +
+                            "JOIN item i ON ihs.item_id = i.id " +
+                            "JOIN size s ON ihs.size_id = s.id"
+            );
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                String name = rs.getString("item_name");
+                String size = rs.getString("item_size");
+                String color = "N/A";
+                int amount = rs.getInt("amount");
+                int price = rs.getInt("checkout_price");
+                double sellingPrice = rs.getDouble("selling_price");
+                String date = rs.getString("date");
+
+                CheckoutItem item = new CheckoutItem(name, size, color, amount, price, sellingPrice, date);
+                itemList.add(item);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();;
+        }
+        return itemList;
+    }
 
     /**
      * Get user roles from the database
@@ -561,6 +767,34 @@ public class Connection {
         return roles;
     }
 
+    /**
+     * Method for showing the sales that we have done
+     */
+
+    public XYChart.Series<String, Number> getSalesChartSeries() {
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+        series.setName("Sales");
+
+        String query = "SELECT chs.date, chs.price " +
+                "FROM customer_has_item_has_size chs";
+
+        try (PreparedStatement stmt = connection.prepareStatement(query);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                String date = rs.getString("date");
+                int price = rs.getInt("price");
+
+                // Add data point to the chart series
+                series.getData().add(new XYChart.Data<>(date, price));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return series;
+    }
 
     /**
      * Add new stock

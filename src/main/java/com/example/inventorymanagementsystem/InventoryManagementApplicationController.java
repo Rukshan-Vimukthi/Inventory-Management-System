@@ -7,6 +7,7 @@ import com.example.inventorymanagementsystem.view.Analytics;
 import com.example.inventorymanagementsystem.view.Users;
 import com.example.inventorymanagementsystem.view.components.TabBuilder;
 import javafx.fxml.FXML;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.BorderPane;
@@ -48,8 +49,12 @@ public class InventoryManagementApplicationController {
         // The Stock Section
         Analytics stockView = new Analytics();
         VBox stockViewContainer = stockView.getLayout();
-        stocksTab.setContent(stockViewContainer);
 
+        ScrollPane scrollableAnalytics = new ScrollPane(stockViewContainer);
+        scrollableAnalytics.setFitToWidth(true); // Optional: makes VBox match width
+        scrollableAnalytics.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+
+        stocksTab.setContent(scrollableAnalytics);
 
         Users userTabView = new Users();
         users.setContent(userTabView);
