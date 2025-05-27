@@ -303,6 +303,9 @@ public class Checkout {
                 totalDiscount.setText("$" + cumulativeTotalDiscount);
                 grandTotal.setText("$" + cumulativeGrandTotal);
 
+                amount.clear();
+                discount.clear();
+
             } catch (NumberFormatException ex) {
                 System.out.println("Invalid quantity entered.");
             }
