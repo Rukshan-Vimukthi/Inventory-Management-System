@@ -37,8 +37,8 @@ public class InventoryManagementApplication extends Application {
 
     @Override
     public void start(Stage stage) throws IOException {
-        FXMLLoader fxmlLoader = new FXMLLoader(InventoryManagementApplication.class.getResource("ApplicationUI.fxml"));
 
+        FXMLLoader fxmlLoader = new FXMLLoader(InventoryManagementApplication.class.getResource("ApplicationUI.fxml"));
         VBox rootContainer = new VBox();
         HBox titleBar = new HBox();
         titleBar.setPadding(new Insets(5.0D));
@@ -75,8 +75,14 @@ public class InventoryManagementApplication extends Application {
 
         Button minimize = new Button();
         minimize.setGraphic(minimizeIcon);
+        minimize.setOnAction(e -> {
+            stage.setIconified(true);
+        });
         Button restore = new Button();
         restore.setGraphic(restoreIcon);
+        restore.setOnAction(e -> {
+            stage.setMaximized(!stage.isMaximized());
+        });
         Button close = new Button();
         close.setGraphic(closeIcon);
         close.setOnAction(actionEvent -> {
@@ -94,7 +100,6 @@ public class InventoryManagementApplication extends Application {
         TabPane tabPane = new TabPane();
         tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
         tabPane.setSide(Side.LEFT);
-
         tabPane.getStylesheets().add(
                 String.valueOf(InventoryManagementApplication.class.getResource("css/style.css"))
         );
@@ -103,7 +108,6 @@ public class InventoryManagementApplication extends Application {
         tabPane.setRotateGraphic(true);
         tabPane.setTabMinWidth(30.0D);
         tabPane.setTabMaxWidth(30.0D);
-
         tabPane.setTabMinHeight(200.0D);
         tabPane.setTabMaxHeight(200.0D);
 
@@ -126,7 +130,7 @@ public class InventoryManagementApplication extends Application {
         InventoryManagementApplicationController.NavigationHandler handler = new InventoryManagementApplicationController.NavigationHandler() {
             @Override
             public void goToInventory() {
-
+                navigate("Inventory");
             }
 
             public void navigate(String destination) {
@@ -142,7 +146,7 @@ public class InventoryManagementApplication extends Application {
         VBox analyticsViewContainer = analyticsView.getLayout();
 
         ScrollPane scrollableAnalytics = new ScrollPane(analyticsViewContainer);
-        scrollableAnalytics.setFitToWidth(true); // Optional: makes VBox match width
+        scrollableAnalytics.setFitToWidth(true);
         scrollableAnalytics.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         analyticsTab.setContent(scrollableAnalytics);
 
@@ -151,6 +155,7 @@ public class InventoryManagementApplication extends Application {
 
         ThemeObserver.init().addObserver(inventoryView);
         ThemeObserver.init().addObserver(analyticsView);
+        ThemeObserver.init().addObserver(checkoutLayout);
         ThemeObserver.init().applyDarkThemeChange();
 
         // Add tabs to the tabPane
@@ -172,11 +177,9 @@ public class InventoryManagementApplication extends Application {
         // remove the frame of the window
         stage.initStyle(StageStyle.UNDECORATED);
         stage.setMaximized(true);
+        stage.setResizable(true);
         stage.setScene(scene);
         stage.show();
-
-//        SignIn signIn = new SignIn(stage);
-//        signIn.show();
     }
 
     public static void main(String[] args) {

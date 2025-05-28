@@ -126,50 +126,43 @@ public class Analytics extends VBox implements ThemeObserver {
 
         int totalProductSum = dbConnection.getTotalProducts();
         // Total product Card
-        Text totalProductsTxt = new Text("Total Products in inventory");
+        Text totalProductsTxt = new Text("📦 Total Products in inventory");
         totalProductsTxt.setTextAlignment(TextAlignment.CENTER);
-        totalProductsTxt.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-fill: white;");
+        totalProductsTxt.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+        totalProductsTxt.getStyleClass().add("sub-cards-heading");
         Label totalProducts = new Label(totalProductSum + " Products are Available");
-        totalProducts.setStyle("-fx-font-size: 17px; -fx-text-fill: gray; -fx-font-weight: bold;");
-        Text percentage = new Text("40% from Expected");
+        totalProducts.setStyle("-fx-font-size: 15px; -fx-text-fill: gray; -fx-font-weight: bold;");
+        Region percentage = new Region();
         Card productCard = new Card(totalProductsTxt, totalProducts, percentage);
         productCard.getStyleClass().add("summary-cards");
 
         int totalProductValue = dbConnection.getTotalProductValue();
         int remainingItemAmount = dbConnection.getRemainingProductsSum();
         // Total Inventory Value card
-        Text inventoryValueTxt = new Text("Total Inventory Value");
-        inventoryValueTxt.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-fill: white;");
+        Text inventoryValueTxt = new Text("💰 Total Inventory Value");
+        inventoryValueTxt.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; ");
+        inventoryValueTxt.getStyleClass().add("sub-cards-heading");
         Label inventoryValue = new Label("$ " + remainingItemAmount * totalProductValue + " of Value");
-        inventoryValue.setStyle("-fx-font-size: 17px; -fx-text-fill: gray; -fx-font-weight: bold;");
-        Text expectedValue = new Text("Expecting $100");
+        inventoryValue.setStyle("-fx-font-size: 15px; -fx-text-fill: gray; -fx-font-weight: bold;");
+        Region expectedValue = new Region();
         Card inventoryValueCard = new Card(inventoryValueTxt, inventoryValue, expectedValue);
         inventoryValueCard.getStyleClass().add("summary-cards");
 
-        int totalSoldQty = dbConnection.getTotalSoldQuantity();
-        // Total sales Card
-        Text totalSaleTxt = new Text("Total Sales");
-        totalSaleTxt.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-fill: white;");
-        Label totalSales = new Label(totalSoldQty + " Sales");
-        totalSales.setStyle("-fx-font-size: 17px; -fx-text-fill: gray; -fx-font-weight: bold;");
-        Text maxSales = new Text("Maximum $100");
-        Card salesCard = new Card(totalSaleTxt, totalSales, maxSales);
-        salesCard.getStyleClass().add("summary-cards");
-
         int lowStokeProducts = Connection.getLowStockItemCount(dbConnection);
         // Total sales Card
-        Text lowStokeTxt = new Text("Low Stokes");
-        lowStokeTxt.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-fill: white;");
+        Text lowStokeTxt = new Text("🔸 Low Stokes");
+        lowStokeTxt.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+        lowStokeTxt.getStyleClass().add("sub-cards-heading");
         Label lowStoke = new Label(lowStokeProducts + " Items");
-        lowStoke.setStyle("-fx-font-size: 17px; -fx-text-fill: gray; -fx-font-weight: bold;");
-        Text currentAmount = new Text("Maximum $100");
+        lowStoke.setStyle("-fx-font-size: 15px; -fx-text-fill: gray; -fx-font-weight: bold;");
+        Region currentAmount = new Region();
         Card lowStockCard = new Card(lowStokeTxt, lowStoke, currentAmount);
         lowStockCard.getStyleClass().add("summary-cards");
 
-        Text fastVsSlowTxt = new Text("Fast vs Slow Moving Items");
-        fastVsSlowTxt.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-fill: white;");
+        Text fastTxt = new Text("✈ Fast Moving Items");
+        fastTxt.getStyleClass().add("sub-cards-heading");
+        fastTxt.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
         Text fastMoving = new Text();
-        fastMoving.setStyle("-fx-font-size: 13px; -fx-text-fill: gray; -fx-font-weight: bold;");
         fastMoving.setFill(Color.WHITE);
 
         Map<String, List<SoldProducts>> salesData = connection.getTopAndBottomSellingProducts();
@@ -180,20 +173,46 @@ public class Analytics extends VBox implements ThemeObserver {
                 for (SoldProducts ps : topList) {
                     String itemName = connection.getItemNameById(ps.getItemId());
                     textBuilder.append(itemName)
-                            .append(" :- Sold: ").append(ps.getTotalSold());
+                            .append(", ");
 
                 }
                 fastMoving.setText(textBuilder.toString());
+                fastMoving.setStyle("-fx-font-size: 15px; -fx-fill: gray; -fx-font-weight: bold;");
             } else {
                 fastMoving.setText("No top selling products found.");
             }
         }
+        Region slowMoving = new Region();
+        Card fastCard = new Card(fastTxt, fastMoving, slowMoving);
+        fastCard.getStyleClass().add("summary-cards");
 
-        Text slowMoving = new Text("Maximum $100");
-        Card fastVsSlowCard = new Card(fastVsSlowTxt, fastMoving, slowMoving);
-        fastVsSlowCard.getStyleClass().add("summary-cards");
+        Text slowText = new Text("🐌 Slow Moving Items");
+        slowText.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+        slowText.getStyleClass().add("sub-cards-heading");
+        Text slowMovingItems = new Text();
+        slowMovingItems.setFill(Color.WHITE);
 
-        summaryCardContainer.getChildren().addAll(productCard, inventoryValueCard, salesCard, lowStockCard, fastVsSlowCard);
+        if (salesData != null && salesData.containsKey("bottom")) {
+            List<SoldProducts> bottomList = salesData.get("bottom");
+            if (bottomList != null && !bottomList.isEmpty()) {
+                StringBuilder textBuilder = new StringBuilder("");
+                for (SoldProducts ps : bottomList) {
+                    String itemName = connection.getItemNameById(ps.getItemId());
+                    textBuilder.append(itemName)
+                            .append(", ");
+
+                }
+                slowMovingItems.setText(textBuilder.toString());
+                slowMovingItems.setStyle("-fx-font-size: 15px; -fx-fill: gray; -fx-font-weight: bold;");
+            } else {
+                slowMovingItems.setText("No top selling products found.");
+            }
+        }
+        Region slowMovingItemSpace = new Region();
+        Card slowCard = new Card(slowText, slowMovingItems, slowMovingItemSpace);
+        slowCard.getStyleClass().add("summary-cards");
+
+        summaryCardContainer.getChildren().addAll(productCard, inventoryValueCard, lowStockCard, fastCard, slowCard);
 
         VBox stockAnalytics = new VBox();
         stockAnalytics.setMaxWidth(Double.MAX_VALUE);
@@ -267,6 +286,7 @@ public class Analytics extends VBox implements ThemeObserver {
         topSoldItemCard.getChildren().addAll(topSellingTxt, topSoldProduct);
 
         // Top Selling items card
+        int totalSoldQty = dbConnection.getTotalSoldQuantity();
         VBox soldUnitCard = new VBox();
         Text unitSoldTxt= new Text("\uD83D\uDD01 Units Sold");
         unitSoldTxt.getStyleClass().add("sub-cards-heading");
@@ -368,8 +388,9 @@ public class Analytics extends VBox implements ThemeObserver {
         VBox alertsSec = new VBox();
         Text alertsTxt = new Text("\uD83D\uDEA8 Alerts & Exceptions");
         alertsTxt.getStyleClass().add("heading-texts");
-        alertsTxt.setFill(Color.web("#333333"));
         alertsSec.setAlignment(Pos.CENTER);
+        alertsSec.setPadding(new Insets(30, 0, 10 ,0));
+        alertsSec.setMaxWidth(Double.MAX_VALUE);
 
         FlowPane alertsContainer = new FlowPane();
         alertsContainer.setHgap(10.0);
@@ -377,6 +398,8 @@ public class Analytics extends VBox implements ThemeObserver {
         alertsContainer.setPadding(new Insets(20, 0, 20, 0));
         alertsContainer.setMaxWidth(Double.MAX_VALUE);
         alertsContainer.setAlignment(Pos.CENTER);
+        alertsContainer.setMaxWidth(1300);
+        alertsContainer.setStyle("-fx-background-color: rgba(0, 0, 0, 0.15); -fx-background-radius: 20;");
 
         // Alerts Low Stoke Card
         VBox lowStockAlertCard = new VBox();
@@ -384,14 +407,15 @@ public class Analytics extends VBox implements ThemeObserver {
         lowStockTxt.getStyleClass().add("alert-heading");
         Text lowStocks = new Text("You currently have " + lowStokeProducts + " low stokes");
         lowStocks.getStyleClass().add("alert-content");
-        lowStocks.setFill(Color.web("#333333"));
         lowStockAlertCard.getChildren().addAll(lowStockTxt, lowStocks);
+        lowStockAlertCard.setSpacing(10);
         lowStockAlertCard.getStyleClass().add("alert-cards");
 
         // Alerts Over Stoke Card
         VBox overStockAlertCard = new VBox();
         Text overStockTxt = new Text("Alert! OverStock Warning!");
         overStockTxt.getStyleClass().add("alert-heading");
+        overStockAlertCard.setSpacing(10);
         HBox overStockMessageContainer = new HBox();
 
         Text overStocks = new Text();
@@ -404,7 +428,7 @@ public class Analytics extends VBox implements ThemeObserver {
                 for (SoldProducts ps : topList) {
                     String itemName = connection.getItemNameById(ps.getItemId());
                     textBuilder.append(itemName)
-                            .append(" :- Sold: ").append(ps.getTotalSold());
+                            .append(" :- Sold: ").append(ps.getTotalSold()).append(", ");
                 }
                 overStocks.setText(textBuilder.toString());
             } else {
@@ -435,8 +459,11 @@ public class Analytics extends VBox implements ThemeObserver {
         searchBar = new TextField();
         searchBar.getStyleClass().add("default-text-areas");
         searchBar.setPromptText("Search name...");
+        searchBar.setStyle("-fx-border-radius: 8 0 0 8;");
+        searchBar.setPrefWidth(300);
         Button searchBtn = new Button("Search");
         searchBtn.getStyleClass().add("default-buttons");
+        searchBtn.setStyle("-fx-background-radius: 0 8 8 0;");
         searchBtn.setOnAction(e -> searchUser());
         Region spaceForShowAll = new Region();
         spaceForShowAll.setMinWidth(30);
@@ -570,14 +597,11 @@ public class Analytics extends VBox implements ThemeObserver {
         allChartsContainer.setAlignment(Pos.CENTER);
         allChartsContainer.setMaxWidth(Double.MAX_VALUE);
 
-// Add your 4 charts/components in 2 rows, 2 columns
-        allChartsContainer.add(stockToggleComponent2, 0, 0);  // column 0, row 0
-        allChartsContainer.add(reorderToggleComponent2, 1, 0); // column 1, row 0
-        allChartsContainer.add(revenueToggleComponent2, 0, 1); // column 0, row 1
-// For salesRevenueRow content, if dynamic, you can place placeholder first or update later:
-        allChartsContainer.add(salesRevenueRow, 1, 1);         // column 1, row 1
+        allChartsContainer.add(stockToggleComponent2, 0, 0);
+        allChartsContainer.add(reorderToggleComponent2, 1, 0);
+        allChartsContainer.add(revenueToggleComponent2, 0, 1);
+        allChartsContainer.add(salesRevenueRow, 1, 1);
 
-// Make each component grow and fill the cell
         GridPane.setHgrow(stockToggleComponent2, Priority.ALWAYS);
         GridPane.setHgrow(reorderToggleComponent2, Priority.ALWAYS);
         GridPane.setHgrow(revenueToggleComponent2, Priority.ALWAYS);

@@ -1,17 +1,16 @@
 .nav-bar {
-    -fx-background-color: black;
+     -fx-background-color: linear-gradient(to bottom, #2c3e50, #1f2b38);
     -fx-text-fill: white;
 }
 
 .heading-texts {
     -fx-fill: white;
-    -fx-font-family: Verdana;
     -fx-font-weight: bold;
     -fx-font-size: 25;
 }
 
 .footer-section {
-    -fx-background-color: black;
+    -fx-background-color: #1f2b38;
     -fx-text-fill: white;
 }
 
@@ -20,12 +19,26 @@
     -fx-font-size: 15;
 }
 
+.default-text-areas {
+    -fx-background-color: #262626;
+    -fx-prompt-text-fill: gray;
+}
+
 .default-dropdowns {
     -fx-background-color: #2F2F2F, #1F1F1F;
     -fx-border-color: #3B82F6;
     -fx-border-radius: 6px;
     -fx-background-radius: 6px;
     -fx-font-size: 14px;
+    -fx-fill: white;
+    -fx-prompt-text-fill: gray;
+}
+
+.default-dropdowns .text-input{
+    -fx-prompt-text-fill: white;
+}
+
+.default-dropdowns .prompt-text {
     -fx-fill: white;
 }
 
@@ -42,5 +55,12 @@
 .default-dropdowns-popup .list-cell:hover,
 .default-dropdowns-popup .list-cell:selected {
     -fx-background-color: #3B82F6;
+    -fx-fill: white;
+}
+
+.information-texts {
+    -fx-fill: gray;
+}
+.information-label {
     -fx-fill: white;
 }
