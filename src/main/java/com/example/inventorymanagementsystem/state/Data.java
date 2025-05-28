@@ -5,6 +5,8 @@ import com.example.inventorymanagementsystem.models.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
+import java.util.List;
+
 public class Data {
     private static Data instance;
     private ObservableList<Stock> stocks;
@@ -79,5 +81,25 @@ public class Data {
 
     public UserAnalytics getUserAnalytics(){
         return userAnalytics;
+    }
+
+
+    public void setStocks(List<Stock> newStocks){
+        stocks.clear();
+        stocks.addAll(newStocks);
+    }
+
+    public void setColors(List<Color> newStocks){
+        colors.clear();
+        colors.addAll(newStocks);
+    }
+
+    public void setSize(List<Size> newSize){
+        size.clear();
+        size.addAll(newSize);
+    }
+
+    public void setItemDetails(List<ItemDetail> newItemDetails){
+
     }
 }

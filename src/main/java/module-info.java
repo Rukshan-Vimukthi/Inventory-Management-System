@@ -5,6 +5,9 @@ module com.example.inventorymanagementsystem {
     requires org.controlsfx.controls;
     requires com.dlsc.formsfx;
     requires org.kordamp.bootstrapfx.core;
+    requires org.kordamp.ikonli.javafx;
+    requires org.kordamp.ikonli.core;
+    requires org.kordamp.ikonli.fontawesome5;
     requires java.sql;
 
     opens com.example.inventorymanagementsystem to javafx.fxml;

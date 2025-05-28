@@ -55,4 +55,9 @@ public class Stock implements DataModel {
     public String getValue(){
         return date.get() + " | " + name.get();
     }
+
+    @Override
+    public String toString() {
+        return date.get() + " | " + name.get();
+    }
 }

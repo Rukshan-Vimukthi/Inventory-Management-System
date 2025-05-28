@@ -41,4 +41,9 @@ public class Role implements DataModel {
     public String getValue(){
         return role.get();
     }
+
+    @Override
+    public String toString() {
+        return role.get();
+    }
 }

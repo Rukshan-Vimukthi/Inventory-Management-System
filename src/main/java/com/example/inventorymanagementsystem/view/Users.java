@@ -7,9 +7,13 @@ import com.example.inventorymanagementsystem.state.Data;
 import com.example.inventorymanagementsystem.view.components.Card;
 import com.example.inventorymanagementsystem.view.components.TableContainer;
 import javafx.geometry.Insets;
+import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import org.controlsfx.glyphfont.FontAwesome;
+import org.kordamp.ikonli.fontawesome5.FontAwesomeSolid;
+import org.kordamp.ikonli.javafx.FontIcon;
 
 public class Users extends HBox {
     public Users(){
@@ -32,7 +36,17 @@ public class Users extends HBox {
         VBox analyticsContainer = new VBox();
         analyticsContainer.setPadding(new Insets(10.0D));
         analyticsContainer.setMinWidth(300.0D);
-        Card card = new Card("Users", String.valueOf(userAnalytics.totalNumberOfUsersProperty().get()), "Footer");
+
+        HBox usersCardHeader = new HBox();
+        FontIcon fontIcon = new FontIcon(FontAwesomeSolid.USER);
+        Label userCardHeaderText = new Label(" Users", fontIcon);
+        usersCardHeader.getChildren().add(userCardHeaderText);
+
+        VBox userCardBody = new VBox();
+
+        HBox footer = new HBox();
+
+        Card card = new Card(usersCardHeader, userCardBody, footer);
         card.setBackgroundColor("#DDD");
         card.setPadding(new Insets(5.0D));
         card.setRoundedCorner(10.0D);

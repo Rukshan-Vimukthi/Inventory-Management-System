@@ -1,6 +1,7 @@
 package com.example.inventorymanagementsystem.view.components;
 
 import com.example.inventorymanagementsystem.models.ItemDetail;
+import com.example.inventorymanagementsystem.services.interfaces.DataModel;
 import com.example.inventorymanagementsystem.services.interfaces.TableContainerInterface;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -22,13 +23,14 @@ import java.util.List;
 public class TableContainer<T> extends VBox {
     private T model;
     private TableView<T> tableView;
-    private TableContainerInterface tableContainerInterface;
+    private TableContainerInterface<T> tableContainerInterface;
 
     TextField searchTextField;
     Button search;
 
-    List<FormField<?, ?>> formFields;
+    List<FormField<? extends Control, ?>> formFields;
 
+    HBox extraButtonsContainer;
     HBox filters;
 
 //    private final ObservableList<TableColumn<T, ?>> tableColumns = FXCollections.observableArrayList();
@@ -54,7 +56,7 @@ public class TableContainer<T> extends VBox {
         searchTextField = new TextField();
         search = new Button("Search");
         search.setOnAction(actionEvent -> {
-
+            tableContainerInterface.onSearch(formFields, searchTextField.getText());
         });
 
         searchField.getChildren().addAll(searchTextField, search);
@@ -101,7 +103,9 @@ public class TableContainer<T> extends VBox {
 
         searchBarContainer.getChildren().addAll(filters, searchFieldContainer);
 
-        toolBar.getChildren().addAll(addItemButton, refresh, delete, update);
+        extraButtonsContainer = new HBox();
+
+        toolBar.getChildren().addAll(addItemButton, refresh, delete, update, extraButtonsContainer);
 
         toolBarContainer.getChildren().addAll(searchBarContainer, toolBar);
 
@@ -135,13 +139,17 @@ public class TableContainer<T> extends VBox {
         this.tableContainerInterface = item;
     }
 
-    public void addFilter(FormField<?, ?> formField){
+    public void addFilter(FormField<? extends Control, ?> formField){
         filters.getChildren().add(formField);
         formFields.add(formField);
     }
 
     public void setFilters(String color, String size, String stock, String price, String name, String sellingPrice){
 
+    }
+
+    public void addExtraButton(Button button){
+        extraButtonsContainer.getChildren().add(button);
     }
 
 }

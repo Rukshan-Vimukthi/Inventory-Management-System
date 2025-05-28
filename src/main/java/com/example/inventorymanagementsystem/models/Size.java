@@ -49,4 +49,9 @@ public class Size implements DataModel {
     public String getValue(){
         return size.get();
     }
+
+    @Override
+    public String toString() {
+        return size.get();
+    }
 }

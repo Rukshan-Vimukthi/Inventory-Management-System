@@ -1,11 +1,12 @@
 package com.example.inventorymanagementsystem.models;
 
+import com.example.inventorymanagementsystem.services.interfaces.DataModel;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 
-public class ItemHasSize {
+public class ItemHasSize implements DataModel {
     IntegerProperty id;
     IntegerProperty itemID;
     IntegerProperty stockID;
@@ -106,5 +107,15 @@ public class ItemHasSize {
 
     public int getRemainingQuantity() {
         return remainingQuantity.get();
+    }
+
+    @Override
+    public String getValue() {
+        return String.valueOf(id.get());
+    }
+
+    @Override
+    public String toString() {
+        return String.valueOf(itemID.get());
     }
 }

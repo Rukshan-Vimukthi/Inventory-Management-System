@@ -93,4 +93,9 @@ public class Customer implements DataModel {
     public String getValue() {
         return getFirstName() + ' ' + getLastName();
     }
+
+    @Override
+    public String toString() {
+        return getFirstName() + ' ' + getLastName();
+    }
 }
