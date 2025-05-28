@@ -17,6 +17,12 @@ public class InventoryManagementApplicationController {
     @FXML
     private TabPane tabPane;
 
+    private Tab inventory;
+
+    public interface NavigationHandler {
+        void goToInventory();
+    }
+
     public void initialize(){
         tabPane.getStylesheets().add(
                 String.valueOf(InventoryManagementApplication.class.getResource("css/style.css"))
@@ -47,7 +53,7 @@ public class InventoryManagementApplicationController {
         checkoutTab.setContent(checkoutContainer);
 
         // The Stock Section
-        Analytics stockView = new Analytics();
+        Analytics stockView = new Analytics(() -> tabPane.getSelectionModel().select(inventory));
         VBox stockViewContainer = stockView.getLayout();
 
         ScrollPane scrollableAnalytics = new ScrollPane(stockViewContainer);

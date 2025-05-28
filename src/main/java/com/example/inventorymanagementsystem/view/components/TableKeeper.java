@@ -98,7 +98,7 @@ public class TableKeeper {
         return table;
     }
 
-    public static TableView<SalesRow> getSalesTable() {
+    public static TableView<SalesRow> getSalesTable(String filter) {
         Connection connection = Connection.getInstance(); // Your DB connection
 
         TableView<SalesRow> salesTable = new TableView<>();
@@ -116,18 +116,15 @@ public class TableKeeper {
 
         ObservableList<SalesRow> salesData = FXCollections.observableArrayList();
 
-        String query = "SELECT chs.date, chs.item_has_size_id FROM customer_has_item_has_size chs";
-
-        try (PreparedStatement stmt = connection.getJdbcConnection().prepareStatement(query);
-             ResultSet rs = stmt.executeQuery()) {
+        try (ResultSet rs = connection.getFilteredSalesData(filter)) {
 
             while (rs.next()) {
                 String date = rs.getString("date");
                 int itemId = rs.getInt("item_has_size_id");
                 String itemName = connection.getItemNameById(itemId);
                 salesData.add(new SalesRow(date, itemName));
-            }
 
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -135,6 +132,7 @@ public class TableKeeper {
         salesTable.setItems(salesData);
         return salesTable;
     }
+
     public static class SalesRow {
         private final String date;
         private final String itemName;

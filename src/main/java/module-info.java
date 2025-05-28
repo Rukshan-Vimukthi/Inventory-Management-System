@@ -6,7 +6,6 @@ module com.example.inventorymanagementsystem {
     requires com.dlsc.formsfx;
     requires org.kordamp.bootstrapfx.core;
     requires java.sql;
-    requires mysql.connector.j;
 
     opens com.example.inventorymanagementsystem to javafx.fxml;
     opens com.example.inventorymanagementsystem.models to javafx.base;
