@@ -1,0 +1,48 @@
+.nav-bar {
+    -fx-background-color: lightGray;
+    -fx-text-fill: black;
+}
+
+.footer-section {
+    -fx-background-color: lightGray;
+    -fx-text-fill: black;
+}
+
+.heading-texts {
+    -fx-fill: #1F2937;
+    -fx-font-family: Verdana;
+    -fx-font-weight: bold;
+    -fx-font-size: 25;
+}
+
+.paragraph-texts {
+    -fx-fill: : #888888;
+    -fx-font-size: 15;
+}
+
+.default-dropdowns {
+    -fx-background-color: #FFFFFF;
+    -fx-text-fill: white;
+    -fx-border-color: #3B82F6;
+}
+
+.default-dropdowns-popup .list-cell {
+    -fx-text-fill: #1F2937;
+}
+
+.default-dropdowns-popup .list-cell:hover,
+.default-dropdowns-popup .list-cell:selected {
+    -fx-background-color: #3B82F6;
+    -fx-text-fill: white;
+}
+
+.default-text-areas {
+    -fx-background-color: #FFFFFF;
+    -fx-text-fill: #1F2937;
+    -fx-border-color: #3B82F6;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-control-inner-background: #FFFFFF;
+    -fx-highlight-fill: #3B82F6;
+    -fx-highlight-text-fill: white;
+}

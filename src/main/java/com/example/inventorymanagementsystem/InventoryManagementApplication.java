@@ -109,7 +109,7 @@ public class InventoryManagementApplication extends Application {
 
         // tabs in the main UI
         Tab checkoutTab = TabBuilder.buildTab("Checkout");
-        Tab stocksTab = TabBuilder.buildTab("Analytics");
+        Tab analyticsTab = TabBuilder.buildTab("Analytics");
         Tab inventory = TabBuilder.buildTab("Inventory");
         Tab users = TabBuilder.buildTab("Users");
 
@@ -123,26 +123,40 @@ public class InventoryManagementApplication extends Application {
         BorderPane checkoutContainer = checkoutLayout.getLayout();
         checkoutTab.setContent(checkoutContainer);
 
-        // The Stock Section
-        Analytics stockView = new Analytics();
-        VBox stockViewContainer = stockView.getLayout();
+        InventoryManagementApplicationController.NavigationHandler handler = new InventoryManagementApplicationController.NavigationHandler() {
+            @Override
+            public void goToInventory() {
 
-        ScrollPane scrollableAnalytics = new ScrollPane(stockViewContainer);
+            }
+
+            public void navigate(String destination) {
+                if (destination.equals("Inventory")) {
+                    tabPane.getSelectionModel().select(inventory);
+                }
+            }
+        };
+
+
+        // The Stock Section
+        Analytics analyticsView = new Analytics(handler);
+        VBox analyticsViewContainer = analyticsView.getLayout();
+
+        ScrollPane scrollableAnalytics = new ScrollPane(analyticsViewContainer);
         scrollableAnalytics.setFitToWidth(true); // Optional: makes VBox match width
         scrollableAnalytics.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-
-        stocksTab.setContent(scrollableAnalytics);
+        analyticsTab.setContent(scrollableAnalytics);
 
         Users userTabView = new Users();
         users.setContent(userTabView);
 
         ThemeObserver.init().addObserver(inventoryView);
+        ThemeObserver.init().addObserver(analyticsView);
         ThemeObserver.init().applyDarkThemeChange();
 
         // Add tabs to the tabPane
         tabPane.getTabs().addAll(
                 checkoutTab,
-                stocksTab,
+                analyticsTab,
                 inventory,
                 users
         );

@@ -5,6 +5,10 @@ import com.example.inventorymanagementsystem.models.CheckoutItem;
 import com.example.inventorymanagementsystem.models.ItemHasSize;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.Label;
+import javafx.scene.layout.VBox;
 import javafx.util.StringConverter;
 import javafx.scene.chart.*;
 import javafx.scene.control.Tooltip;
@@ -31,6 +35,7 @@ public class ChartKeeper {
 
         BarChart<String, Number> columnChart = new BarChart<>(xAxis, yAxis);
         columnChart.setTitle("Product Stock Level");
+        columnChart.getStyleClass().add("charts");
         columnChart.setBarGap(10);
         columnChart.setCategoryGap(20);
         columnChart.lookupAll(".chart-bar").forEach(node -> node.setStyle("-fx-bar-fill: blue;"));
@@ -76,6 +81,7 @@ public class ChartKeeper {
 
         BarChart<String, Number> reOrdrdColumnmChart = new BarChart<>(reOrdrXAxis, reOrdrYAxis);
         reOrdrdColumnmChart.setTitle("Reorder Product Alerts");
+        reOrdrdColumnmChart.getStyleClass().add("charts");
         reOrdrdColumnmChart.setBarGap(10);
         reOrdrdColumnmChart.setCategoryGap(20);
         reOrdrdColumnmChart.lookupAll(".chart-bar").forEach(node -> node.setStyle("-fx-bar-fill: blue;"));
@@ -113,6 +119,7 @@ public class ChartKeeper {
 
         LineChart<String, Number> salesLineChart = new LineChart<>(salesXAxis, salesYAxis);
         salesLineChart.setTitle("Sales Trends Over Time");
+        salesLineChart.getStyleClass().add("charts");
         salesLineChart.setAnimated(false);
 
         XYChart.Series<String, Number> salesSeries = new XYChart.Series<>();
@@ -123,17 +130,13 @@ public class ChartKeeper {
         int indexCounter = 1;
 
         try {
-            Statement stmt = connection.getJdbcConnection().createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT item_has_size_id, date FROM customer_has_item_has_size ORDER BY date");
+            ResultSet rs = connection.getFilteredSalesData(filter);
 
             while (rs.next()) {
                 int itemId = rs.getInt("item_has_size_id");
                 String date = rs.getString("date");
 
-                if (date == null || date.isBlank()) {
-                    System.err.println("Warning: No date filter applied, skipping or returning empty data.");
-
-                }
+                if (date == null || date.isBlank()) continue;
 
                 String itemName = connection.getItemNameById(itemId);
                 if (!itemNameToIndex.containsKey(itemName)) {
@@ -146,11 +149,17 @@ public class ChartKeeper {
                 XYChart.Data<String, Number> dataPoint = new XYChart.Data<>(date, itemIndex);
                 salesSeries.getData().add(dataPoint);
             }
+
             rs.close();
-            stmt.close();
 
         } catch (SQLException e) {
             e.printStackTrace();
+        }
+
+        if (salesSeries.getData().isEmpty()) {
+            Label noDataMsg = new Label("No data found related to the selected dates");
+            noDataMsg.setStyle("-fx-font-size: 16px; -fx-text-fill: red;");
+            return salesLineChart;
         }
 
         for (XYChart.Data<String, Number> data : salesSeries.getData()) {
@@ -172,6 +181,28 @@ public class ChartKeeper {
         return salesLineChart;
     }
 
+    // For setting the dates as filters for showing the sales
+    private static String getFilterCondition(String filter) {
+        switch (filter) {
+            case "Today":
+                return " WHERE DATE(date) = CURDATE()";
+            case "Yesterday":
+                return " WHERE DATE(date) = CURDATE() - INTERVAL 1 DAY";
+            case "Last 7 Days":
+                return " WHERE date >= CURDATE() - INTERVAL 7 DAY";
+            case "This Month":
+                return " WHERE MONTH(date) = MONTH(CURDATE()) AND YEAR(date) = YEAR(CURDATE())";
+            case "Last Month":
+                return " WHERE MONTH(date) = MONTH(CURDATE() - INTERVAL 1 MONTH) AND YEAR(date) = YEAR(CURDATE() - INTERVAL 1 MONTH)";
+            case "This Year":
+                return " WHERE YEAR(date) = YEAR(CURDATE())";
+            case "Last Year":
+                return " WHERE YEAR(date) = YEAR(CURDATE() - INTERVAL 1 YEAR)";
+            default:
+                return "";
+        }
+    }
+
     // Shows the revenue
     public static BarChart<String, Number> getRevenueChart(Connection connection) {
         CategoryAxis revenueXAxis = new CategoryAxis();
@@ -181,6 +212,7 @@ public class ChartKeeper {
 
         BarChart<String, Number> revenueUnitChart = new BarChart<>(revenueXAxis, revenueYAxis);
         revenueUnitChart.setTitle("Revenue vs Units Sold");
+        revenueUnitChart.getStyleClass().add("charts");
 
         XYChart.Series<String, Number> revenueSeries = new XYChart.Series<>();
         revenueSeries.setName("Revenue");

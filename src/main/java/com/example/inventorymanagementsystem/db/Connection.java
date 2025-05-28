@@ -26,7 +26,7 @@ public class Connection {
 
     public Connection(){
         try {
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/sandyafashioncorner", "root", "root@techlix2002");
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/sandyafashioncorner", "root", "Sandun@2008.sd");
         }catch(SQLException e){
             e.printStackTrace();
         }
@@ -555,6 +555,9 @@ public class Connection {
                 query += "YEAR(chs.date) = YEAR(CURDATE() - INTERVAL 1 YEAR)";
                 break;
             default:
+                query = "SELECT chs.date, chs.item_has_size_id FROM customer_has_item_has_size chs";
+                break;
+            case "All Time":
                 query = "SELECT chs.date, chs.item_has_size_id FROM customer_has_item_has_size chs";
                 break;
         }

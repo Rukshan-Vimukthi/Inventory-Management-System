@@ -1,0 +1,46 @@
+.nav-bar {
+    -fx-background-color: black;
+    -fx-text-fill: white;
+}
+
+.heading-texts {
+    -fx-fill: white;
+    -fx-font-family: Verdana;
+    -fx-font-weight: bold;
+    -fx-font-size: 25;
+}
+
+.footer-section {
+    -fx-background-color: black;
+    -fx-text-fill: white;
+}
+
+.paragraph-texts {
+    -fx-fill: #999999;
+    -fx-font-size: 15;
+}
+
+.default-dropdowns {
+    -fx-background-color: #2F2F2F, #1F1F1F;
+    -fx-border-color: #3B82F6;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-font-size: 14px;
+    -fx-fill: white;
+}
+
+.default-dropdowns .text{
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+}
+
+.default-dropdowns-popup .list-cell {
+    -fx-background-color: transparent;
+    -fx-fill: white;
+}
+
+.default-dropdowns-popup .list-cell:hover,
+.default-dropdowns-popup .list-cell:selected {
+    -fx-background-color: #3B82F6;
+    -fx-fill: white;
+}
