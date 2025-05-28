@@ -45,4 +45,9 @@ public class Color implements DataModel {
     public String getValue(){
         return color.get();
     }
+
+    @Override
+    public String toString() {
+        return color.get();
+    }
 }

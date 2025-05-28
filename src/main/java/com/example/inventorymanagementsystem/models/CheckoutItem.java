@@ -1,11 +1,12 @@
 package com.example.inventorymanagementsystem.models;
 
+import com.example.inventorymanagementsystem.services.interfaces.DataModel;
 import javafx.beans.property.*;
 
 /**
  * Represents a single item entry in the checkout table.
  */
-public class CheckoutItem {
+public class CheckoutItem implements DataModel {
     private final StringProperty name;
     private final StringProperty itemSize;
     private final StringProperty itemColor;
@@ -83,6 +84,12 @@ public class CheckoutItem {
 
     public StringProperty itemTotalCostProperty() {
         return itemTotalCost;
+    }
+
+
+    @Override
+    public String getValue() {
+        return nameProperty().get();
     }
 
 }

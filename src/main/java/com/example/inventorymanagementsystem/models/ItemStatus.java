@@ -51,5 +51,10 @@ public class ItemStatus implements DataModel {
     public String getValue(){
         return status.get();
     }
+
+    @Override
+    public String toString() {
+        return status.get();
+    }
 }
 

@@ -1,14 +1,18 @@
 package com.example.inventorymanagementsystem.view.components;
 
+import com.example.inventorymanagementsystem.models.Size;
+import com.example.inventorymanagementsystem.models.Stock;
 import com.example.inventorymanagementsystem.services.interfaces.DataModel;
 import javafx.collections.ObservableList;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.util.Callback;
 
 public class FormField<C extends Control, M> extends VBox {
     private Control node;
+    private String columnName = null;
     public FormField(String labelText, Class<C> nodeClass){
         try {
             Label label = new Label(labelText);
@@ -129,7 +133,6 @@ public class FormField<C extends Control, M> extends VBox {
 
     private void buildComboBox(ObservableList<M> data, M selectedItem){
         ComboBox<M> comboBox = new ComboBox<M>(data);
-        comboBox.getSelectionModel().select(selectedItem);
         comboBox.setCellFactory(new Callback<ListView<M>, ListCell<M>>() {
             @Override
             public ListCell<M> call(ListView<M> param) {
@@ -144,6 +147,26 @@ public class FormField<C extends Control, M> extends VBox {
                 };
             }
         });
+
+        comboBox.getSelectionModel().select(selectedItem);
         node = comboBox;
+    }
+
+    public void setColumnName(String columnName){
+        this.columnName = columnName;
+    }
+
+    public String getColumnName(){
+        return this.columnName;
+    }
+
+    public void setValue(String value){
+        if (value != null) {
+            if (node instanceof TextField textField) {
+                textField.setText(value);
+            } else if (node instanceof ColorPicker colorPicker) {
+                colorPicker.setValue(Color.valueOf(value));
+            }
+        }
     }
 }

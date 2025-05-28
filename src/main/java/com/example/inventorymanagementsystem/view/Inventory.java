@@ -5,6 +5,7 @@ import com.example.inventorymanagementsystem.db.Connection;
 import com.example.inventorymanagementsystem.models.*;
 import com.example.inventorymanagementsystem.models.Stock;
 import com.example.inventorymanagementsystem.services.interfaces.TableContainerInterface;
+import com.example.inventorymanagementsystem.services.interfaces.ThemeObserver;
 import com.example.inventorymanagementsystem.state.Data;
 import com.example.inventorymanagementsystem.view.components.FormField;
 import com.example.inventorymanagementsystem.view.components.ItemPreview;
@@ -19,7 +20,9 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
-public class Inventory extends HBox {
+import java.util.List;
+
+public class Inventory extends HBox implements ThemeObserver {
     ItemPreview itemPreview;
     public Inventory(){
         super();
@@ -40,13 +43,26 @@ public class Inventory extends HBox {
         itemsTable.addColumn("itemColor", Integer.class);
         itemsTable.addItems(Data.getInstance().getItemDetails());
 
+        Button addSizeButton = new Button("Add Size");
+        Button addColorButton = new Button("Add Color");
+        itemsTable.getChildren().addAll(addSizeButton, addColorButton);
+
         FormField<ComboBox, Size> sizeFilter = new FormField<>("Size", ComboBox.class, Data.getInstance().getSize());
+        sizeFilter.setColumnName("`size`.`size`");
         sizeFilter.setMaxWidth(50.0D);
+
         FormField<ColorPicker, String> colorFilter = new FormField<>("Color", ColorPicker.class);
+        colorFilter.setColumnName("`color`.`color`");
+
         FormField<ComboBox, Stock> stockFilter = new FormField<>("Stock", ComboBox.class, Data.getInstance().getStocks());
+        stockFilter.setColumnName("`stock`.`name`");
+
         FormField<TextField, Double> costFilter = new FormField<>("Cost", TextField.class);
+        costFilter.setColumnName("`item_has_size`.`cost`");
         costFilter.setMaxWidth(100.0D);
+
         FormField<TextField, Double> priceFilter = new FormField<>("Price", TextField.class);
+        priceFilter.setColumnName("`item_has_size`.`cost`");
         priceFilter.setMaxWidth(100.0D);
 
         itemsTable.addFilter(sizeFilter);
@@ -85,6 +101,11 @@ public class Inventory extends HBox {
                 if (itemPreview != null){
                     itemPreview.update(item);
                 }
+            }
+
+            @Override
+            public void onSearch(List<FormField<? extends Control, ?>> formFields, String searchBoxText) {
+
             }
 
         });
@@ -134,6 +155,17 @@ public class Inventory extends HBox {
 
             }
 
+            @Override
+            public void onSearch(List<FormField<? extends Control, ?>> formFields, String searchBoxText) {
+                if (formFields.size() > 0){
+                    for (FormField<?, ?> formField : formFields){
+                        System.out.println(formField.getColumnName() + ": " + formField.getValue());
+                    }
+                }
+                System.out.println(searchBoxText);
+                Data.getInstance().setStocks(Connection.getInstance().filterStocks(searchBoxText));
+            }
+
         });
 
         TableContainer<Color> colorTableContainer = new TableContainer<>(false, null, "Enter color code");
@@ -166,6 +198,11 @@ public class Inventory extends HBox {
             @Override
             public void onSelectItem(Color item) {
 
+            }
+
+            @Override
+            public void onSearch(List<FormField<?, ?>> formFields, String searchBoxText) {
+                Data.getInstance().setColors(Connection.getInstance().filterColors(searchBoxText));
             }
         });
 
@@ -201,10 +238,25 @@ public class Inventory extends HBox {
 
             }
 
+            @Override
+            public void onSearch(List<FormField<?, ?>> formFields, String searchBoxText) {
+                Data.getInstance().setSize(Connection.getInstance().filterSizes(searchBoxText));
+            }
+
         });
 
         otherTablesContainer.getChildren().addAll(stockTableContainer, colorTableContainer, itemSizeTableContainer);
 
         this.getChildren().addAll(itemTableContainer, otherTablesContainer);
+    }
+
+    @Override
+    public void lightTheme() {
+        this.setStyle("-fx-background-color: #EEE; ");
+    }
+
+    @Override
+    public void darkTheme() {
+        this.setStyle("-fx-background-color: #555; ");
     }
 }

@@ -1,6 +1,7 @@
 package com.example.inventorymanagementsystem.view.dialogs;
 
 import com.example.inventorymanagementsystem.db.Connection;
+import com.example.inventorymanagementsystem.models.Color;
 import com.example.inventorymanagementsystem.models.ItemDetail;
 import com.example.inventorymanagementsystem.models.Size;
 import com.example.inventorymanagementsystem.models.Stock;
@@ -17,6 +18,7 @@ import javafx.scene.layout.VBox;
 public class AddNewItem extends Dialog<Boolean> {
     private FormField<TextField, String> itemName;
     private FormField<TextField, String> itemQty;
+    private FormField<TextField, String> remainingQty;
     private FormField<TextField, String> itemOrderedPrice;
     private FormField<TextField, String> itemSellingPrice;
     private FormField<ColorPicker, String> itemColor;
@@ -43,6 +45,8 @@ public class AddNewItem extends Dialog<Boolean> {
 
         itemName = new FormField<>("Item Name", TextField.class);
         itemQty = new FormField<>("Item Qty", TextField.class);
+        remainingQty = new FormField<>("Remaining Qty", TextField.class);
+        remainingQty.setDisable(itemDetail == null);
         itemOrderedPrice = new FormField<>("Bought Price", TextField.class);
         itemSellingPrice = new FormField<>("Selling Price", TextField.class);
         itemColor = new FormField<>("Color", ColorPicker.class);
@@ -61,11 +65,19 @@ public class AddNewItem extends Dialog<Boolean> {
                     ComboBox.class,
                     Data.getInstance().getStocks(),
                     Connection.getInstance().getStock(itemDetail.getSizeID()));
+
+            itemName.setValue(itemDetail.getName());
+            itemQty.setValue(String.valueOf(itemDetail.getOrderedQty()));
+            remainingQty.setValue(String.valueOf(itemDetail.getRemainingQty()));
+            itemOrderedPrice.setValue(String.valueOf(itemDetail.getPrice()));
+            itemSellingPrice.setValue(String.valueOf(itemDetail.getSellingPrice()));
+            itemColor.setValue(itemDetail.getItemColor());
         }
 
         flowPane.getChildren().addAll(
                 itemName,
                 itemQty,
+                remainingQty,
                 itemOrderedPrice,
                 itemSellingPrice,
                 itemColor,
@@ -87,15 +99,58 @@ public class AddNewItem extends Dialog<Boolean> {
                 System.out.println(itemSize.getValue());
                 System.out.println("#" + ((String)itemColor.getValue()).split("0x")[1]);
 
-//                boolean isInserted = Connection.getInstance().addNewItem(
-//                        (String) itemName.getValue(),
-//                        (Integer) itemQty.getValue(),
-//                        (Double) itemOrderedPrice.getValue(),
-//                        (Double) itemSellingPrice.getValue(),
-//                        (Integer) itemStock.getValue(),
-//                        (Integer) itemSize.getValue(),
-//                        (Integer) itemColor.getValue()
-//                );
+                String name = (String) itemName.getValue();
+                Integer qty = Integer.parseInt((String)itemQty.getValue());
+                Integer remainingQtyValue = Integer.parseInt((String)remainingQty.getValue());
+                Double price = Double.parseDouble((String)itemOrderedPrice.getValue());
+                Double sellingPrice = Double.parseDouble((String)itemSellingPrice.getValue());
+                Stock stock = (Stock) itemStock.getValue();
+                Size size = (Size) itemSize.getValue();
+                String colorCode = "#" + ((String)itemColor.getValue()).split("0x")[1];
+
+                Color color = Connection.getInstance().getColorByCode(colorCode);
+                int newColorID = -1;
+                if (color == null){
+                    newColorID = Connection.getInstance().addNewColor(colorCode);
+                }else{
+                    newColorID = color.getId();
+                }
+
+                String sql = "INSERT INTO `item` " +
+                        "(`name`, `stock_id`) " +
+                        "VALUES('%s', %d)".formatted(itemName.getValue(), ((Stock)itemStock.getValue()).getId());
+
+                
+                if (itemDetail != null){
+                    int itemID = itemDetail.getId();
+                    int itemHasSizeID = itemDetail.getItemHasSizeID();
+                    int colorHasItemHasSizeID = itemDetail.getColorHasItemHasSize();
+
+                    boolean isUpdated = Connection.getInstance().updateItem(
+                            itemID,
+                            itemHasSizeID,
+                            colorHasItemHasSizeID,
+                            name,
+                            qty,
+                            remainingQtyValue,
+                            price, sellingPrice,
+                            stock.getId(),
+                            size.getId(),
+                            newColorID
+                    );
+                }else{
+                    boolean isInserted = Connection.getInstance().addNewItem(
+                        name,
+                        qty,
+                        price,
+                        sellingPrice,
+                        stock.getId(),
+                        size.getId(),
+                        Connection.getInstance().getColorByCode(colorCode).getId()
+                    );
+                    System.out.println("New item is added!");
+                }
+                Data.getInstance().refreshItemDetails();
 
 //                AddNewItem.this.setResult(isInserted);
             }

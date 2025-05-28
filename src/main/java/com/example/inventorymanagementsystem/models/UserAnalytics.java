@@ -80,4 +80,5 @@ public class UserAnalytics implements DataModel {
     public String getValue() {
         return null;
     }
+
 }

@@ -26,6 +26,11 @@ public class ItemDetail implements DataModel {
 
     private IntegerProperty itemHasSizeID;
 
+    private IntegerProperty colorHasItemHasSizeID;
+
+    private IntegerProperty remainingQty;
+    private IntegerProperty orderedQty;
+
 
     public ItemDetail(int id, String name, Double price,
                       Double sellingPrice, int stockID,
@@ -35,7 +40,9 @@ public class ItemDetail implements DataModel {
                       String itemSize,
                       int itemColorID,
                       String itemColor,
-                      int itemHasSizeID){
+                      int itemHasSizeID,
+                      int colorHasItemHasSizeID,
+                      int orderedQty, int remainingQty){
         idProperty().setValue(id);
         nameProperty().setValue(name);
         priceProperty().setValue(price);
@@ -48,6 +55,9 @@ public class ItemDetail implements DataModel {
         itemColorIDProperty().setValue(itemColorID);
         itemColorProperty().setValue(itemColor);
         itemHasSizeIDProperty().setValue(itemHasSizeID);
+        colorHasItemHasSizeIDProperty().setValue(colorHasItemHasSizeID);
+        orderedQtyProperty().setValue(orderedQty);
+        remainingQtyProperty().setValue(remainingQty);
     }
 
     public IntegerProperty idProperty(){
@@ -118,18 +128,39 @@ public class ItemDetail implements DataModel {
         return itemColor;
     }
 
-    public int getPrice() {
-        return (int) priceProperty().get(); // Correctly retrieves the price value
-    }
-    public int getId() {
-        return id.get();
-    }
-
     public IntegerProperty itemHasSizeIDProperty(){
         if (itemHasSizeID == null) {
             itemHasSizeID = new SimpleIntegerProperty(this, "itemHasID");
         }
         return itemHasSizeID;
+    }
+
+    public IntegerProperty colorHasItemHasSizeIDProperty(){
+        if (colorHasItemHasSizeID == null){
+            colorHasItemHasSizeID = new SimpleIntegerProperty(this, "colorHasItemHasSizeID");
+        }
+        return colorHasItemHasSizeID;
+    }
+
+    public IntegerProperty orderedQtyProperty(){
+        if (orderedQty == null){
+            orderedQty = new SimpleIntegerProperty(this, "orderedQty");
+        }
+        return orderedQty;
+    }
+
+    public IntegerProperty remainingQtyProperty(){
+        if (remainingQty == null){
+            remainingQty = new SimpleIntegerProperty(this, "remainingQty");
+        }
+        return remainingQty;
+    }
+
+    public int getPrice() {
+        return (int) priceProperty().get(); // Correctly retrieves the price value
+    }
+    public int getId() {
+        return id.get();
     }
 
     public String getName() {
@@ -185,5 +216,30 @@ public class ItemDetail implements DataModel {
     }
     public StringProperty itemTotalCostProperty () {
         return itemTotalCost;
+    }
+
+    public Integer getColorHasItemHasSize(){
+        return colorHasItemHasSizeID.get();
+    }
+
+    public String getItemTotalCost() {
+        return itemTotalCost.get();
+    }
+
+    public int getColorHasItemHasSizeID() {
+        return colorHasItemHasSizeID.get();
+    }
+
+    public int getRemainingQty() {
+        return remainingQty.get();
+    }
+
+    public int getOrderedQty() {
+        return orderedQty.get();
+    }
+
+    @Override
+    public String toString() {
+        return name.get();
     }
 }

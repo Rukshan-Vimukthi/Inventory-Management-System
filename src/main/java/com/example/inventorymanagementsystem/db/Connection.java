@@ -26,7 +26,7 @@ public class Connection {
 
     public Connection(){
         try {
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/sandyafashioncorner", "root", "Sandun@2008.sd");
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/sandyafashioncorner", "root", "root@techlix2002");
         }catch(SQLException e){
             e.printStackTrace();
         }
@@ -253,7 +253,7 @@ public class Connection {
         return items;
     }
 
-    public boolean addNewColor(String colorCode){
+    public int addNewColor(String colorCode){
         try {
             // create the statement
             statement = connection.createStatement();
@@ -265,11 +265,11 @@ public class Connection {
             int id = generatedKeys.getInt(1);
             System.out.println("New Color ID: " + id);
             Data.getInstance().refreshColors();
-            return success;
+            return id;
         }catch(SQLException sqlException){
             sqlException.printStackTrace();
         }
-        return false;
+        return -1;
     }
 
     /**
@@ -289,6 +289,44 @@ public class Connection {
             exception.printStackTrace();
         }
         return false;
+    }
+
+    public List<Color> filterColors(String colorCode){
+        ArrayList<Color> rows = new ArrayList<>();
+        try {
+            statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM `color` WHERE `color` LIKE '%" + colorCode + "%'");
+            while (resultSet.next()){
+                int id = resultSet.getInt(1);
+                String colorCodeValue = resultSet.getString(2);
+                Color color = new Color(id, colorCodeValue);
+                rows.add(color);
+            }
+        }catch(SQLException sqlException){
+            sqlException.printStackTrace();
+        }
+        return rows;
+    }
+
+    /**
+     * Get the color by using the color code
+     * @param colorCode - color code (ex. #FF00FF)
+     * @return Color - color object for the color code specified.
+     * null if there is no any color match with the color code specified
+     */
+    public Color getColorByCode(String colorCode){
+        Color color = null;
+        try {
+            statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM `color` WHERE `color` = '" + colorCode + "'");
+            resultSet.next();
+            int id = resultSet.getInt(1);
+            String colorCodeValue = resultSet.getString(2);
+            color = new Color(id, colorCodeValue);
+        }catch(SQLException sqlException){
+            sqlException.printStackTrace();
+        }
+        return color;
     }
 
     /**
@@ -324,35 +362,82 @@ public class Connection {
         return false;
     }
 
+    /**
+     * Add a new item (product) to the database
+     *
+     * @param name - Name of the item
+     * @param qty - Ordered Quantity there were at the time when the item get inserted
+     * @param price - Unit price that had been assigned to the item when placed an order
+     * @param sellingPrice - Selling price of the item
+     * @param stockID - ID of the stock to which the item belongs
+     * @param sizeID - ID of the size which the item has
+     * @param colorID - ID of the color which the item has
+     * @return boolean - true if insertion is successful. false otherwise
+     */
     public boolean addNewItem(String name, Integer qty, Double price, Double sellingPrice, int stockID, int sizeID, int colorID){
+        System.out.println(name);
+        System.out.println(qty);
+        System.out.println(price);
+        System.out.println(sellingPrice);
+        System.out.println(stockID);
+        System.out.println(sizeID);
+        System.out.println(colorID);
         try{
             statement = connection.createStatement();
-            boolean isExecuted = statement.execute(
+            statement.execute(
                     "INSERT INTO `item` (`name`, " +
-                            "`selling_price`, `stock_id`)" +
+                            "`price`, `stock_id`)" +
                             "VALUES('%s', '%f', '%d')".formatted(
                                     name, sellingPrice, stockID
-                            ));
+                            ), Statement.RETURN_GENERATED_KEYS);
             ResultSet generatedKeys = statement.getGeneratedKeys();
             generatedKeys.next();
             int id = generatedKeys.getInt(1);
-
-            if (isExecuted){
-                isExecuted = statement.execute("INSERT INTO `item_has_size` (" +
-                        ("`item_id`, `item_stock_id`, `size_id`, `ordered_qty`, `cost`) " +
-                                "('%d', '%d', '%d', '%d', '%f')").formatted(
-                                        1, stockID, sizeID, qty, price));
-
-                if (isExecuted){
-                    isExecuted = statement.execute("INSERT INTO `color_has_item_has_size` (" +
+            statement.execute("INSERT INTO `item_has_size` (" +
+                        "`item_id`, `item_stock_id`, `size_id`, `ordered_qty`, `cost`, `price`, `remaining_qty`) " +
+                                "VALUES(%d, %d, %d, %d, %f, %f, %d)".formatted(
+                                        id, stockID, sizeID, qty, price, sellingPrice, qty), Statement.RETURN_GENERATED_KEYS);
+            generatedKeys = statement.getGeneratedKeys();
+            generatedKeys.next();
+            id = generatedKeys.getInt(1);
+            statement.execute("INSERT INTO `color_has_item_has_size` (" +
                             "`color_id`, `item_has_size_id`) VALUES('%d', '%d')".formatted(
-                                    colorID, 1
-                            ));
-                    return isExecuted;
-                }
-            }
+                                    colorID, id
+                            ), Statement.RETURN_GENERATED_KEYS);
+            Data.getInstance().refreshItemDetails();
+            return true;
         }catch(SQLException e){
             e.printStackTrace();
+        }
+        return false;
+    }
+
+    /**
+     * Update the information of the item selected
+     * @return
+     */
+    public boolean updateItem(int itemID, int itemHasSizeID, int colorHasItemHasSizeId, String name, Integer qty, Integer remainingQty, Double price, Double sellingPrice, int stockID, int sizeID, int colorID){
+        try{
+            statement = connection.createStatement();
+            statement.execute(
+                    "UPDATE `item` SET `name` = '%s', `price` = %f, `stock_id` = %d WHERE `id` = %d".formatted(
+                            name, price, stockID, itemID
+                    ));
+
+
+            statement.execute(
+                    "UPDATE `item_has_size` SET `item_id` = %d, `item_stock_id` = %d, `size_id` = %d, `ordered_qty` = %d, `cost` = %f, `price` = %f, `remaining_qty` = %d WHERE `id` = %d ".formatted(
+                            itemID, stockID, sizeID, qty, price, sellingPrice, remainingQty, itemHasSizeID
+                    ));
+
+            statement.execute("UPDATE `color_has_item_has_size` SET " +
+                    "`color_id` = %d WHERE `id` = %d".formatted(
+                            colorID, colorHasItemHasSizeId
+                    ));
+            Data.getInstance().refreshItemDetails();
+            return true;
+        }catch(SQLException sqlException){
+            sqlException.printStackTrace();
         }
         return false;
     }
@@ -386,19 +471,21 @@ public class Connection {
         try{
             statement = connection.createStatement();
             ResultSet resultSet = statement.executeQuery("SELECT * FROM `item` " +
-                    "INNER JOIN `item_has_size` " +
+                    "LEFT JOIN `item_has_size` " +
                     "ON `item`.`id` = `item_has_size`.`item_id`" +
-                    "INNER JOIN `stock` ON `item`.`stock_id` = `stock`.`id` " +
-                    "INNER JOIN `size` ON `size`.`id` = `item_has_size`.`size_id` " +
-                    "INNER JOIN `color_has_item_has_size` " +
+                    "LEFT JOIN `stock` ON `item`.`stock_id` = `stock`.`id` " +
+                    "LEFT JOIN `size` ON `size`.`id` = `item_has_size`.`size_id` " +
+                    "LEFT JOIN `color_has_item_has_size` " +
                     "ON `item_has_size`.`id` = `color_has_item_has_size`.`item_has_size_id` " +
-                    "INNER JOIN `color` ON `color_has_item_has_size`.`color_id` = `color`.`id`");
+                    "LEFT JOIN `color` ON `color_has_item_has_size`.`color_id` = `color`.`id`");
 
             while (resultSet.next()){
                 int itemID = resultSet.getInt("item.id");
                 String name = resultSet.getString("item.name");
                 Double price = resultSet.getDouble("item_has_size.cost");
                 Double sellingPrice = resultSet.getDouble("item_has_size.price");
+                int orderedQty = resultSet.getInt("item_has_size.ordered_qty");
+                int remainingQty = resultSet.getInt("item_has_size.remaining_qty");
                 int stockID = resultSet.getInt("stock.id");
                 String stockDate = resultSet.getString("stock.date");
                 String stockName = resultSet.getString("stock.name");
@@ -407,6 +494,7 @@ public class Connection {
                 String itemSize = resultSet.getString("size.size");
                 int itemColorID = resultSet.getInt("color.id");
                 String itemColor = resultSet.getString("color.color");
+                int colorHasItemHasSizeID = resultSet.getInt("color_has_item_has_size.id");
 
                 ItemDetail itemDetail = new ItemDetail(
                         itemID,
@@ -420,7 +508,10 @@ public class Connection {
                         itemSize,
                         itemColorID,
                         itemColor,
-                        itemHasSizeID
+                        itemHasSizeID,
+                        colorHasItemHasSizeID,
+                        orderedQty,
+                        remainingQty
                 );
                 System.out.println(name);
 
@@ -550,6 +641,23 @@ public class Connection {
             sqlException.printStackTrace();
         }
         return size;
+    }
+
+    public List<Size> filterSizes(String sizeText){
+        List<Size> sizes = new ArrayList<>();
+        try {
+            statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM `size` WHERE `size` LIKE '%" + sizeText + "%'");
+            while (resultSet.next()){
+                int id = resultSet.getInt(1);
+                String sizeValue = resultSet.getString(2);
+                Size size = new Size(id, sizeValue);
+                sizes.add(size);
+            }
+        } catch (SQLException sqlException) {
+            sqlException.printStackTrace();
+        }
+        return sizes;
     }
 
     public boolean updateSize(int id, String newSize){
@@ -891,6 +999,28 @@ public class Connection {
             exception.printStackTrace();
         }
         return false;
+    }
+
+    public List<Stock> filterStocks(String value){
+        ArrayList<Stock> rows = new ArrayList<>();
+        try {
+            PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM `stock` WHERE `date` LIKE ? OR `name` LIKE ?");
+            preparedStatement.setString(1, '%' + value + '%');
+            preparedStatement.setString(2, '%' + value + '%');
+
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()){
+                int id = resultSet.getInt(1);
+                String date = resultSet.getString(2);
+                String name = resultSet.getString(3);
+                System.out.println(id + " " + date + " " + name);
+                Stock stock = new Stock(id, date, name);
+                rows.add(stock);
+            }
+        }catch(SQLException sqlException){
+            sqlException.printStackTrace();
+        }
+        return rows;
     }
 
     public Stock getStock(int stockId){
