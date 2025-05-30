@@ -10,6 +10,9 @@ version '1.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
+    maven {
+        url="https://jitpack.io"
+    }
 }
 
 ext {
@@ -42,6 +45,11 @@ dependencies {
     implementation('org.kordamp.ikonli:ikonli-javafx:12.3.1')
     implementation('org.kordamp.ikonli:ikonli-fontawesome5-pack:12.3.1')
     implementation 'com.mysql:mysql-connector-j:8.3.0'
+//    implementation 'org.apache.commons:commons-configuration2:2.9.0'
+//    implementation 'org.apache.commons:commons-beanutils:1.9.4'
+
+
+//    implementation ('io.github.cdimascio:java-dotenv:5.2.2')
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:${junitVersion}")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")

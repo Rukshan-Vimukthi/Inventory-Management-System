@@ -3,10 +3,7 @@ package com.example.inventorymanagementsystem;
 import com.example.inventorymanagementsystem.state.Data;
 
 import com.example.inventorymanagementsystem.state.ThemeObserver;
-import com.example.inventorymanagementsystem.view.Analytics;
-import com.example.inventorymanagementsystem.view.Checkout;
-import com.example.inventorymanagementsystem.view.Inventory;
-import com.example.inventorymanagementsystem.view.Users;
+import com.example.inventorymanagementsystem.view.*;
 import com.example.inventorymanagementsystem.view.components.TabBuilder;
 import com.example.inventorymanagementsystem.view.dialogs.SignIn;
 import javafx.application.Application;
@@ -25,6 +22,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Paint;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import org.kordamp.ikonli.Ikonli;
@@ -40,64 +38,12 @@ public class InventoryManagementApplication extends Application {
 
         FXMLLoader fxmlLoader = new FXMLLoader(InventoryManagementApplication.class.getResource("ApplicationUI.fxml"));
         VBox rootContainer = new VBox();
-        HBox titleBar = new HBox();
-        titleBar.setPadding(new Insets(5.0D));
-        titleBar.setSpacing(10.0D);
-        Label label = new Label("Inventory Management System + Integrated POS features");
-        MenuBar menuBar = new MenuBar();
-        Menu file = new Menu("File");
-        Menu about = new Menu("About");
 
-        menuBar.getMenus().addAll(file, about);
-
-        HBox commandButtons = new HBox();
-        FontIcon minimizeIcon = new FontIcon(FontAwesomeSolid.WINDOW_MINIMIZE);
-        FontIcon restoreIcon = new FontIcon(FontAwesomeSolid.WINDOW_RESTORE);
-        FontIcon closeIcon = new FontIcon(FontAwesomeSolid.WINDOW_CLOSE);
-
-        FontIcon lightTheme = new FontIcon(FontAwesomeSolid.SUN);
-        FontIcon darkTheme = new FontIcon(FontAwesomeSolid.MOON);
-
-        ToggleButton toggleTheme = new ToggleButton();
-        toggleTheme.setGraphic(lightTheme);
-        toggleTheme.selectedProperty().addListener(new ChangeListener<Boolean>() {
-            @Override
-            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-                if (newValue){
-                    toggleTheme.setGraphic(darkTheme);
-                    ThemeObserver.init().applyLightThemeChange();
-                }else{
-                    toggleTheme.setGraphic(lightTheme);
-                    ThemeObserver.init().applyDarkThemeChange();
-                }
-            }
-        });
-
-        Button minimize = new Button();
-        minimize.setGraphic(minimizeIcon);
-        minimize.setOnAction(e -> {
-            stage.setIconified(true);
-        });
-        Button restore = new Button();
-        restore.setGraphic(restoreIcon);
-        restore.setOnAction(e -> {
-            stage.setMaximized(!stage.isMaximized());
-        });
-        Button close = new Button();
-        close.setGraphic(closeIcon);
-        close.setOnAction(actionEvent -> {
-            stage.close();
-        });
-
-        commandButtons.getChildren().addAll(toggleTheme, minimize, restore, close);
-        commandButtons.setMinWidth(120);
-        commandButtons.setMaxWidth(120);
-        commandButtons.setAlignment(Pos.CENTER_RIGHT);
-
-        titleBar.getChildren().addAll(label, menuBar, commandButtons);
-        HBox.setHgrow(menuBar, Priority.ALWAYS);
+        TitleBar titleBar = new TitleBar(stage);
 
         TabPane tabPane = new TabPane();
+        tabPane.setStyle("-fx-background-color: #222;");
+        
         tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
         tabPane.setSide(Side.LEFT);
         tabPane.getStylesheets().add(
@@ -110,12 +56,22 @@ public class InventoryManagementApplication extends Application {
         tabPane.setTabMaxWidth(30.0D);
         tabPane.setTabMinHeight(200.0D);
         tabPane.setTabMaxHeight(200.0D);
+        tabPane.setFocusTraversable(false);
+
+        FontIcon checkoutIcon = new FontIcon(FontAwesomeSolid.SHOPPING_CART);
+        checkoutIcon.setFill(Paint.valueOf("#FFF"));
+        FontIcon analyticsIcon = new FontIcon(FontAwesomeSolid.CHART_LINE);
+        analyticsIcon.setFill(Paint.valueOf("#FFF"));
+        FontIcon inventoryIcon = new FontIcon(FontAwesomeSolid.BOXES);
+        inventoryIcon.setFill(Paint.valueOf("#FFF"));
+        FontIcon userIcon = new FontIcon(FontAwesomeSolid.USERS);
+        userIcon.setFill(Paint.valueOf("#FFF"));
 
         // tabs in the main UI
-        Tab checkoutTab = TabBuilder.buildTab("Checkout");
-        Tab analyticsTab = TabBuilder.buildTab("Analytics");
-        Tab inventory = TabBuilder.buildTab("Inventory");
-        Tab users = TabBuilder.buildTab("Users");
+        Tab checkoutTab = TabBuilder.buildTab("Checkout", checkoutIcon);
+        Tab analyticsTab = TabBuilder.buildTab("Analytics", analyticsIcon);
+        Tab inventory = TabBuilder.buildTab("Inventory", inventoryIcon);
+        Tab users = TabBuilder.buildTab("Users", userIcon);
 
         // create the inventory view (custom javaFX layout container ex. HBox, VBox)
         Inventory inventoryView = new Inventory();
@@ -155,7 +111,9 @@ public class InventoryManagementApplication extends Application {
 
         ThemeObserver.init().addObserver(inventoryView);
         ThemeObserver.init().addObserver(analyticsView);
+
         ThemeObserver.init().addObserver(checkoutLayout);
+
         ThemeObserver.init().applyDarkThemeChange();
 
         // Add tabs to the tabPane

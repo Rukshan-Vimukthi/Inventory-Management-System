@@ -61,6 +61,11 @@
 .information-texts {
     -fx-fill: gray;
 }
+
 .information-label {
     -fx-fill: white;
+}
+
+.form-field-label{
+    -fx-text-fill: #00AAFF;
 }

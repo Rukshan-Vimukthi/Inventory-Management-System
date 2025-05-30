@@ -4,6 +4,7 @@ import com.example.inventorymanagementsystem.db.Connection;
 import com.example.inventorymanagementsystem.models.ItemDetail;
 import com.example.inventorymanagementsystem.models.ItemHasSize;
 import com.example.inventorymanagementsystem.services.interfaces.ItemPreviewObserver;
+import com.example.inventorymanagementsystem.services.interfaces.ThemeObserver;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
@@ -18,7 +19,7 @@ import javafx.scene.text.TextAlignment;
 /**
  * Class that extends VBox to show the information of the selected item.
  */
-public class ItemPreview extends HBox implements ItemPreviewObserver {
+public class ItemPreview extends HBox implements ItemPreviewObserver, ThemeObserver {
     VBox informationContainer;
     GridPane gridPane;
 
@@ -49,7 +50,7 @@ public class ItemPreview extends HBox implements ItemPreviewObserver {
      *
      */
     public ItemPreview(){
-        this.setStyle("-fx-background-color: #AAA; -fx-border-radius: 10px; -fx-background-radius: 10px;");
+        this.setStyle("-fx-border-radius: 10px; -fx-background-radius: 10px; ");
         this.setPadding(new Insets(10.0D));
         imageView = new ImageView();
         imageView.setFitWidth(300.0D);
@@ -60,6 +61,7 @@ public class ItemPreview extends HBox implements ItemPreviewObserver {
         this.setMinHeight(300.0D);
         this.setMaxHeight(300.0D);
         this.setPadding(new Insets(10.0D));
+        com.example.inventorymanagementsystem.state.ThemeObserver.init().addObserver(this);
     }
 
     @Override
@@ -180,5 +182,15 @@ public class ItemPreview extends HBox implements ItemPreviewObserver {
         label.setTextAlignment(TextAlignment.CENTER);
         this.setAlignment(Pos.CENTER);
         this.getChildren().add(label);
+    }
+
+    @Override
+    public void lightTheme() {
+        this.setStyle(this.getStyle() + "-fx-background-color: #AAA; ");
+    }
+
+    @Override
+    public void darkTheme() {
+        this.setStyle(this.getStyle() + "-fx-background-color: #202033; ");
     }
 }

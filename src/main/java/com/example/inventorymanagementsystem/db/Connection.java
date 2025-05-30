@@ -5,11 +5,20 @@ import com.example.inventorymanagementsystem.state.Data;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.chart.XYChart;
+//import org.apache.commons.configuration2.Configuration;
+//import org.apache.commons.configuration2.FileBasedConfiguration;
+//import org.apache.commons.configuration2.PropertiesConfiguration;
+//import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
+//import org.apache.commons.configuration2.builder.fluent.Parameters;
+//import org.apache.commons.configuration2.ex.ConfigurationException;
 
 import javax.xml.transform.Result;
 import java.io.IOException;
 import java.sql.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAmount;
 import java.util.*;
 import java.util.Date;
 
@@ -26,7 +35,19 @@ public class Connection {
 
     public Connection(){
         try {
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/sandyafashioncorner", "root", "Sandun@2008.sd");
+//            Parameters parameters = new Parameters();
+//            FileBasedConfigurationBuilder<FileBasedConfiguration> fileBasedConfigurationBuilder = new FileBasedConfigurationBuilder<FileBasedConfiguration>(PropertiesConfiguration.class)
+//                    .configure(parameters.properties().setFileName("db.env"));
+//
+//            Configuration config = fileBasedConfigurationBuilder.getConfiguration();
+//            String dbLink = config.getString("DBURL");
+//            String username = config.getString("USERNAME");
+//            String password = config.getString("PASSWORD");
+
+            String dbLink = "jdbc:mysql://localhost:3306/sandyafashioncorner";
+            String username = "root";
+            String password = "root@techlix2002";
+            connection = DriverManager.getConnection(dbLink, username, password);
         }catch(SQLException e){
             e.printStackTrace();
         }
@@ -715,25 +736,47 @@ public class Connection {
      * @param roleID - roleID - call getRoleIDs() method to get the roles available
      * @return boolean - true if the user is successfully added. false otherwise
      */
-    public boolean addNewUser(String firstName, String lastName, String email, int roleID){
+    public int addNewUser(String firstName, String lastName, String userName, String email, String password, String registeredDate, int roleID){
         try{
             statement = connection.createStatement();
             boolean isUserAdded = statement.execute("INSERT INTO `user` " +
-                    "(`firstName`, `lastName`, `email`, `role_id`) " +
-                    "VALUES('%s', '%s', '%s')".formatted(firstName, lastName, email, roleID));
-//            Data.getInstance().refreshUsers();
-            return isUserAdded;
+                    "(`firstName`, `lastName`, `username`, `email`, `password`, `registered_date`, `role_id`) " +
+                    "VALUES('%s', '%s', '%s', '%s', '%s', '%s', '%d')".formatted(firstName, lastName, userName, email, password, registeredDate, roleID));
+            Data.getInstance().refreshUsers();
+            return 1;
         }catch(SQLException exception){
             exception.printStackTrace();
         }
-        return false;
+        return -1;
     }
 
     /**
      * Get and returns all the users from the database
      */
-    public void getUsers(){
+    public List<User> getUsers(){
+        List<User> users = new ArrayList<>();
+        try{
+            statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM `user` INNER JOIN `role` ON `user`.`role_id` = `role`.`id`");
+            while (resultSet.next()){
+                int id = resultSet.getInt("id");
+                String firstName = resultSet.getString("firstname");
+                String lastName = resultSet.getString("lastname");
+                String userName = resultSet.getString("username");
+                String email = resultSet.getString("email");
+                String password = resultSet.getString("password");
+                String registeredDate = resultSet.getString("registered_date");
+                String role = resultSet.getString("role.role");
 
+                System.out.println(firstName + " " + lastName);
+
+                User user = new User(id, firstName, lastName, userName, email, password, registeredDate, role);
+                users.add(user);
+            }
+        }catch(SQLException exception){
+            exception.printStackTrace();
+        }
+        return users;
     }
 
     public ResultSet getUser(String userName, String password){
@@ -760,32 +803,135 @@ public class Connection {
         return null;
     }
 
+    public List<Customer> getCustomersRegisteredOn(String timeFrame){
+        LocalDateTime endTime = LocalDateTime.now();
+        LocalDateTime startTime = null;
+
+        int hoursElapsed = endTime.getHour();
+        int minutesElapsed = endTime.getMinute();
+        int secondsElapsed = endTime.getSecond();
+        int dayOfTheWeek = endTime.getDayOfWeek().getValue();
+
+        LocalDateTime todayStart = endTime.minusSeconds(secondsElapsed)
+                .minusMinutes(minutesElapsed)
+                .minusHours(hoursElapsed);
+
+        int dateElapsed = endTime.getDayOfMonth();
+        int dayInTheYear = endTime.getDayOfYear();
+        int monthsElapsed = 0;
+
+        System.out.println(dayInTheYear);
+        System.out.println(endTime.getMonth());
+        System.out.println(endTime.getYear());
+        System.out.println(dayOfTheWeek);
+
+        switch (timeFrame) {
+            case "Today" -> startTime = todayStart;
+            case "This Week" -> startTime = endTime.minusDays(dayOfTheWeek);
+            case "Last Week" -> {
+                startTime = endTime.minusDays(dayOfTheWeek).minusWeeks(1);
+                endTime = endTime.minusDays(dayOfTheWeek);
+            }
+            case "This month" -> startTime = endTime.minusDays(dateElapsed);
+            case "Last Month" -> {
+                startTime = endTime.minusDays(dateElapsed).minusMonths(1);
+                endTime = endTime.minusDays(dateElapsed);
+            }
+            case "This Year" -> startTime = endTime.minusDays(dayInTheYear);
+            case "Last Year" -> startTime = endTime.minusDays(dayInTheYear).minusYears(1);
+        }
+
+        if(startTime != null) {
+            System.out.print("Start Time: ");
+            System.out.println(startTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        }
+
+        System.out.print("End Time: ");
+        System.out.println(endTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+
+
+        List<Customer> customers = new ArrayList<>();
+        try{
+            statement = connection.createStatement();
+            ResultSet resultSet;
+
+            if (startTime != null) {
+                resultSet = statement.executeQuery("SELECT * FROM `customer` WHERE `registered_date` >= '%s' AND `registered_date` <= '%s'".formatted(startTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), endTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))));
+            }else{
+                resultSet = statement.executeQuery("SELECT * FROM `customer`");
+            }
+
+            while (resultSet.next()){
+                int id = resultSet.getInt("id");
+                String firstName = resultSet.getString("first_name");
+                String lastName = resultSet.getString("last_name");
+                String email = resultSet.getString("email");
+                String phone = resultSet.getString("phone");
+                String registeredDate = resultSet.getString("registered_date");
+
+//                System.out.println(firstName + " " + lastName);
+
+                Customer customer = new Customer(id, firstName, lastName, phone, email, registeredDate);
+                customers.add(customer);
+            }
+        }catch(SQLException exception){
+            exception.printStackTrace();
+        }
+        return customers;
+    }
+
+    public List<Customer> getCustomers(){
+        List<Customer> customers = new ArrayList<>();
+        try{
+            statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM `customer`");
+            while (resultSet.next()){
+                int id = resultSet.getInt("id");
+                String firstName = resultSet.getString("first_name");
+                String lastName = resultSet.getString("last_name");
+                String email = resultSet.getString("email");
+                String phone = resultSet.getString("phone");
+                String registeredDate = resultSet.getString("registered_date");
+
+                System.out.println(firstName + " " + lastName);
+
+                Customer customer = new Customer(id, firstName, lastName, phone, email, registeredDate);
+                customers.add(customer);
+            }
+        }catch(SQLException exception){
+            exception.printStackTrace();
+        }
+        return customers;
+    }
+
     /*
     * Get the details of all the users and show the details
     * */
     public ObservableList<User> getUserDetail() {
         ObservableList<User> userList = FXCollections.observableArrayList();
 
-        String query = "SELECT `id`, `firstName`, `lastName`, `username`, `email`, `password` FROM user";
-
-        try (PreparedStatement stmt = connection.prepareStatement(query);
-             ResultSet resultSet = stmt.executeQuery()) {
-
-            while (resultSet.next()) {
-                User user = new User(
-                        resultSet.getInt("id"),
-                        resultSet.getString("firstName"),
-                        resultSet.getString("lastName"),
-                        resultSet.getString("username"),
-                        resultSet.getString("email"),
-                        resultSet.getString("password")
-                );
-                userList.add(user);
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+//        String query = "SELECT `id`, `firstName`, `lastName`, `username`, `email`, `password` FROM user";
+//
+//        try (PreparedStatement stmt = connection.prepareStatement(query);
+//             ResultSet resultSet = stmt.executeQuery()) {
+//
+//            while (resultSet.next()) {
+//                User user = new User(
+//                        resultSet.getInt("id"),
+//                        resultSet.getString("firstName"),
+//                        resultSet.getString("lastName"),
+//                        resultSet.getString("username"),
+//                        resultSet.getString("email"),
+//                        resultSet.getString("password")
+//                        resultSet.getString("")
+//                        resultSet.getString("password")
+//                );
+//                userList.add(user);
+//            }
+//
+//        } catch (SQLException e) {
+//            e.printStackTrace();
+//        }
         return userList;
     }
 
@@ -1117,4 +1263,54 @@ public class Connection {
         }
         return userAnalytics;
     }
+
+    public List<Customer> getTopTenCustomers(){
+        List<Customer> customerList = new ArrayList<>();
+        try{
+            statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT `customer_id`, `customer`.*, COUNT(*) AS count FROM `customer_has_item_has_size` INNER JOIN `customer` ON `customer_has_item_has_size`.`customer_id` = `customer`.`id` GROUP BY `customer_id` ORDER BY count DESC LIMIT 10");
+            while (resultSet.next()){
+                int id = resultSet.getInt("id");
+                String firstName = resultSet.getString("first_name");
+                String lastName = resultSet.getString("last_name");
+                String phone = resultSet.getString("phone");
+                String email = resultSet.getString("email");
+                String registeredDate = resultSet.getString("registered_date");
+
+                Customer customer = new Customer(id, firstName, lastName, phone, email, registeredDate);
+                customerList.add(customer);
+            }
+        }catch(SQLException e){
+            e.printStackTrace();
+        }
+        return customerList;
+    }
+
+    public int[] getUserCounts(){
+        int numberOfCustomers = 0;
+        int numberOfAdmins = 0;
+        int numberOfUsers = 0;
+
+        try{
+            statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM `user` INNER JOIN `role` WHERE `user`.`role_id` = `role`.`id`");
+            while (resultSet.next()){
+                String role = resultSet.getString("role.role");
+                if (role.equals("Admin")){
+                    numberOfAdmins += 1;
+                }else{
+                    numberOfUsers += 1;
+                }
+            }
+
+            resultSet = statement.executeQuery("SELECT * FROM `customer`");
+            while (resultSet.next()){
+                numberOfCustomers += 1;
+            }
+        }catch(SQLException exception){
+            exception.printStackTrace();
+        }
+        return new int[]{numberOfAdmins, numberOfUsers, numberOfCustomers};
+    }
+
 }

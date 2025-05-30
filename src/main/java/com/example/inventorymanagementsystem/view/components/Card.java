@@ -1,9 +1,11 @@
 package com.example.inventorymanagementsystem.view.components;
 
+import com.example.inventorymanagementsystem.services.interfaces.ThemeObserver;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
 /**
@@ -25,7 +27,7 @@ import javafx.scene.layout.VBox;
  *  <li>#setStyles(String style)</li>
  * </ul>
  */
-public class Card extends VBox {
+public class Card extends VBox implements ThemeObserver {
 
     private Label titleLabel;
     private Label bodyLabel;
@@ -59,11 +61,23 @@ public class Card extends VBox {
         this.header = header;
         this.body = body;
         this.footer = footer;
+        if (header != null) {
+            headerContainer.getChildren().add(header);
+            HBox.setHgrow(this.header, Priority.ALWAYS);
+        }
 
-        headerContainer.getChildren().add(header);
-        bodyContainer.setCenter(body);
-        footerContainer.getChildren().add(footer);
+        if (body != null) {
+            bodyContainer.setCenter(body);
+        }
 
+        if(footer != null) {
+            footerContainer.getChildren().add(footer);
+//            HBox.setHgrow(this.footer, Priority.ALWAYS);
+        }
+        VBox.setVgrow(this.headerContainer, Priority.ALWAYS);
+        VBox.setVgrow(this.bodyContainer, Priority.ALWAYS);
+        VBox.setVgrow(this.footerContainer, Priority.ALWAYS);
+        this.setFillWidth(true);
         this.getChildren().addAll(this.headerContainer, this.bodyContainer, this.footerContainer);
     }
 
@@ -80,6 +94,7 @@ public class Card extends VBox {
         footerContainer.getChildren().add(this.footerLabel);
 
         this.getChildren().addAll(this.headerContainer, this.bodyContainer, this.footerContainer);
+        com.example.inventorymanagementsystem.state.ThemeObserver.init().addObserver(this);
     }
 
     /**
@@ -184,5 +199,25 @@ public class Card extends VBox {
      */
     public void setStyles(String style){
         this.addStyle(style);
+    }
+
+    public void setCardWidth(double width){
+        this.setMinWidth(width);
+        this.setMaxWidth(width);
+    }
+
+    public void setCardHeight(double height){
+        this.setMinHeight(height);
+        this.setMaxHeight(height);
+    }
+
+    @Override
+    public void lightTheme() {
+//        this.setBackgroundColor("#EEE");
+    }
+
+    @Override
+    public void darkTheme() {
+//        this.setBackgroundColor("#002");
     }
 }

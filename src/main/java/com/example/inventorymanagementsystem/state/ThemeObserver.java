@@ -9,11 +9,11 @@ import java.util.List;
 public class ThemeObserver {
     private static ThemeObserver themeObserver;
     private static List<com.example.inventorymanagementsystem.services.interfaces.ThemeObserver> nodes;
-    private static List<com.example.inventorymanagementsystem.services.interfaces.ThemeObserver> controls;
 
     private ThemeObserver(){
-        nodes = new ArrayList<>();
-        controls = new ArrayList<>();
+        if (nodes == null) {
+            nodes = new ArrayList<>();
+        }
     }
 
     public static ThemeObserver init(){
