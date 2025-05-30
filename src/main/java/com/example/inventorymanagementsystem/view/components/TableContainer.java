@@ -15,6 +15,8 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.util.Callback;
+import org.kordamp.ikonli.fontawesome5.FontAwesomeSolid;
+import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +42,15 @@ public class TableContainer<T> extends VBox {
         VBox toolBarContainer = new VBox();
         toolBarContainer.setFillWidth(true);
 
+        FontIcon addIcon = new FontIcon(FontAwesomeSolid.PLUS);
+        addIcon.setFill(Paint.valueOf("#FFF"));
+        FontIcon refreshIcon = new FontIcon(FontAwesomeSolid.RECYCLE);
+        refreshIcon.setFill(Paint.valueOf("#FFF"));
+        FontIcon deleteIcon = new FontIcon(FontAwesomeSolid.TRASH);
+        deleteIcon.setFill(Paint.valueOf("#FFF"));
+        FontIcon searchIcon = new FontIcon(FontAwesomeSolid.SEARCH);
+        searchIcon.setFill(Paint.valueOf("#FFF"));
+
         HBox searchBarContainer = new HBox();
         searchBarContainer.setSpacing(10.0D);
         VBox searchFieldContainer = new VBox();
@@ -54,7 +65,9 @@ public class TableContainer<T> extends VBox {
 
         Label searchLabel;
         searchTextField = new TextField();
-        search = new Button("Search");
+        searchTextField.getStyleClass().add("default-text-areas");
+        search = new Button("Search", searchIcon);
+        search.getStyleClass().add("default-buttons");
         search.setOnAction(actionEvent -> {
             tableContainerInterface.onSearch(formFields, searchTextField.getText());
         });
@@ -74,22 +87,26 @@ public class TableContainer<T> extends VBox {
             searchFieldContainer.getChildren().add(searchField);
         }
 
-        Button addItemButton = new Button("Add");
+        Button addItemButton = new Button("Add", addIcon);
+        addItemButton.getStyleClass().add("add-button");
         addItemButton.setOnAction((actionEvent) -> {
             tableContainerInterface.addItem();
         });
 
-        Button refresh = new Button("Refresh");
+        Button refresh = new Button("Refresh", refreshIcon);
+        refresh.getStyleClass().add("default-buttons");
         refresh.setOnAction(event -> {
             tableContainerInterface.refresh();
         });
 
-        Button delete = new Button("Delete");
+        Button delete = new Button("Delete", deleteIcon);
+        delete.getStyleClass().add("delete-button");
         delete.setOnAction(event -> {
             tableContainerInterface.delete(tableView.getSelectionModel().getSelectedItem());
         });
 
         Button update = new Button("Update");
+        update.getStyleClass().add("update-button");
         update.setOnAction(event -> {
             tableContainerInterface.update(tableView.getSelectionModel().getSelectedItem());
         });
@@ -104,6 +121,7 @@ public class TableContainer<T> extends VBox {
         searchBarContainer.getChildren().addAll(filters, searchFieldContainer);
 
         extraButtonsContainer = new HBox();
+        extraButtonsContainer.setSpacing(10.0D);
 
         toolBar.getChildren().addAll(addItemButton, refresh, delete, update, extraButtonsContainer);
 

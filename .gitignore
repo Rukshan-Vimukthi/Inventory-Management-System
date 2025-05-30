@@ -43,3 +43,7 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+./db.mwb
+./db.mwb.bak
+db.env

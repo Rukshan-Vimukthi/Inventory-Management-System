@@ -12,6 +12,16 @@ public class Customer implements DataModel {
     private StringProperty lastName;
     private StringProperty phone;
     private StringProperty email;
+    private StringProperty registeredDate;
+
+    public Customer(int id, String firstName, String lastName, String phone, String email, String registeredDate){
+        setId(id);
+        setFirstName(firstName);
+        setLastName(lastName);
+        setEmail(email);
+        setPhone(phone);
+        setRegisteredDate(registeredDate);
+    }
 
     public IntegerProperty idProperty(){
         if(id == null){
@@ -48,6 +58,13 @@ public class Customer implements DataModel {
         return email;
     }
 
+    public StringProperty registeredDateProperty(){
+        if (registeredDate == null){
+            registeredDate = new SimpleStringProperty(this, "registeredDate");
+        }
+        return registeredDate;
+    }
+
 
     public void setId(int id){
         idProperty().setValue(id);
@@ -69,6 +86,10 @@ public class Customer implements DataModel {
         phoneProperty().setValue(phone);
     }
 
+    public void setRegisteredDate(String registeredDate){
+        registeredDateProperty().setValue(registeredDate);
+    }
+
     public int getId() {
         return id.get();
     }
@@ -87,6 +108,10 @@ public class Customer implements DataModel {
 
     public String getEmail() {
         return email.get();
+    }
+
+    public String getRegisteredDate(){
+        return registeredDateProperty().get();
     }
 
     @Override

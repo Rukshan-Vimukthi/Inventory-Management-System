@@ -27,6 +27,7 @@ public class ChartTableToggleComponent extends VBox {
         VBox.setVgrow(container, Priority.ALWAYS);
 
         Button toggleButton = new Button("Show Table");
+        toggleButton.getStyleClass().add("default-buttons");
         toggleButton.setOnAction(e -> {
             showingChart = !showingChart;
             container.setCenter(showingChart ? chart : table);

@@ -44,8 +44,15 @@ public class Inventory extends HBox implements ThemeObserver {
         itemsTable.addItems(Data.getInstance().getItemDetails());
 
         Button addSizeButton = new Button("Add Size");
+        addSizeButton.getStyleClass().add("add-button");
+        addSizeButton.getStyleClass().add("default-buttons");
+
         Button addColorButton = new Button("Add Color");
-        itemsTable.getChildren().addAll(addSizeButton, addColorButton);
+        addColorButton.getStyleClass().add("add-button");
+        addColorButton.getStyleClass().add("default-buttons");
+
+        itemsTable.addExtraButton(addSizeButton);
+        itemsTable.addExtraButton(addColorButton);
 
         FormField<ComboBox, Size> sizeFilter = new FormField<>("Size", ComboBox.class, Data.getInstance().getSize());
         sizeFilter.setColumnName("`size`.`size`");
@@ -112,6 +119,7 @@ public class Inventory extends HBox implements ThemeObserver {
 
 
         itemPreview = new ItemPreview();
+
 
         itemTableContainer.getChildren().addAll(itemsTable, itemPreview);
         HBox.setHgrow(itemTableContainer, Priority.ALWAYS);
@@ -257,6 +265,6 @@ public class Inventory extends HBox implements ThemeObserver {
 
     @Override
     public void darkTheme() {
-        this.setStyle("-fx-background-color: #555; ");
+        this.setStyle("-fx-background-color: #222; ");
     }
 }
