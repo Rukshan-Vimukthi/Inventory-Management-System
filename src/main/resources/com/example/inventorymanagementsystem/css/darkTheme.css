@@ -61,11 +61,20 @@
 .information-texts {
     -fx-fill: gray;
 }
-
 .information-label {
-    -fx-fill: white;
+    -fx-text-fill: white;
 }
 
-.form-field-label{
-    -fx-text-fill: #00AAFF;
+.hovering-tooltip {
+    -fx-background-color: #333333;
+    -fx-text-fill: #eeeeee;
+    -fx-padding: 8px 10px;
+    -fx-background-radius: 6px;
+    -fx-border-radius: 6px;
+    -fx-border-color: #444444;
+    -fx-border-width: 1px;
+    -fx-font-size: 13px;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-effect: dropshadow(one-pass-box, rgba(0, 0, 0, 0.5), 4, 0.5, 0, 2);
 }
+

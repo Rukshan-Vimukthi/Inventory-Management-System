@@ -1,9 +1,14 @@
 package com.example.inventorymanagementsystem.view.components;
+import com.example.inventorymanagementsystem.db.Connection;
 import javafx.geometry.Pos;
 import javafx.scene.chart.BarChart;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.Node;
+
+import javax.security.auth.RefreshFailedException;
+import javax.security.auth.Refreshable;
+import java.util.List;
 
 public class ChartTableToggleComponent extends VBox {
 

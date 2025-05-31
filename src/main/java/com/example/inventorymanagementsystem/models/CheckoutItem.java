@@ -14,6 +14,8 @@ public class CheckoutItem implements DataModel {
     private final IntegerProperty price;
     private final DoubleProperty sellingPrice;
     private final StringProperty itemTotalCost;
+    private int itemHasSizeId;
+    private boolean isCheckedout = false;
 
     public CheckoutItem(String name, String itemSize, String itemColor,
                         int amount, int price, double sellingPrice, String itemTotalCost) {
@@ -24,6 +26,7 @@ public class CheckoutItem implements DataModel {
         this.price = new SimpleIntegerProperty(price);
         this.sellingPrice = new SimpleDoubleProperty(sellingPrice);
         this.itemTotalCost = new SimpleStringProperty(itemTotalCost);
+        this.itemHasSizeId = itemHasSizeId;
     }
 
     // Getters for TableView
@@ -86,10 +89,17 @@ public class CheckoutItem implements DataModel {
         return itemTotalCost;
     }
 
-
     @Override
     public String getValue() {
         return nameProperty().get();
+    }
+
+    public void setItemHasSizeId(int itemHasSizeId) {
+        this.itemHasSizeId = itemHasSizeId;
+    }
+
+    public int getitemHasSizeId() {
+        return itemHasSizeId;
     }
 
 }

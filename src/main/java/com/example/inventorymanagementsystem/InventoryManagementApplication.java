@@ -111,7 +111,6 @@ public class InventoryManagementApplication extends Application {
 
         ThemeObserver.init().addObserver(inventoryView);
         ThemeObserver.init().addObserver(analyticsView);
-
         ThemeObserver.init().addObserver(checkoutLayout);
 
         ThemeObserver.init().applyDarkThemeChange();

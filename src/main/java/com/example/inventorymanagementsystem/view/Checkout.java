@@ -7,6 +7,7 @@ import com.example.inventorymanagementsystem.models.ItemDetail;
 import com.example.inventorymanagementsystem.models.ItemStatus;
 import com.example.inventorymanagementsystem.services.interfaces.ThemeObserver;
 import com.example.inventorymanagementsystem.state.Data;
+import com.example.inventorymanagementsystem.view.components.HoverTooltip;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.beans.property.DoubleProperty;
@@ -28,10 +29,14 @@ import javafx.util.StringConverter;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.function.UnaryOperator;
 
 
 public class Checkout implements ThemeObserver {
@@ -56,6 +61,8 @@ public class Checkout implements ThemeObserver {
     private double cumulativeTotalDiscount = 0;
     private double cumulativeGrandTotal = 0;
     private double cumulativeReceivedFund = 0;
+    private Set<Integer> processedItemIds = new HashSet<>();
+    private boolean checkoutJustCompleted = false;
 
     public Checkout () {
         dbConnection = Connection.getInstance();
@@ -169,7 +176,7 @@ public class Checkout implements ThemeObserver {
         phone.setPromptText("Phone Number");
         phone.getStyleClass().add("default-text-areas");
         TextField eMail = new TextField();
-        eMail.setPromptText("E-Mail");
+        eMail.setPromptText("E-Mail(Optional)");
         eMail.getStyleClass().add("default-text-areas");
 
         HBox addCustomerSec = new HBox();
@@ -184,6 +191,10 @@ public class Checkout implements ThemeObserver {
             phone.clear();
             eMail.clear();
         });
+        // The tooltip
+        HoverTooltip clearFormsTooltip = new HoverTooltip("Clear the forms");
+        clearFormsTooltip.attachTo(clearForm);
+
         Button addCustomer = new Button("➕ Add Customer");
         addCustomer.getStyleClass().add("add-button");
 
@@ -253,10 +264,56 @@ public class Checkout implements ThemeObserver {
         TextField discountForAll = new TextField();
         discountForAll.setPromptText("Apply discount for all");
         discountForAll.getStyleClass().add("default-text-areas");
+        UnaryOperator<TextFormatter.Change> filter = change -> {
+            String newText = change.getControlNewText();
+
+            if (newText.isEmpty()) return change;
+
+            if (newText.matches("\\d*%?")) {
+                if (newText.chars().filter(ch -> ch == '%').count() <= 1 &&
+                        (!newText.contains("%") || newText.endsWith("%"))) {
+                    return change;
+                }
+            }
+            return null;
+        };
+        discountForAll.setTextFormatter(new TextFormatter<>(filter));
+        discountForAll.focusedProperty().addListener((obs, oldV, newV) -> {
+            if (!newV) {
+                String txt = discountForAll.getText();
+                if (txt != null && !txt.isEmpty() && !txt.endsWith("%")) {
+                    discountForAll.setText(txt + "%");
+                }
+            }
+        });
 
         TextField receivedFund = new TextField();
         receivedFund.setPromptText("Received Fund");
         receivedFund.getStyleClass().add("default-text-areas");
+
+        receivedFund.textProperty().addListener((obs, oldValue, newValue) -> {
+            if (newValue == null || newValue.isEmpty()) {
+                return;
+            }
+            String digitsOnly = newValue.replaceAll("[^\\d]", "");
+
+            if (digitsOnly.isEmpty()) {
+                receivedFund.setText("");
+                return;
+            }
+            try {
+                long number = Long.parseLong(digitsOnly);
+                String formatted = String.format("$%,d", number);
+
+                if (!formatted.equals(newValue)) {
+                    receivedFund.setText(formatted);
+                    receivedFund.positionCaret(formatted.length());
+                }
+            } catch (NumberFormatException e) {
+                receivedFund.setText(oldValue);
+                receivedFund.positionCaret(oldValue.length());
+            }
+        });
 
         Text totalCostTxt = new Text("Total Cost:");
         Label totalCost = new Label("_");
@@ -278,32 +335,64 @@ public class Checkout implements ThemeObserver {
         Label balance = new Label("_");
         balance.setStyle("-fx-font-weight: bold; -fx-font-size: 19px;");
         balanceTxt.getStyleClass().add("information-texts");
-        balance.getStyleClass().add("information-texts");
+        balance.getStyleClass().add("information-label");
         Button checkOutButton = new Button("Check Out");
         checkOutButton.getStyleClass().add("default-buttons");
 
         /*
         *   This is the action of the adding button for items and this piece of code is here cause, to access for all the values in the above code.
         */
+        Text stockMessage = new Text("");
+        stockMessage.setVisible(false);
+        stockMessage.setManaged(false);
+        stockMessage.setTextAlignment(TextAlignment.CENTER);
+        stockMessage.setFont(Font.font("System"));
+        stockMessage.getStyleClass().add("stock-message");
+        StackPane stockMessageContainer = new StackPane();
+        stockMessageContainer.setMaxWidth(Double.MAX_VALUE);
+        Region space = new Region();
+        space.setPrefHeight(40);
+        stockMessageContainer.getChildren().addAll(space, stockMessage);
 
         addButton.setOnAction(e -> {
             ItemDetail selectedItemDetail = itemComboBox.getSelectionModel().getSelectedItem();
+            int remainingAmount =  selectedItemDetail.getRemainingQty();
 
             if (selectedItemDetail == null || amount.getText().isEmpty()) {
                 System.out.println("Please select an item and enter the quantity.");
                 return;
             }
             if (selectedItemDetail != null) {
-                int itemTotalCost = selectedItemDetail.getPrice() * quantityValue;
+                int itemTotalCost = (int) (selectedItemDetail.getSellingPrice() * quantityValue);
                 selectedItemDetail.setItemTotalCost(String.valueOf(itemTotalCost));
+            }
+
+            if (checkoutJustCompleted) {
+                itemList.clear();
+                mainTable.refresh();
+                cumulativeTotalCost= 0;
+                cumulativeTotalDiscount = 0;
+                cumulativeGrandTotal = 0;
+                cumulativeReceivedFund = 0;
+
+                totalCost.setText("-");
+                totalDiscount.setText("-");
+                grandTotal.setText("-");
+                balance.setText("");
+                checkoutJustCompleted = false;
             }
 
             try {
                 int quantityValue = Integer.parseInt(amount.getText().trim());
-                int discountValue = Integer.parseInt(discount.getText().trim());
+            if ((remainingAmount > 0) && quantityValue <= remainingAmount) {
+                stockMessage.setText("");
+                int discountValue = 0;
+                if (!discount.getText().trim().isEmpty()) {
+                    discountValue = Integer.parseInt(discount.getText().trim());
+                }
                 int price = selectedItemDetail.getPrice();
                 double sellingPrice = selectedItemDetail.getSellingPrice();
-                double totalCostValue = selectedItemDetail.getPrice() * quantityValue ;
+                double totalCostValue = selectedItemDetail.getSellingPrice() * quantityValue ;
                 double totalDiscountValue = totalCostValue * ((double) discountValue / 100);
                 double grandTotalValue = totalCostValue - totalDiscountValue;
 
@@ -314,7 +403,7 @@ public class Checkout implements ThemeObserver {
                         price,
                         1
                 );
-                String itemTotalCostStr = String.valueOf(selectedItemDetail.getPrice() * quantityValue);
+                String itemTotalCostStr = String.valueOf(selectedItemDetail.getSellingPrice() * quantityValue);
 
                 CheckoutItem newItem = new CheckoutItem(
                         selectedItemDetail.getName(),
@@ -326,7 +415,14 @@ public class Checkout implements ThemeObserver {
                         itemTotalCostStr
                 );
 
+                newItem.setItemHasSizeId(selectedItemDetail.getItemHasSizeID());
                 itemList.add(newItem);
+                checkOutButton.setDisable(false);
+                totalCost.setText("-");
+                totalDiscount.setText("-");
+                grandTotal.setText("-");
+                balance.setText("-");
+
                 mainTable.refresh();
                 itemComboBox.getSelectionModel().clearSelection();
 
@@ -338,23 +434,122 @@ public class Checkout implements ThemeObserver {
                 totalDiscount.setText("$" + cumulativeTotalDiscount);
                 grandTotal.setText("$" + cumulativeGrandTotal);
 
+                stockMessage.setVisible(false);
+                stockMessage.setManaged(false);
+                addButton.setDisable(false);
                 amount.clear();
                 discount.clear();
+            }
+            else {
+                stockMessageContainer.setAlignment(Pos.CENTER);
+                space.setMinHeight(10);
+                addButton.setDisable(true);
+                stockMessage.setText("Not enough stock!");
+                stockMessage.setTextAlignment(TextAlignment.CENTER);
+                stockMessage.getStyleClass().add("stock-error-message");
+                inputSection.setMaxWidth(Double.MAX_VALUE);
+                stockMessageContainer.getChildren().addAll(space, stockMessage);
+                inputSection.getChildren().addAll(space, stockMessageContainer);
+                stockMessage.setVisible(true);
+                stockMessage.setManaged(true);
+            }
 
             } catch (NumberFormatException ex) {
                 System.out.println("Invalid quantity entered.");
             }
         });
 
+        amount.textProperty().addListener((obs, oldVal, newVal) -> {
+            ItemDetail selectedItemDetail = itemComboBox.getSelectionModel().getSelectedItem();
+
+            if (selectedItemDetail != null && !newVal.trim().isEmpty()) {
+                try {
+                    int quantity = Integer.parseInt(newVal.trim());
+                    int remainingQty = selectedItemDetail.getRemainingQty();
+
+                    if (quantity > 0 && quantity <= remainingQty) {
+                        stockMessage.setVisible(false);
+                        stockMessage.setManaged(false);
+                        addButton.setDisable(false);
+                    } else {
+                        stockMessage.setText("Not enough stock!");
+                        stockMessage.setVisible(true);
+                        stockMessage.setManaged(true);
+                        addButton.setDisable(true);
+                    }
+
+                } catch (NumberFormatException e) {
+                    stockMessage.setText("Invalid input!");
+                    stockMessage.setVisible(true);
+                    stockMessage.setManaged(true);
+                    addButton.setDisable(true);
+                }
+            } else {
+                // Empty or no item selected
+                addButton.setDisable(true);
+            }
+        });
+
+        amount.textProperty().addListener((observable, oldValue, newValue) -> {
+            ItemDetail selectedItemDetail = itemComboBox.getSelectionModel().getSelectedItem();
+            int typedAmount = Integer.parseInt(amount.getText().trim());
+            int remainingAmount = selectedItemDetail.getRemainingQty();
+
+            if (typedAmount >= remainingAmount) {
+                stockMessage.setText("Not enough stock!");
+
+                if (!(inputSection.getChildren().contains(stockMessageContainer))) {
+                    inputSection.getChildren().add(stockMessageContainer);
+                }
+            } else {
+                inputSection.getChildren().remove(stockMessageContainer);
+            }
+        });
+
         checkOutButton.setOnAction(e -> {
             try {
-                double receivedFundValue = Double.parseDouble(receivedFund.getText().trim());
-                cumulativeReceivedFund += receivedFundValue;
+                if (itemList.isEmpty()) {
+                    System.out.println("No items in the checkout list!");
+                    return;
+                }
+
+                for (CheckoutItem item : itemList) {
+                    if (!processedItemIds.contains(item.getitemHasSizeId())) {
+                        String updateQuery = "UPDATE item_has_size SET remaining_qty = remaining_qty - ? WHERE id = ?";
+                        try (PreparedStatement pstmt = dbConnection.getJdbcConnection().prepareStatement(updateQuery)) {
+                            pstmt.setInt(1, item.getAmount());
+                            pstmt.setInt(2, item.getitemHasSizeId());
+                            int rowsUpdated = pstmt.executeUpdate();
+                            if (rowsUpdated > 0) {
+                                System.out.println("Remaining quantity updated for item: " + item.getName());
+                                processedItemIds.add(item.getitemHasSizeId());
+                            }
+                        } catch (SQLException ex) {
+                            System.out.println("Database error while updating quantity: " + ex.getMessage());
+                        }
+                    }
+                }
+
+                String receivedInput = receivedFund.getText();
+                double receivedFundValue = 0.0;
+                if (receivedInput != null && !receivedInput.isEmpty()) {
+                    String cleaned = receivedInput.replaceAll("[$,\\s]", "");
+                    if (!cleaned.isEmpty()) {
+                        receivedFundValue = Double.parseDouble(cleaned);
+                    }
+                }
+
+                cumulativeReceivedFund = receivedFundValue;
 
                 double discountValue = 0.0;
                 String  discountText = discountForAll.getText().trim();
 
-                if (!discountText.isEmpty()) {
+                if (discountText.endsWith("%")) {
+                    String numberPart = discountText.substring(0, discountText.length() -1);
+                    if (!numberPart.isEmpty()) {
+                        discountValue = Double.parseDouble(numberPart);
+                    }
+                } else if (!discountText.isEmpty()) {
                     discountValue = Double.parseDouble(discountText);
                 }
 
@@ -370,8 +565,15 @@ public class Checkout implements ThemeObserver {
                 double dueBalanceValue = cumulativeReceivedFund - adjustedTotal;
                 balance.setText("$" + dueBalanceValue);
 
+                mainTable.refresh();
                 discountForAll.clear();
                 receivedFund.clear();
+
+                if (!itemList.isEmpty()) {
+                    checkOutButton.setDisable(true);
+                    checkoutJustCompleted = true;
+                }
+
             } catch (NumberFormatException ex) {
                 System.out.println("Invalid input in received fund or discount field.");
             }
@@ -387,6 +589,9 @@ public class Checkout implements ThemeObserver {
             balance.setText("_");
             mainTable.getItems().clear();
         });
+        // The tooltip
+        HoverTooltip removeItemsTooltip = new HoverTooltip("Remove all items from the checkout list.");
+        removeItemsTooltip.attachTo(remove);
 
         VBox actionSection = new VBox();
         actionSection.setSpacing(10);
