@@ -204,8 +204,10 @@ public class Checkout implements ThemeObserver {
             String phoneField = phone.getText();
             String emailField = eMail.getText();
 
+            LocalDateTime now = LocalDateTime.now();
+
             Connection connection = new Connection();
-            connection.addCustomers(firstNameField, lastNameField, phoneField, emailField);
+            connection.addCustomers(firstNameField, lastNameField, phoneField, emailField, now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
 
             // Clear input fields
             firstName.clear();

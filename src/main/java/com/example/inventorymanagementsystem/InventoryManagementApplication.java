@@ -1,5 +1,6 @@
 package com.example.inventorymanagementsystem;
 
+import com.example.inventorymanagementsystem.state.Constants;
 import com.example.inventorymanagementsystem.state.Data;
 
 import com.example.inventorymanagementsystem.state.ThemeObserver;
@@ -25,14 +26,14 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Paint;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import org.kordamp.ikonli.Ikonli;
 import org.kordamp.ikonli.fontawesome5.FontAwesomeSolid;
 import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.io.IOException;
 
-public class InventoryManagementApplication extends Application {
+public class InventoryManagementApplication extends Application implements com.example.inventorymanagementsystem.services.interfaces.ThemeObserver {
 
+    Scene scene;
     @Override
     public void start(Stage stage) throws IOException {
 
@@ -125,7 +126,7 @@ public class InventoryManagementApplication extends Application {
 
         rootContainer.getChildren().addAll(titleBar, tabPane);
 
-        Scene scene = new Scene(rootContainer);
+        scene = new Scene(rootContainer);
 
         scene.getStylesheets().add(
             String.valueOf(InventoryManagementApplication.class.getResource("css/style.css"))
@@ -141,5 +142,17 @@ public class InventoryManagementApplication extends Application {
 
     public static void main(String[] args) {
         launch();
+    }
+
+    @Override
+    public void lightTheme() {
+        scene.getStylesheets().remove(Constants.DARK_THEME_CSS);
+        scene.getStylesheets().add(Constants.LIGHT_THEME_CSS);
+    }
+
+    @Override
+    public void darkTheme() {
+        scene.getStylesheets().remove(Constants.LIGHT_THEME_CSS);
+        scene.getStylesheets().add(Constants.DARK_THEME_CSS);
     }
 }

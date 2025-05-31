@@ -1,12 +1,14 @@
 package com.example.inventorymanagementsystem.view;
 
 
+import com.example.inventorymanagementsystem.InventoryManagementApplication;
 import com.example.inventorymanagementsystem.db.Connection;
 import com.example.inventorymanagementsystem.models.Customer;
 import com.example.inventorymanagementsystem.models.User;
 import com.example.inventorymanagementsystem.models.UserAnalytics;
 import com.example.inventorymanagementsystem.services.interfaces.TableContainerInterface;
 import com.example.inventorymanagementsystem.services.interfaces.ThemeObserver;
+import com.example.inventorymanagementsystem.state.Constants;
 import com.example.inventorymanagementsystem.state.Data;
 import com.example.inventorymanagementsystem.view.components.Card;
 import com.example.inventorymanagementsystem.view.components.FormField;
@@ -19,12 +21,10 @@ import com.example.inventorymanagementsystem.view.forms.AddUpdateUser;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Control;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
+import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Paint;
+import javafx.util.Callback;
 import org.controlsfx.glyphfont.FontAwesome;
 import org.kordamp.ikonli.fontawesome5.FontAwesomeSolid;
 import org.kordamp.ikonli.javafx.FontIcon;
@@ -40,6 +40,8 @@ public class Users extends HBox implements ThemeObserver {
     private int filteredNumberOfCustomers;
 
     private List<Customer> topTenCustomers;
+
+    private UserPreview userPreview;
 
     private Label customersRegisteredOnATimeFrameValue;
 
@@ -70,7 +72,7 @@ public class Users extends HBox implements ThemeObserver {
 
             @Override
             public void refresh() {
-
+                Data.getInstance().refreshUsers();
             }
 
             @Override
@@ -81,12 +83,12 @@ public class Users extends HBox implements ThemeObserver {
 
             @Override
             public void delete(User user) {
-
+                Connection.getInstance().deleteUser(user.getId());
             }
 
             @Override
             public void onSelectItem(User user) {
-
+                userPreview.setUserData(user);
             }
 
             @Override
@@ -112,7 +114,7 @@ public class Users extends HBox implements ThemeObserver {
 
             @Override
             public void refresh() {
-
+                Data.getInstance().refreshCustomers();
             }
 
             @Override
@@ -123,12 +125,12 @@ public class Users extends HBox implements ThemeObserver {
 
             @Override
             public void delete(Customer customer) {
-
+                Connection.getInstance().deleteCustomer(customer.getId());
             }
 
             @Override
-            public void onSelectItem(Customer item) {
-
+            public void onSelectItem(Customer customer) {
+                userPreview.setCustomerData(customer);
             }
 
             @Override
@@ -138,7 +140,7 @@ public class Users extends HBox implements ThemeObserver {
         });
         tableContainer.getChildren().addAll(userTableContainer, customerTableContainer);
 
-        UserPreview userPreview = new UserPreview();
+        userPreview = new UserPreview();
         VBox.setVgrow(userPreview, Priority.ALWAYS);
 
         tableAndFormContainer.getChildren().addAll(tableContainer, userPreview);
@@ -157,7 +159,6 @@ public class Users extends HBox implements ThemeObserver {
         FontIcon totalUsersIcon = new FontIcon(FontAwesomeSolid.USERS);
         FontIcon adminUsersIcon = new FontIcon(FontAwesomeSolid.USER_SHIELD);
         FontIcon userIcon = new FontIcon(FontAwesomeSolid.USER);
-//        userIcon.setFill(Paint.valueOf("#FFF"));
         FontIcon customerIcon = new FontIcon(FontAwesomeSolid.USER_TAG);
 
         // Total number of users
@@ -167,10 +168,10 @@ public class Users extends HBox implements ThemeObserver {
         Label totalUserCountLabel = new Label(String.valueOf(userCount[0] + userCount[1] + userCount[2]));
         totalUserCountLabel.getStyleClass().add("card-content");
         Card totalUsersCard = new Card(totalUsersCardHeader, totalUserCountLabel, null);
-        totalUsersCard.setBackgroundColor("#DDD");
         totalUsersCard.setPadding(new Insets(5.0D));
         totalUsersCard.setCardWidth(150.0D);
         totalUsersCard.setRoundedCorner(10.0D);
+        totalUsersCard.getStyleClass().add("user-analytics-card");
 
         // Admin users card
         Label adminUsersCardHeader = new Label("Admins", adminUsersIcon);
@@ -179,22 +180,17 @@ public class Users extends HBox implements ThemeObserver {
         Label adminUserCountLabel = new Label(String.valueOf(userCount[0]));
         adminUserCountLabel.getStyleClass().add("card-content");
         Card adminUsersCard = new Card(adminUsersCardHeader, adminUserCountLabel, null);
-        adminUsersCard.setBackgroundColor("#DDD");
         adminUsersCard.setPadding(new Insets(5.0D));
         adminUsersCard.setRoundedCorner(10.0D);
 
         // Users card
         Label userCardHeader = new Label("Users", userIcon);
         userCardHeader.setGraphicTextGap(10.0D);
-//        userCardHeader.setTextFill(Paint.valueOf("#FFF"));
         userCardHeader.getStyleClass().add("card-heading");
         Label userCountLabel = new Label(String.valueOf(userCount[1]));
-//        userCountLabel.setTextFill(Paint.valueOf("#FFF"));
         userCountLabel.getStyleClass().add("card-content");
         Card userCard = new Card(userCardHeader, userCountLabel, null);
-//        userCard.getStyleClass().add("summary-cards");
         userCard.setCardWidth(100.0D);
-        userCard.setBackgroundColor("#DDD");
         userCard.setPadding(new Insets(5.0D));
         userCard.setRoundedCorner(10.0D);
 
@@ -205,7 +201,6 @@ public class Users extends HBox implements ThemeObserver {
         Label customerCountLabel = new Label(String.valueOf(userCount[2]));
         customerCountLabel.getStyleClass().add("card-content");
         Card customerCard = new Card(customerCardHeader, customerCountLabel, null);
-        customerCard.setBackgroundColor("#DDD");
         customerCard.setPadding(new Insets(5.0D));
         customerCard.setRoundedCorner(10.0D);
 
@@ -225,6 +220,7 @@ public class Users extends HBox implements ThemeObserver {
 //                customersRegisteredOnATimeFrameValue.setText(Connection.getInstance().getCustomersRegisteredOn(newValue));
             }
         });
+
         customerRegisteredOnTimeHeader.getChildren().addAll(customersRegisteredOnATimeFrameLabel, timeFrame);
         customersRegisteredOnATimeFrameValue = new Label("");
         customersRegisteredOnATimeFrameValue.getStyleClass().add("card-content");
@@ -243,24 +239,33 @@ public class Users extends HBox implements ThemeObserver {
         topTenCustomerCardHeader.setGraphic(topTenCustomersFontIcon);
         topTenCustomerCardHeaderContainer.getChildren().addAll(topTenCustomerCardHeader);
 
-        ScrollPane scrollPane = new ScrollPane();
-        scrollPane.setStyle("-fx-background-color: transparent; ");
+        ListView<Customer> listView = new ListView<>();
+        listView.setCellFactory(new Callback<ListView<Customer>, ListCell<Customer>>() {
+            @Override
+            public ListCell<Customer> call(ListView<Customer> param) {
+                return new ListCell<>(){
+                    @Override
+                    protected void updateItem(Customer item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (item != null) {
+                            setText(item.getFirstName() + ' ' + item.getLastName());
+                        }
+                    }
+                };
+            }
+        });
 
-        Card topTenCustomersCard = new Card(topTenCustomerCardHeaderContainer, scrollPane, null);
-        topTenCustomersCard.setBackgroundColor("#DDD");
+        listView.getItems().addAll(Connection.getInstance().getTopTenCustomers());
+        listView.setStyle("-fx-background-color: transparent; ");
+
+        Card topTenCustomersCard = new Card(topTenCustomerCardHeaderContainer, listView, null);
         topTenCustomersCard.setPadding(new Insets(5.0D));
         topTenCustomersCard.setRoundedCorner(10.0D);
 
         analyticsContainer.setHgap(10.0D);
         analyticsContainer.setVgap(10.0D);
-//        analyticsContainer.setSpacing(10.0D);
-
-//        analyticsContainer.setMinWidth(300.0D);
-//        analyticsContainer.setMaxWidth(300.0D);
         analyticsContainer.getChildren().addAll(totalUsersCard, adminUsersCard, userCard, customerRegisteredOnATimeCard, topTenCustomersCard);
 
-//        HBox.setHgrow(userTableContainer, Priority.ALWAYS);
-//        HBox.setHgrow(customerTableContainer, Priority.ALWAYS);
 
         HBox.setHgrow(tableAndFormContainer, Priority.ALWAYS);
         HBox.setHgrow(analyticsContainer, Priority.ALWAYS);
@@ -274,11 +279,15 @@ public class Users extends HBox implements ThemeObserver {
 
     @Override
     public void lightTheme() {
+        this.getStylesheets().remove(Constants.DARK_THEME_CSS);
+        this.getStylesheets().add(Constants.LIGHT_THEME_CSS);
         this.setStyle("-fx-background-color: #EEE;");
     }
 
     @Override
     public void darkTheme() {
+        this.getStylesheets().remove(Constants.LIGHT_THEME_CSS);
+        this.getStylesheets().add(Constants.DARK_THEME_CSS);
         this.setStyle("-fx-background-color: #111; ");
     }
 }
