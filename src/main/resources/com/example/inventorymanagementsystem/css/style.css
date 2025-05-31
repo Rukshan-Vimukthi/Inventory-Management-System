@@ -386,29 +386,3 @@
      -fx-background-color: #303030;
 }
 
-.close-button-light{
-    -fx-text-fill: #000;
-}
-
-.close-button-dark{
-    -fx-text-fill: #FFF;
-}
-
-.command-button{
-    -fx-background-color: transparent;
-}
-
-.close-button:hover{
-    -fx-background-color: #FF0000;
-    -fx-text-fill: #000;
-}
-
-.command-buttons-light{
-    -fx-background-color: transparent;
-    -fx-text-fill: black;
-}
-
-.command-buttons-dark{
-    -fx-background-color: transparent;
-    -fx-text-fill: white;
-}

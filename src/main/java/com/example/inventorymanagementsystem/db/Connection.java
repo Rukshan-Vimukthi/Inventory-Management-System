@@ -46,7 +46,7 @@ public class Connection {
 
             String dbLink = "jdbc:mysql://localhost:3306/sandyafashioncorner";
             String username = "root";
-            String password = "Sandun@2008.sd";
+            String password = "root@techlix2002";
             connection = DriverManager.getConnection(dbLink, username, password);
         }catch(SQLException e){
             e.printStackTrace();
@@ -861,6 +861,23 @@ public class Connection {
     }
 
     /**
+     * Delete user
+     * @param userID - ID of the user in the database
+     * @return int - 1 if the process completes without an error. -1 if there is any error occurred
+     */
+    public int deleteUser(int userID){
+        try{
+            statement = connection.createStatement();
+            statement.executeUpdate("DELETE FROM `user` WHERE `id` = %d".formatted(userID));
+            Data.getInstance().refreshUsers();
+            return 1;
+        }catch (SQLException exception){
+            exception.printStackTrace();
+        }
+        return -1;
+    }
+
+    /**
      * Get and returns all the users from the database
      */
     public List<User> getUsers(){
@@ -1053,22 +1070,48 @@ public class Connection {
     }
 
     /**
+     * Delete user
+     * @param customerID - ID of the user in the database
+     * @return int - 1 if the process completes without an error. -1 if there is any error occurred
+     */
+    public int deleteCustomer(int customerID){
+        try{
+            statement = connection.createStatement();
+            statement.executeUpdate("DELETE FROM `customer` WHERE `id` = %d".formatted(customerID));
+            Data.getInstance().refreshCustomers();
+            return 1;
+        }catch (SQLException exception){
+            exception.printStackTrace();
+        }
+        return -1;
+    }
+
+    /**
      * Gets customers from the database and return the result
      */
-    public void addCustomers(String first_name, String last_name, String phone, String email){
+    public void addCustomers(String first_name, String last_name, String phone, String email, String registeredDate){
         try {
             if (email == null || email.trim().isEmpty()) {
                 email = "Not included";
             }
-            PreparedStatement ps = connection.prepareStatement(
-                    "INSERT INTO customer (first_name, last_name, phone, email) VALUES (?, ?, ?, ?)"
-            );
+            PreparedStatement ps;
+
+            if(registeredDate == null) {
+                ps = connection.prepareStatement(
+                        "INSERT INTO customer (first_name, last_name, phone, email) VALUES (?, ?, ?, ?)"
+                );
+            }else{
+                ps = connection.prepareStatement(
+                        "INSERT INTO customer (first_name, last_name, phone, email, registered_date) VALUES (?, ?, ?, ?, ?)"
+                );
+            }
             ps.setString(1, first_name);
             ps.setString(2, last_name);
             ps.setString(3, phone);
             ps.setString(4, email);
+            ps.setString(5, registeredDate);
             ps.executeUpdate();
-
+            Data.getInstance().refreshCustomers();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

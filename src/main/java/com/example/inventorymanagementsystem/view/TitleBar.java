@@ -1,5 +1,6 @@
 package com.example.inventorymanagementsystem.view;
 
+import com.example.inventorymanagementsystem.state.Constants;
 import com.example.inventorymanagementsystem.state.ThemeObserver;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
