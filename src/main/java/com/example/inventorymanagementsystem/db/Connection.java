@@ -46,7 +46,7 @@ public class Connection {
 
             String dbLink = "jdbc:mysql://localhost:3306/sandyafashioncorner";
             String username = "root";
-            String password = "root@techlix2002";
+            String password = "Sandun@2008.sd";
             connection = DriverManager.getConnection(dbLink, username, password);
         }catch(SQLException e){
             e.printStackTrace();
@@ -189,18 +189,99 @@ public class Connection {
         int count = 0;
 
         for (ItemHasSize item : allItems) {
-            if (item.getRemainingQuantity() < 20) {
+            if (item.getRemainingQuantity() < 10) {
                 count++;
             }
         }
 
         return count;
+
+    }
+
+    public static List<String> getLowStockitemNames(Connection connection) {
+        List<ItemHasSize> allItems = connection.getAllItemHasSizes();
+        List<String> lowStockNames = new ArrayList<>();
+
+        for (ItemHasSize item : allItems) {
+            if (item.getRemainingQuantity() < 10) {
+                int itemId = item.getItemID();
+                String itemName = connection.getItemNameById(itemId);
+                lowStockNames.add(itemName);
+            }
+        }
+        if (lowStockNames.isEmpty()) {
+            lowStockNames.add("No low stocks");
+        }
+        return lowStockNames;
+    }
+    public static List<String> getOverStockitemNames(Connection connection) {
+        List<ItemHasSize> allItems = connection.getAllItemHasSizes();
+        List<String> overStockNames = new ArrayList<>();
+
+        for (ItemHasSize item : allItems) {
+            if (item.getRemainingQuantity() > 100) {
+                int itemId = item.getItemID();
+                String itemName = connection.getItemNameById(itemId);
+                String itemSize = connectionObject.getItemSizeById(itemId);
+                String nameSizeLabel = itemName + "-" +  itemSize;
+                overStockNames.add(nameSizeLabel);
+            }
+        }
+        if (overStockNames.isEmpty()) {
+            overStockNames.add("No low stocks");
+        }
+        return overStockNames;
+    }
+
+    public static int getOverStockItems(Connection connection) {
+        List<ItemHasSize> allItems = connection.getAllItemHasSizes();
+        int overStockItems = 0;
+        for (ItemHasSize item : allItems) {
+            if (item.getRemainingQuantity() > 100) {
+                overStockItems++;
+            }
+        }
+        return overStockItems;
+    }
+
+    public static int getOutofStokeItems(Connection connection) {
+        List<ItemHasSize> allItems = connection.getAllItemHasSizes();
+        int outOfStokesItems = 0;
+
+        for (ItemHasSize item : allItems) {
+            if (item.getRemainingQuantity() == 0) {
+                outOfStokesItems++;
+            }
+        }
+
+        return outOfStokesItems;
+    }
+
+    public static List<String> getOutOfStockItemNames(Connection connection) {
+        List<ItemHasSize> allItems = connection.getAllItemHasSizes();
+        List<String> outOfrStockNames = new ArrayList<>();
+
+        for (ItemHasSize item : allItems) {
+            if (item.getRemainingQuantity() <= 0) {
+                int itemId = item.getItemID();
+                String itemName = connection.getItemNameById(itemId);
+                String itemSize = connectionObject.getItemSizeById(itemId);
+                String nameSizeLabel = itemName + itemSize;
+                outOfrStockNames.add(nameSizeLabel);
+            }
+        }
+        if (outOfrStockNames.isEmpty()) {
+            outOfrStockNames.add("No low stocks");
+        }
+        return outOfrStockNames;
     }
 
     public Map<String, List<SoldProducts>> getTopAndBottomSellingProducts() {
         Map<String, List<SoldProducts>> soldResult = new HashMap<>();
         List<SoldProducts> topSelling = new ArrayList<>();
+        List<SoldProducts> topFiveSelling = new ArrayList<>();
         List<SoldProducts> bottomSelling = new ArrayList<>();
+        List<SoldProducts> bottomFiveSelling = new ArrayList<>();
 
         String topQuery =  "SELECT item_id, SUM(ordered_qty - remaining_qty) AS total_sold " +
                 "FROM item_has_size GROUP BY item_id " +
@@ -216,14 +297,25 @@ public class Connection {
                 topSelling.add(new SoldProducts(rsTop.getInt("item_id"), rsTop.getInt("total_sold")));
             }
 
-            // Bottom 3
             ResultSet rsBottom = stmt.executeQuery(bottomQuery);
             while (rsBottom.next()) {
                 bottomSelling.add(new SoldProducts(rsBottom.getInt("item_id"), rsBottom.getInt("total_sold")));
             }
 
+            ResultSet rsTopFive = stmt.executeQuery(topQuery);
+            while (rsTopFive.next()) {
+                topFiveSelling.add(new SoldProducts(rsTopFive.getInt("item_id"), rsTopFive.getInt("total_sold")));
+            }
+
+            ResultSet rsBottomFive = stmt.executeQuery(bottomQuery);
+            while (rsBottomFive.next()) {
+                bottomFiveSelling.add(new SoldProducts(rsBottomFive.getInt("item_id"), rsBottomFive.getInt("total_sold")));
+            }
+
             soldResult.put("top", topSelling);
             soldResult.put("bottom", bottomSelling);
+            soldResult.put("topFive", topFiveSelling);
+            soldResult.put("bottomFive", bottomFiveSelling);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -246,6 +338,22 @@ public class Connection {
         return name;
     }
 
+    public String getItemSizeById(int itemId) {
+        String size = "-";
+        try {
+            Statement stmt = connection.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT size FROM size WHERE id = " + itemId);
+            if (rs.next()) {
+                size = rs.getString("size");
+            }
+            rs.close();
+            stmt.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return size;
+    }
+
     /**
      * Get the items in the item_has_size table
      * @param
@@ -253,9 +361,11 @@ public class Connection {
      */
     public ArrayList<ItemHasSize> getAllItemHasSizes() {
         ArrayList<ItemHasSize> items = new ArrayList<>();
-        try {
-            statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery("SELECT * FROM `item_has_size`");
+        String query = "SELECT * FROM item_has_size";
+        Set<Integer> seenItemIds = new HashSet<>();
+
+        try  (PreparedStatement stmt = connection.prepareStatement(query);
+               ResultSet resultSet = stmt.executeQuery()) {
             while (resultSet.next()) {
                 items.add(new ItemHasSize(
                         resultSet.getInt("id"),
@@ -547,7 +657,7 @@ public class Connection {
 
     // For setting the dates as filters for showing the sales
     public ResultSet getFilteredSalesData (String filter) throws SQLException {
-        String query =  "SELECT chs.date, chs.item_has_size_id FROM customer_has_item_has_size chs WHERE ";
+        String query =  "SELECT chs.date, chs.item_has_size_id, chs.price, chs.amount FROM customer_has_item_has_size chs WHERE ";
 
         if (filter == null) {
             filter = "";
@@ -576,10 +686,10 @@ public class Connection {
                 query += "YEAR(chs.date) = YEAR(CURDATE() - INTERVAL 1 YEAR)";
                 break;
             default:
-                query = "SELECT chs.date, chs.item_has_size_id FROM customer_has_item_has_size chs";
+                query = "SELECT chs.date, chs.item_has_size_id, chs.price, chs.amount FROM customer_has_item_has_size chs";
                 break;
             case "All Time":
-                query = "SELECT chs.date, chs.item_has_size_id FROM customer_has_item_has_size chs";
+                query = "SELECT chs.date, chs.item_has_size_id, chs.price, chs.amount FROM customer_has_item_has_size chs";
                 break;
         }
         PreparedStatement stmt = connection.prepareStatement(query);
@@ -947,6 +1057,9 @@ public class Connection {
      */
     public void addCustomers(String first_name, String last_name, String phone, String email){
         try {
+            if (email == null || email.trim().isEmpty()) {
+                email = "Not included";
+            }
             PreparedStatement ps = connection.prepareStatement(
                     "INSERT INTO customer (first_name, last_name, phone, email) VALUES (?, ?, ?, ?)"
             );
@@ -984,7 +1097,6 @@ public class Connection {
 
     public void storeSales (int customerId, int itemHasSizeId, int amount, int price, int item_status_id) {
         String theCurrentDate = LocalDate.now().toString();
-
         try {
             PreparedStatement stmt = connection.prepareStatement(
                     "INSERT INTO customer_has_item_has_size (customer_id, item_has_size_id, amount, price, date, item_Status_id) VALUES (?, ?, ?, ?, ?, ?)"
@@ -999,6 +1111,25 @@ public class Connection {
             stmt.executeUpdate();
             System.out.println("sale recorded successfully");
 
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void updateRemainingQuantity(int itemHasSizeId, int purchasedAmount) {
+        try {
+            PreparedStatement stmt = connection.prepareStatement(
+                    "UPDATE item_has_size SET remaining_qty = remaining_qty - ? WHERE id = ?");
+
+            stmt.setInt(1, purchasedAmount);
+            stmt.setInt(2, itemHasSizeId);;
+
+            int rowsAffected = stmt.executeUpdate();
+            if (rowsAffected > 0) {
+                System.out.println("Stock updated successfully for itemHasSizeId: " + itemHasSizeId);
+            } else {
+            System.out.println("No stock record found for itemHasSizeId: " + itemHasSizeId);
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
