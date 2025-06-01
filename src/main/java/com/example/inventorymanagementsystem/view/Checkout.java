@@ -9,6 +9,7 @@ import com.example.inventorymanagementsystem.services.interfaces.ThemeObserver;
 import com.example.inventorymanagementsystem.state.Data;
 import com.example.inventorymanagementsystem.view.components.HoverTooltip;
 import javafx.animation.KeyFrame;
+import javafx.animation.PauseTransition;
 import javafx.animation.Timeline;
 import javafx.beans.property.DoubleProperty;
 import javafx.collections.FXCollections;
@@ -27,6 +28,7 @@ import javafx.scene.text.TextAlignment;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 
+import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.text.DecimalFormat;
@@ -57,12 +59,17 @@ public class Checkout implements ThemeObserver {
     private int quantityValue;
     private double discountValue;
     private double totalCostValue = 0.0;
+    private PauseTransition stockMessageTimer;
+    private PauseTransition messageTimer;
     private double cumulativeTotalCost = 0;
     private double cumulativeTotalDiscount = 0;
     private double cumulativeGrandTotal = 0;
     private double cumulativeReceivedFund = 0;
     private Set<Integer> processedItemIds = new HashSet<>();
     private boolean checkoutJustCompleted = false;
+    Text stockMessage;
+    Text customerMessage;
+    VBox inputVerticalSec;
 
     public Checkout () {
         dbConnection = Connection.getInstance();
@@ -110,7 +117,7 @@ public class Checkout implements ThemeObserver {
         navbar.getChildren().addAll(heading, clockPane);
 
         // Input area
-        VBox inputVerticalSec = new VBox();
+        inputVerticalSec = new VBox();
         inputVerticalSec.setAlignment(Pos.TOP_LEFT);
 
         Text itemTxt = new Text("Item Information");
@@ -161,6 +168,10 @@ public class Checkout implements ThemeObserver {
         addButton.getStyleClass().add("add-button");
         addButton.setMaxWidth(Double.MAX_VALUE);
 
+        // Focusing the next text area
+        amount.setOnAction(e -> discount.requestFocus());
+        discount.setOnAction( e-> addButton.fire());
+
         Region theSpace = new Region();
         theSpace.setMinHeight(15);
 
@@ -178,6 +189,14 @@ public class Checkout implements ThemeObserver {
         TextField eMail = new TextField();
         eMail.setPromptText("E-Mail(Optional)");
         eMail.getStyleClass().add("default-text-areas");
+        Button addCustomer = new Button("➕ Add Customer");
+        addCustomer.getStyleClass().add("add-button");
+
+        // Focusting the next text areas
+        firstName.setOnAction(e -> lastName.requestFocus());
+        lastName.setOnAction(e -> phone.requestFocus());
+        phone.setOnAction(e -> eMail.requestFocus());
+        eMail.setOnAction(e -> addCustomer.requestFocus());
 
         HBox addCustomerSec = new HBox();
         addCustomerSec.setSpacing(5.5);
@@ -195,27 +214,43 @@ public class Checkout implements ThemeObserver {
         HoverTooltip clearFormsTooltip = new HoverTooltip("Clear the forms");
         clearFormsTooltip.attachTo(clearForm);
 
-        Button addCustomer = new Button("➕ Add Customer");
-        addCustomer.getStyleClass().add("add-button");
-
         addCustomer.setOnAction(e -> {
-            String firstNameField = firstName.getText();
-            String lastNameField = lastName.getText();
-            String phoneField = phone.getText();
-            String emailField = eMail.getText();
+            String firstNameField = firstName.getText().trim();
+            String lastNameField = lastName.getText().trim();
+            String phoneField = phone.getText().trim();
+            String emailField = eMail.getText().trim();
+
+            if (firstNameField.isEmpty() || lastNameField.isEmpty() || phoneField.isEmpty()) {
+                showMessage("Please fill in all required fields.", Color.ORANGE);
+                return;
+            }
 
             LocalDateTime now = LocalDateTime.now();
-
             Connection connection = new Connection();
-            connection.addCustomers(firstNameField, lastNameField, phoneField, emailField, now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
 
-            // Clear input fields
-            firstName.clear();
-            lastName.clear();
-            phone.clear();
-            eMail.clear();
+            String result = connection.addCustomers(
+                    firstNameField,
+                    lastNameField,
+                    phoneField,
+                    emailField,
+                    now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+            );
+
+            // Show message
+            if (result.equals("Customer already exists!")) {
+                customerMessage.setText(result);
+                showMessage(result, Color.RED);
+            } else if (result.equals("Customer added successfully!")) {
+                showMessage(result, Color.GREEN);
+                // Clear input fields
+                firstName.clear();
+                lastName.clear();
+                phone.clear();
+                eMail.clear();
+            }
         });
 
+        addCustomerSec.setPadding(new Insets(0, 0, 20, 0));
         addCustomerSec.getChildren().addAll(addCustomer, clearForm);
 
         // For the adding items section
@@ -341,20 +376,33 @@ public class Checkout implements ThemeObserver {
         Button checkOutButton = new Button("Check Out");
         checkOutButton.getStyleClass().add("default-buttons");
 
+        // Focusting the next text areas and buttons
+        discountForAll.setOnAction(e -> receivedFund.requestFocus());
+        receivedFund.setOnAction(e -> checkOutButton.requestFocus());
+
         /*
         *   This is the action of the adding button for items and this piece of code is here cause, to access for all the values in the above code.
         */
-        Text stockMessage = new Text("");
+        customerMessage = new Text("");
+        stockMessage = new Text("");
         stockMessage.setVisible(false);
         stockMessage.setManaged(false);
         stockMessage.setTextAlignment(TextAlignment.CENTER);
         stockMessage.setFont(Font.font("System"));
         stockMessage.getStyleClass().add("stock-message");
+
+        if (stockMessageTimer != null) {
+            stockMessageTimer.stop();
+        }
+
+        // Auto-hide after 3 seconds
+        stockMessageTimer = new PauseTransition(Duration.seconds(1));
+        stockMessageTimer.setOnFinished(ev -> stockMessage.setText(""));
+        stockMessageTimer.play();
+
         StackPane stockMessageContainer = new StackPane();
         stockMessageContainer.setMaxWidth(Double.MAX_VALUE);
-        Region space = new Region();
-        space.setPrefHeight(40);
-        stockMessageContainer.getChildren().addAll(space, stockMessage);
+        stockMessageContainer.getChildren().addAll(stockMessage);
 
         addButton.setOnAction(e -> {
             ItemDetail selectedItemDetail = itemComboBox.getSelectionModel().getSelectedItem();
@@ -444,16 +492,22 @@ public class Checkout implements ThemeObserver {
             }
             else {
                 stockMessageContainer.setAlignment(Pos.CENTER);
-                space.setMinHeight(10);
                 addButton.setDisable(true);
                 stockMessage.setText("Not enough stock!");
                 stockMessage.setTextAlignment(TextAlignment.CENTER);
                 stockMessage.getStyleClass().add("stock-error-message");
                 inputSection.setMaxWidth(Double.MAX_VALUE);
-                stockMessageContainer.getChildren().addAll(space, stockMessage);
-                inputSection.getChildren().addAll(space, stockMessageContainer);
+                stockMessageContainer.getChildren().addAll(stockMessage);
+                inputSection.getChildren().addAll(stockMessageContainer);
                 stockMessage.setVisible(true);
                 stockMessage.setManaged(true);
+
+                if (messageTimer != null) {
+                    messageTimer.stop();
+                }
+                messageTimer = new PauseTransition(Duration.seconds(3));
+                messageTimer.setOnFinished(ev -> stockMessage.setText(""));
+                messageTimer.play();
             }
 
             } catch (NumberFormatException ex) {
@@ -490,6 +544,14 @@ public class Checkout implements ThemeObserver {
                 // Empty or no item selected
                 addButton.setDisable(true);
             }
+            if (stockMessageTimer != null) {
+                stockMessageTimer.stop();
+            }
+
+            // Auto-hide after 3 seconds
+            stockMessageTimer = new PauseTransition(Duration.seconds(3));
+            stockMessageTimer.setOnFinished(ev -> stockMessage.setText(""));
+            stockMessageTimer.play();
         });
 
         amount.textProperty().addListener((observable, oldValue, newValue) -> {
@@ -663,4 +725,27 @@ public class Checkout implements ThemeObserver {
                 String.valueOf(InventoryManagementApplication.class.getResource("css/darkTheme.css"))
         );
     }
+    private void showMessage(String message, Color color) {
+        customerMessage.setText(message);
+        customerMessage.setFill(color);
+        customerMessage.setTextAlignment(TextAlignment.CENTER);
+        customerMessage.setStyle("-fx-padding: 20px 0px 0px 0px");
+        customerMessage.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+        Region space = new Region();
+        space.setMinHeight(40);
+        if (!inputVerticalSec.getChildren().contains(customerMessage)) {
+            inputVerticalSec.getChildren().add(customerMessage);
+        }
+
+        // Cancel previous timer if still running
+        if (messageTimer != null) {
+            messageTimer.stop();
+        }
+
+        // Auto-hide after 3 seconds
+        messageTimer = new PauseTransition(Duration.seconds(2));
+        messageTimer.setOnFinished(ev -> customerMessage.setText(""));
+        messageTimer.play();
+    }
+
 }

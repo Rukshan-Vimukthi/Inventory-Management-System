@@ -12,15 +12,11 @@ import javafx.scene.chart.XYChart;
 //import org.apache.commons.configuration2.builder.fluent.Parameters;
 //import org.apache.commons.configuration2.ex.ConfigurationException;
 
-import javax.xml.transform.Result;
-import java.io.IOException;
 import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAmount;
 import java.util.*;
-import java.util.Date;
 
 /**
  * This is a singleton class. Use to do insert, update, delete, retrieve items from the database. to use methods to do those tasks with the
@@ -46,7 +42,7 @@ public class Connection {
 
             String dbLink = "jdbc:mysql://localhost:3306/sandyafashioncorner";
             String username = "root";
-            String password = "root@techlix2002";
+            String password = "Sandun@2008.sd";
             connection = DriverManager.getConnection(dbLink, username, password);
         }catch(SQLException e){
             e.printStackTrace();
@@ -193,9 +189,7 @@ public class Connection {
                 count++;
             }
         }
-
         return count;
-
     }
 
     public static List<String> getLowStockitemNames(Connection connection) {
@@ -253,7 +247,6 @@ public class Connection {
                 outOfStokesItems++;
             }
         }
-
         return outOfStokesItems;
     }
 
@@ -1086,34 +1079,40 @@ public class Connection {
         return -1;
     }
 
-    /**
-     * Gets customers from the database and return the result
-     */
-    public void addCustomers(String first_name, String last_name, String phone, String email, String registeredDate){
+    public String addCustomers(String first_name, String last_name, String phone, String email, String registeredDate) {
         try {
             if (email == null || email.trim().isEmpty()) {
                 email = "Not included";
             }
-            PreparedStatement ps;
 
-            if(registeredDate == null) {
-                ps = connection.prepareStatement(
-                        "INSERT INTO customer (first_name, last_name, phone, email) VALUES (?, ?, ?, ?)"
-                );
-            }else{
-                ps = connection.prepareStatement(
-                        "INSERT INTO customer (first_name, last_name, phone, email, registered_date) VALUES (?, ?, ?, ?, ?)"
-                );
+            // Check if customer already exists
+            PreparedStatement checkPs = connection.prepareStatement(
+                    "SELECT COUNT(*) FROM customer WHERE first_name = ? AND last_name = ? AND phone = ? AND email = ?"
+            );
+            checkPs.setString(1, first_name);
+            checkPs.setString(2, last_name);
+            checkPs.setString(3, phone);
+            checkPs.setString(4, email);
+            ResultSet rs = checkPs.executeQuery();
+            if (rs.next() && rs.getInt(1) > 0) {
+                return "Customer already exists!";
             }
+
+            PreparedStatement ps = connection.prepareStatement(
+                    "INSERT INTO customer (first_name, last_name, phone, email, registered_date) VALUES (?, ?, ?, ?, ?)"
+            );
             ps.setString(1, first_name);
             ps.setString(2, last_name);
             ps.setString(3, phone);
             ps.setString(4, email);
-            ps.setString(5, registeredDate);
+            ps.setDate(5, java.sql.Date.valueOf(registeredDate));
             ps.executeUpdate();
+
             Data.getInstance().refreshCustomers();
+            return "Customer added successfully!";
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
+            return "Error: Could not add customer.";
         }
     }
 
