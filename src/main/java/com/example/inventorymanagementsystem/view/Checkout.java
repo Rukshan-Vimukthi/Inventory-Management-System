@@ -12,6 +12,7 @@ import com.example.inventorymanagementsystem.view.components.HoverTooltip;
 import javafx.animation.KeyFrame;
 import javafx.animation.PauseTransition;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -333,6 +334,23 @@ public class Checkout implements ThemeObserver {
         mainTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         mainTable.prefWidthProperty().bind(mainLayout.widthProperty());
 
+        mainTable.setRowFactory(tv -> {
+            TableRow<CheckoutItem> row = new TableRow<>();
+
+            row.setOnMouseClicked(event -> {
+                if (!row.isEmpty()) {
+                    if (row.isSelected()) {
+                        tableView.getSelectionModel().clearSelection(row.getIndex());
+                    } else {
+                        tableView.getSelectionModel().select(row.getIndex());
+                    }
+                }
+            });
+
+            return row;
+        });
+
+
         mainTable.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, selectedItem) -> {
             if (selectedItem != null) {
                 selectedCheckoutItem = selectedItem;
@@ -358,6 +376,28 @@ public class Checkout implements ThemeObserver {
                 amount.clear();
                 discount.clear();
             }
+        });
+        mainTable.setRowFactory(tv -> {
+            TableRow<CheckoutItem> row = new TableRow<>();
+
+            row.setOnMouseClicked(event -> {
+                if (!row.isEmpty() && event.getClickCount() == 1) {
+                    if (event.isControlDown() || event.isShiftDown() || event.isMetaDown()) {
+                        return;
+                    }
+
+                    int index = row.getIndex();
+                    if (mainTable.getSelectionModel().isSelected(index)) {
+                        mainTable.getSelectionModel().clearSelection(index);
+                    } else {
+                        mainTable.getSelectionModel().select(index);
+                    }
+
+                    event.consume();
+                }
+            });
+
+            return row;
         });
 
         // Bottom Section
