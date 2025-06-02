@@ -163,7 +163,7 @@ public class Analytics extends VBox implements ThemeObserver {
         Text inventoryValueTxt = new Text("💰 Total Inventory Value");
         inventoryValueTxt.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; ");
         inventoryValueTxt.getStyleClass().add("sub-cards-heading");
-        inventoryValue = new Label("$" + formattedTotalInventoryValue + " of Value");
+        inventoryValue = new Label("Rs." + formattedTotalInventoryValue + " of Value");
         inventoryValue.setStyle("-fx-font-size: 15px; -fx-text-fill: gray; -fx-font-weight: bold;");
         Region expectedValue = new Region();
         Card inventoryValueCard = new Card(inventoryValueTxt, inventoryValue, expectedValue);
@@ -305,7 +305,7 @@ public class Analytics extends VBox implements ThemeObserver {
         VBox orderFullFilledCard = new VBox();
         Text revenueTxt= new Text("\uD83D\uDCE6 Revenue");
         revenueTxt.getStyleClass().add("sub-cards-heading");
-        revenue = new Text("$ " + formattedRevenue + " of revenue");
+        revenue = new Text("Rs." + formattedRevenue + " of revenue");
         revenue.getStyleClass().add("sub-cards-value");
         orderFullFilledCard.getStyleClass().add("summary-cards");
         orderFullFilledCard.setAlignment(Pos.CENTER);
@@ -351,6 +351,7 @@ public class Analytics extends VBox implements ThemeObserver {
         revenueToggleComponent = createRevenueToggleComponent();
         revenueToggleComponent.setMaxWidth(800);
         reorderToggleComponent.setPrefWidth(500);
+        revenueToggleComponent.setMaxHeight(400);
         revenueAlertSection.setMinWidth(800);
 
         revenueUnitSec.getChildren().addAll(revenueToggleComponent);
@@ -428,7 +429,7 @@ public class Analytics extends VBox implements ThemeObserver {
 
         revenueAlertSection.setMaxWidth(Double.MAX_VALUE);
         revenueAlertSection.setAlignment(Pos.CENTER);
-        revenueAlertSection.setSpacing(35);
+        revenueAlertSection.setSpacing(40);
         revenueAlertSection.getChildren().addAll(revenueToggleComponent, alertsSec);
 
         // updating all the cards data
@@ -478,6 +479,7 @@ public class Analytics extends VBox implements ThemeObserver {
                 TableKeeper.getSalesTable("")
         );
         salesToggleComponent2.setMaxWidth(Double.MAX_VALUE);
+        salesToggleComponent2.setMaxHeight(60);
         HBox.setHgrow(salesToggleComponent2, Priority.ALWAYS);
 
         // Shows the revenue and the unit sold table & chart
@@ -539,10 +541,14 @@ public class Analytics extends VBox implements ThemeObserver {
 
         allChartsContainer = new GridPane();
         allChartsContainer.setPadding(new Insets(20, 0, 0, 0));
-        allChartsContainer.setHgap(20);
+        allChartsContainer.setHgap(40);
         allChartsContainer.setVgap(20);
         allChartsContainer.setAlignment(Pos.CENTER);
         allChartsContainer.setMaxWidth(Double.MAX_VALUE);
+        ColumnConstraints chartsContainerWidth = new ColumnConstraints();
+        chartsContainerWidth.setPercentWidth(50);
+
+        allChartsContainer.getColumnConstraints().addAll(chartsContainerWidth, chartsContainerWidth);
 
         allChartsContainer.add(stockToggleComponent2, 0, 0);
         allChartsContainer.add(reorderToggleComponent2, 1, 0);
@@ -573,7 +579,7 @@ public class Analytics extends VBox implements ThemeObserver {
             int updatedInventoryValue = updatedTotalItemsValue * updatedRemainingAmount;
             DecimalFormat inventoryFormatter = new DecimalFormat("#,###");
             String updateValue = inventoryFormatter.format(updatedInventoryValue);
-            inventoryValue.setText("$ " + updateValue + " of Value");
+            inventoryValue.setText("Rs." + updateValue + " of Value");
 
             int updatedTotalSoldQty = dbConnection.getTotalSoldQuantity();
             soldUnits.setText("Total Ordered Quantity " + updatedTotalSoldQty);
@@ -585,7 +591,7 @@ public class Analytics extends VBox implements ThemeObserver {
             int updatedRevenueValue = (updatedTotalSoldQty * updatedOrderedItemsValue);
             DecimalFormat updatedRevenueFormatter = new DecimalFormat("#,###");
             String updatedCompletedRevenue = updatedRevenueFormatter.format(updatedRevenueValue);
-            revenue.setText("$ " + updatedCompletedRevenue + " of revenue");
+            revenue.setText("Rs." + updatedCompletedRevenue + " of revenue");
 
             // Updating the items with the sold amount
             Map<String, List<SoldProducts>> updatedTopSalesData = connection.getTopAndBottomSellingProducts();
@@ -654,7 +660,7 @@ public class Analytics extends VBox implements ThemeObserver {
         footerSEc.setSpacing(30);
         footerSEc.setPadding(new Insets(10, 0, 0 ,0));
 
-        Text helpText = new Text("Need help?  Contact rukshanse.info@gmail.com / sandunsathyajith1@gmail.com");
+        Text helpText = new Text("Need help?  Contact rukshan.info@gmail.com / sandunsathyajith1@gmail.com");
         helpText.setStyle("-fx-font-size: 17px; -fx-font-weight: 500;");
         helpText.getStyleClass().add("paragraph-texts");
 
@@ -709,9 +715,6 @@ public class Analytics extends VBox implements ThemeObserver {
         chartTableToggleComponent.setPrefHeight(Region.USE_COMPUTED_SIZE);
         HBox.setHgrow(chartTableToggleComponent, Priority.ALWAYS);
         return chartTableToggleComponent;
-
-
-
     }
 
     private ChartTableToggleComponent createRevenueToggleComponent() {
@@ -776,15 +779,21 @@ public class Analytics extends VBox implements ThemeObserver {
             StackPane noDataPane = new StackPane(noDataMessage);
             noDataPane.setPrefSize(600, 600);
             salesSection.getChildren().add(noDataPane);
-
         } else {
-            ChartTableToggleComponent salesToggleComponent = new ChartTableToggleComponent(chart, table);
-            salesToggleComponent.setMaxWidth(Double.MAX_VALUE);
-            salesToggleComponent.setMinHeight(700);
+            chart.setMaxHeight(600);
+
+            ScrollPane scrollableChart = new ScrollPane(chart);
+            scrollableChart.setStyle("-fx-background-color: transparent;");
+            scrollableChart.setFitToWidth(true);
+            scrollableChart.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+            scrollableChart.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+            scrollableChart.setMaxHeight(500);
+
+            ChartTableToggleComponent salesToggleComponent = new ChartTableToggleComponent(scrollableChart, table);
+
             salesToggleComponent.setMaxWidth(1300);
             salesToggleComponent.setAlignment(Pos.CENTER);
             HBox.setHgrow(salesToggleComponent, Priority.ALWAYS);
-            salesToggleComponent.prefHeightProperty().bind(salesSection.heightProperty().multiply(0.9));
             salesSection.getChildren().add(salesToggleComponent);
             salesSection.setAlignment(Pos.CENTER);
         }

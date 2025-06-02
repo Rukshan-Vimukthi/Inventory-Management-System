@@ -115,7 +115,7 @@ public class TableKeeper {
 
         TableColumn<ItemHasSize, Integer> priceCol = new TableColumn<>("Price");
         priceCol.setCellValueFactory(new PropertyValueFactory<>("price"));
-
+        priceCol.setCellFactory(CurrencyCellFactory.withPrefix("Rs."));
 
         table.getColumns().addAll(itemIdCol, orderedQtyCol, stockQtyCol, priceCol);
 
@@ -148,6 +148,7 @@ public class TableKeeper {
 
         TableColumn<SalesRow, Integer> priceCol = new TableColumn<>("Price");
         priceCol.setCellValueFactory(new PropertyValueFactory<>("price"));
+        priceCol.setCellFactory(CurrencyCellFactory.withPrefix("Rs."));
 
         TableColumn<SalesRow, Integer> amountCol = new TableColumn<>("Amount");
         amountCol.setCellValueFactory(new PropertyValueFactory<>("amount"));
@@ -223,6 +224,7 @@ public class TableKeeper {
 
         TableColumn<RevenueData, Double> revenueCol = new TableColumn<>("Revenue");
         revenueCol.setCellValueFactory(new PropertyValueFactory<>("revenue"));
+        revenueCol.setCellFactory(CurrencyCellFactory.withPrefix("Rs."));
 
         revenueTable.getColumns().addAll(nameCol, unitsSoldCol, revenueCol);
 

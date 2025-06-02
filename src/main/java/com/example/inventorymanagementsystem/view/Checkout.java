@@ -7,6 +7,7 @@ import com.example.inventorymanagementsystem.models.ItemDetail;
 import com.example.inventorymanagementsystem.models.ItemStatus;
 import com.example.inventorymanagementsystem.services.interfaces.ThemeObserver;
 import com.example.inventorymanagementsystem.state.Data;
+import com.example.inventorymanagementsystem.view.components.CurrencyCellFactory;
 import com.example.inventorymanagementsystem.view.components.HoverTooltip;
 import javafx.animation.KeyFrame;
 import javafx.animation.PauseTransition;
@@ -71,6 +72,7 @@ public class Checkout implements ThemeObserver {
     private double totalCostValue = 0.0;
     private PauseTransition stockMessageTimer;
     private PauseTransition messageTimer;
+    private PauseTransition itemsDeletingMsgTimer;
     private double cumulativeTotalCost = 0;
     private double cumulativeTotalDiscount = 0;
     private double cumulativeGrandTotal = 0;
@@ -190,6 +192,7 @@ public class Checkout implements ThemeObserver {
         addButton.setMaxWidth(Double.MAX_VALUE);
 
         // Focusing the next text area
+        itemComboBox.setOnAction(e -> amount.requestFocus());
         amount.setOnAction(e -> discount.requestFocus());
         discount.setOnAction(e -> addButton.fire());
 
@@ -301,13 +304,15 @@ public class Checkout implements ThemeObserver {
 
         TableColumn<CheckoutItem, Integer> priceCol = new TableColumn<>("Price");
         priceCol.setCellValueFactory(cellData -> cellData.getValue().priceProperty().asObject());
-        priceCol.setCellFactory(dollarCellFactory());
+        priceCol.setCellFactory(CurrencyCellFactory.withPrefix("Rs."));
 
         TableColumn<CheckoutItem, Double> sellingPriceCol = new TableColumn<>("Selling Price");
         sellingPriceCol.setCellValueFactory(cellData -> cellData.getValue().sellingPriceProperty().asObject());
+        sellingPriceCol.setCellFactory(CurrencyCellFactory.withPrefix("Rs."));
 
         TableColumn<CheckoutItem, String> totalCostCol = new TableColumn<>("Total Cost");
         totalCostCol.setCellValueFactory(new PropertyValueFactory<>("itemTotalCost"));
+        totalCostCol.setCellFactory(CurrencyCellFactory.withPrefix("Rs."));
 
         TableColumn<CheckoutItem, Double> discountCol = new TableColumn<>("Discount");
         discountCol.setCellValueFactory(cellData -> cellData.getValue().discountProperty().asObject());
@@ -541,9 +546,9 @@ public class Checkout implements ThemeObserver {
                         cumulativeGrandTotal += itemGrandTotal;
                     }
 
-                    totalCost.setText("$" + String.format("%.2f", cumulativeTotalCost));
-                    totalDiscount.setText("$" + String.format("%.2f", cumulativeTotalDiscount));
-                    grandTotal.setText("$" + String.format("%.2f", cumulativeGrandTotal));
+                    totalCost.setText("Rs." + String.format("%.2f", cumulativeTotalCost));
+                    totalDiscount.setText("Rs." + String.format("%.2f", cumulativeTotalDiscount));
+                    grandTotal.setText("Rs." + String.format("%.2f", cumulativeGrandTotal));
 
                     mainTable.refresh();
 
@@ -693,14 +698,14 @@ public class Checkout implements ThemeObserver {
                 }
 
                 // Format output values to 2 decimals
-                totalDiscount.setText("$" + String.format("%.2f", totalDiscountValue));
-                grandTotal.setText("$" + String.format("%.2f", adjustedTotal));
+                totalDiscount.setText("Rs." + String.format("%.2f", totalDiscountValue));
+                grandTotal.setText("Rs." + String.format("%.2f", adjustedTotal));
 
                 cumulativeTotalDiscount = totalDiscountValue;
                 cumulativeGrandTotal = adjustedTotal;
 
                 double dueBalanceValue = cumulativeReceivedFund - adjustedTotal;
-                balance.setText("$" + String.format("%.2f", dueBalanceValue));
+                balance.setText("Rs." + String.format("%.2f", dueBalanceValue));
 
                 mainTable.refresh();
 
@@ -718,6 +723,7 @@ public class Checkout implements ThemeObserver {
             checkOutButton.setDisable(false);
         }
 
+        itemMessageContainer = new Label("");
         // The floating section in the right_side
         Button deleteRow = new Button("❌Remove Item");
         deleteRow.setWrapText(false);
@@ -757,9 +763,9 @@ public class Checkout implements ThemeObserver {
                 cumulativeGrandTotal += itemGrandTotal;
             }
 
-            totalCost.setText("$" + String.format("%.2f", cumulativeTotalCost));
-            totalDiscount.setText("$" + String.format("%.2f", cumulativeTotalDiscount));
-            grandTotal.setText("$" + String.format("%.2f", cumulativeGrandTotal));
+            totalCost.setText("Rs." + String.format("%.2f", cumulativeTotalCost));
+            totalDiscount.setText("Rs." + String.format("%.2f", cumulativeTotalDiscount));
+            grandTotal.setText("Rs." + String.format("%.2f", cumulativeGrandTotal));
 
             double receivedFundValue = 0.0;
             String receivedInput = receivedFund.getText();
@@ -777,7 +783,30 @@ public class Checkout implements ThemeObserver {
             String deletedNames = itemsToRemove.stream()
                     .map(CheckoutItem::getName)
                     .collect(Collectors.joining(", "));
-            itemMessageContainer.setText("Deleted item(s): " + deletedNames);
+            itemMessageContainer.setVisible(true);
+            itemMessageContainer.setManaged(true);
+            itemMessageContainer.setStyle("-fx-font-size: 19px; -fx-font-weight: bold;");
+            itemMessageContainer.setMaxWidth(250);
+            itemMessageContainer.setText("Deleted item: " + deletedNames);
+            itemMessageContainer.setStyle(
+                    "-fx-font-size: 14px;" +
+                    "-fx-text-fill: white;" +
+                    "-fx-background-color: #264653;" +
+                    "-fx-padding: 5 10;" +
+                    "-fx-border-color: #2a9d8f;"  +
+                    "-fx-border-radius: 9;" +
+                    "-fx-background-radius: 6;" +
+                    "-fx-font-weight: bold;" +
+                    "-fx-effect: dropshadow(gaussian,  rgba(0,0,0,0.4), 4, 0, 1, 1);"
+            );
+
+            itemsDeletingMsgTimer = new PauseTransition(Duration.seconds(2));
+            itemsDeletingMsgTimer.setOnFinished(ev -> {
+                        itemMessageContainer.setText("");
+                        itemMessageContainer.setStyle("");
+                    });
+            itemsDeletingMsgTimer.play();
+
             System.out.println("Deleted items: " + deletedNames);
         });
 
@@ -807,13 +836,20 @@ public class Checkout implements ThemeObserver {
         removeItemsTooltip.attachTo(remove);
 
         HBox actionSection = new HBox();
-        itemMessageContainer = new Label("");
+        itemMessageContainer.setPrefWidth(600);
+        itemMessageContainer.setWrapText(true);
+        itemMessageContainer.setStyle("-fx-font-size: 19px; -fx-fill: white;");
+        itemMessageContainer.setAlignment(Pos.CENTER_LEFT);
         itemMessageContainer.setMaxWidth(Double.MAX_VALUE);
+        itemMessageContainer.setMaxWidth(Double.MAX_VALUE);
+        AnchorPane.setBottomAnchor(itemMessageContainer, 300.0);
+        AnchorPane.setRightAnchor(itemMessageContainer, 30.0);
+
         actionSection.setSpacing(10);
-        actionSection.setPrefWidth(200);
+        actionSection.setPrefWidth(600);
         actionSection.setAlignment(Pos.TOP_RIGHT);
         actionSection.setPadding(new Insets(0, 0, 10, 0));
-        actionSection.getChildren().addAll(itemMessageContainer, itemInformation, deleteRow, remove);
+        actionSection.getChildren().addAll(itemMessageContainer, deleteRow, remove);
         actionSection.setMaxWidth(Double.MAX_VALUE);
         actionSection.setAlignment(Pos.CENTER_RIGHT);
 
@@ -925,20 +961,6 @@ public class Checkout implements ThemeObserver {
         }
     }
 
-    private <T> Callback<TableColumn<T, Integer>, TableCell<T, Integer>> dollarCellFactory() {
-        return column -> new TableCell<T, Integer>() {
-            @Override
-            protected void updateItem(Integer price, boolean empty) {
-                super.updateItem(price, empty);
-                if (empty || price == null) {
-                    setText(null);
-                } else {
-                    setText("$" + price);
-                }
-            }
-        };
-    }
-
     private void recalculateTotals() {
         double cumulativeTotalCost = 0;
         double cumulativeTotalDiscount = 0;
@@ -956,9 +978,9 @@ public class Checkout implements ThemeObserver {
             cumulativeGrandTotal += itemGrandTotal;
         }
 
-        totalCost.setText("$" + String.format("%.2f", cumulativeTotalCost));
-        totalDiscount.setText("$" + String.format("%.2f", cumulativeTotalDiscount));
-        grandTotal.setText("$" + String.format("%.2f", cumulativeGrandTotal));
+        totalCost.setText("Rs." + String.format("%.2f", cumulativeTotalCost));
+        totalDiscount.setText("Rs." + String.format("%.2f", cumulativeTotalDiscount));
+        grandTotal.setText("Rs." + String.format("%.2f", cumulativeGrandTotal));
     }
 
 

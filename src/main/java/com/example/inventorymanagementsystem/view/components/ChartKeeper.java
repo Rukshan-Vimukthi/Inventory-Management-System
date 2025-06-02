@@ -167,7 +167,6 @@ public class ChartKeeper {
                 -fx-border-color: #93c5fd;
                 -fx-border-radius: 6px;
             """);
-
                 tooltipMap.put(dataPoint, tooltip);
 
                 dataPoint.nodeProperty().addListener((obs, oldNode, newNode) -> {
@@ -178,6 +177,22 @@ public class ChartKeeper {
                                 current.hide();
                             } else {
                                 current.show(newNode, event.getScreenX() + 10, event.getScreenY() - 30);
+                            }
+                        });
+                        newNode.setOnMouseEntered(event -> {
+                            Tooltip current = tooltipMap.get(dataPoint);
+                            if (current.isShowing()) {
+                                current.hide();
+                            } else {
+                                current.show(newNode, event.getScreenX() + 10, event.getScreenY() - 30);
+                            }
+                        });
+                        newNode.setOnMouseExited(event -> {
+                            Tooltip current = tooltipMap.get(dataPoint);
+                            if (current.isShowing()) {
+                                current.hide();
+                            } else {
+                                current.hide();
                             }
                         });
 
