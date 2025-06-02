@@ -302,6 +302,7 @@
     -fx-cursor: hand;
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 4, 0, 0, 2);
     -fx-transition: all 0.3s ease;
+    -fx-padding: 5 10 5 10;
 }
 
 .clear-button:hover {

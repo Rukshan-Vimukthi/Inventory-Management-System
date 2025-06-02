@@ -7,6 +7,7 @@ import javafx.beans.property.*;
  * Represents a single item entry in the checkout table.
  */
 public class CheckoutItem implements DataModel {
+    private ItemDetail itemDetail;
     private final StringProperty name;
     private final StringProperty itemSize;
     private final StringProperty itemColor;
@@ -15,10 +16,17 @@ public class CheckoutItem implements DataModel {
     private final DoubleProperty sellingPrice;
     private final StringProperty itemTotalCost;
     private int itemHasSizeId;
+    private DoubleProperty discount;
     private boolean isCheckedout = false;
 
     public CheckoutItem(String name, String itemSize, String itemColor,
                         int amount, int price, double sellingPrice, String itemTotalCost) {
+        this(name, itemSize, itemColor, amount, price, sellingPrice, 0.0, itemTotalCost); // Default discount = 0.0%
+    }
+
+    public CheckoutItem(String name, String itemSize, String itemColor,
+                        int amount, int price, double sellingPrice, double discountValue, String itemTotalCost) {
+        this.itemDetail = itemDetail;
         this.name = new SimpleStringProperty(name);
         this.itemSize = new SimpleStringProperty(itemSize);
         this.itemColor = new SimpleStringProperty(itemColor);
@@ -26,10 +34,15 @@ public class CheckoutItem implements DataModel {
         this.price = new SimpleIntegerProperty(price);
         this.sellingPrice = new SimpleDoubleProperty(sellingPrice);
         this.itemTotalCost = new SimpleStringProperty(itemTotalCost);
+        this.discount = new SimpleDoubleProperty(discountValue);
         this.itemHasSizeId = itemHasSizeId;
     }
 
     // Getters for TableView
+    public ItemDetail getItemDetail() {
+        return itemDetail;
+    }
+
     public String getName() {
         return name.get();
     }
@@ -102,4 +115,15 @@ public class CheckoutItem implements DataModel {
         return itemHasSizeId;
     }
 
+    public double getDiscount() {
+        return discount.get();
+    }
+
+    public void setDiscount(double discountValue) {
+        discount.set(discountValue);
+    }
+
+    public DoubleProperty discountProperty() {
+        return discount;
+    }
 }

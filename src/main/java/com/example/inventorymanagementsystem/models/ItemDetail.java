@@ -8,6 +8,7 @@ import javafx.beans.property.*;
  * Recommended for using when showing all the item data and loading items in a checkout page.
  */
 public class ItemDetail implements DataModel {
+    private ItemDetail itemDetail;
     private IntegerProperty id;
     private StringProperty name;
     private DoubleProperty price;
@@ -241,5 +242,13 @@ public class ItemDetail implements DataModel {
     @Override
     public String toString() {
         return name.get();
+    }
+
+    public void setItemDetail(ItemDetail itemDetail) {
+        this.itemDetail = itemDetail;
+    }
+
+    public ItemDetail getItemDetail() {
+        return itemDetail;
     }
 }

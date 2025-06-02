@@ -12,7 +12,9 @@ import javafx.animation.KeyFrame;
 import javafx.animation.PauseTransition;
 import javafx.animation.Timeline;
 import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -25,6 +27,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
+import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 
@@ -35,19 +38,26 @@ import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.UnaryOperator;
-
+import java.util.stream.Collectors;
 
 public class Checkout implements ThemeObserver {
-    @FXML private TableView<CheckoutItem> tableView;
-    @FXML private TableColumn<CheckoutItem, Integer> colId;
-    @FXML private TableColumn<CheckoutItem, Integer> colCustomerId;
-    @FXML private TableColumn<CheckoutItem, Integer> colAmount;
-    @FXML private TableColumn<CheckoutItem, Double> colPrice;
-    @FXML private TableColumn<CheckoutItem, String> colDate;
+    @FXML
+    private TableView<CheckoutItem> tableView;
+    @FXML
+    private TableColumn<CheckoutItem, Integer> colId;
+    @FXML
+    private TableColumn<CheckoutItem, Integer> colCustomerId;
+    @FXML
+    private TableColumn<CheckoutItem, Integer> colAmount;
+    @FXML
+    private TableColumn<CheckoutItem, Double> colPrice;
+    @FXML
+    private TableColumn<CheckoutItem, String> colDate;
 
     private BorderPane mainLayout;
     private Connection dbConnection;// The main container
@@ -67,11 +77,22 @@ public class Checkout implements ThemeObserver {
     private double cumulativeReceivedFund = 0;
     private Set<Integer> processedItemIds = new HashSet<>();
     private boolean checkoutJustCompleted = false;
+    private TextField receivedFund;
+    private TextField discountForAll;
+    private CheckoutItem selectedCheckoutItem = null;
+    Label totalDiscount;
+    TableView<CheckoutItem> mainTable;
+    Label grandTotal;
+    Label balance;
     Text stockMessage;
     Text customerMessage;
     VBox inputVerticalSec;
+    Label itemMessageContainer;
+    TextField discount;
+    TextField amount;
+    Button checkOutButton;
 
-    public Checkout () {
+    public Checkout() {
         dbConnection = Connection.getInstance();
         // The main container
         mainLayout = new BorderPane();
@@ -135,7 +156,7 @@ public class Checkout implements ThemeObserver {
             @Override
             protected void updateItem(ItemDetail item, boolean empty) {
                 super.updateItem(item, empty);
-                setText(empty || item == null ? null : item.nameProperty().get());
+                setText(empty || item == null ? null : item.nameProperty().get() + " (" + item.getSize() + ")");
             }
         });
 
@@ -143,7 +164,7 @@ public class Checkout implements ThemeObserver {
             @Override
             protected void updateItem(ItemDetail item, boolean empty) {
                 super.updateItem(item, empty);
-                setText(empty || item == null ? null : item.nameProperty().get());
+                setText(empty || item == null ? null : item.nameProperty().get() + " (" + item.getSize() + ")");
             }
         });
 
@@ -158,10 +179,10 @@ public class Checkout implements ThemeObserver {
         itemComboBox.setPromptText("Select The Item");
         itemComboBox.getStyleClass().add("default-dropdowns");
 
-        TextField amount = new TextField();
+        amount = new TextField();
         amount.setPromptText("Type the quantity");
         amount.getStyleClass().add("default-text-areas");
-        TextField discount = new TextField();
+        discount = new TextField();
         discount.setPromptText("Type the discount");
         discount.getStyleClass().add("default-text-areas");
         Button addButton = new Button("📃 Add to List");
@@ -170,7 +191,7 @@ public class Checkout implements ThemeObserver {
 
         // Focusing the next text area
         amount.setOnAction(e -> discount.requestFocus());
-        discount.setOnAction( e-> addButton.fire());
+        discount.setOnAction(e -> addButton.fire());
 
         Region theSpace = new Region();
         theSpace.setMinHeight(15);
@@ -264,41 +285,78 @@ public class Checkout implements ThemeObserver {
 
         // The Table Section in the Center
         HBox centerContainer = new HBox();
-        TableView mainTable = new TableView();
+        mainTable = new TableView<>();
 
-        TableColumn<CheckoutItem, String> nameCol = new TableColumn<>("Name");
-        nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
+        TableColumn<CheckoutItem, String> nameCol = new TableColumn<>("Item");
+        nameCol.setCellValueFactory(cellData -> cellData.getValue().nameProperty());
 
         TableColumn<CheckoutItem, String> sizeCol = new TableColumn<>("Item Size");
-        sizeCol.setCellValueFactory(new PropertyValueFactory<>("itemSize"));
+        sizeCol.setCellValueFactory(cellData -> cellData.getValue().itemSizeProperty());
 
         TableColumn<CheckoutItem, String> colorCol = new TableColumn<>("Item Color");
-        colorCol.setCellValueFactory(new PropertyValueFactory<>("itemColor"));
+        colorCol.setCellValueFactory(cellData -> cellData.getValue().itemColorProperty());
 
         TableColumn<CheckoutItem, Integer> amountCol = new TableColumn<>("Amount");
-        amountCol.setCellValueFactory(new PropertyValueFactory<>("amount"));
+        amountCol.setCellValueFactory(cellData -> cellData.getValue().amountProperty().asObject());
 
         TableColumn<CheckoutItem, Integer> priceCol = new TableColumn<>("Price");
-        priceCol.setCellValueFactory(new PropertyValueFactory<>("price"));
+        priceCol.setCellValueFactory(cellData -> cellData.getValue().priceProperty().asObject());
+        priceCol.setCellFactory(dollarCellFactory());
 
-        TableColumn<CheckoutItem, Integer> sellingPriceCol = new TableColumn<>("Selling Price");
-        sellingPriceCol.setCellValueFactory(new PropertyValueFactory<>("sellingPrice"));
+        TableColumn<CheckoutItem, Double> sellingPriceCol = new TableColumn<>("Selling Price");
+        sellingPriceCol.setCellValueFactory(cellData -> cellData.getValue().sellingPriceProperty().asObject());
 
         TableColumn<CheckoutItem, String> totalCostCol = new TableColumn<>("Total Cost");
         totalCostCol.setCellValueFactory(new PropertyValueFactory<>("itemTotalCost"));
 
+        TableColumn<CheckoutItem, Double> discountCol = new TableColumn<>("Discount");
+        discountCol.setCellValueFactory(cellData -> cellData.getValue().discountProperty().asObject());
+
         mainTable.getColumns().addAll(nameCol, sizeCol, colorCol, amountCol, priceCol, sellingPriceCol, totalCostCol);
         mainTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        ObservableList<CheckoutItem> itemList = dbConnection.getCheckoutItems();
 
+        mainTable.getColumns().addAll(discountCol);
+
+        ObservableList<CheckoutItem> itemList = dbConnection.getCheckoutItems(); // contains full item objects
         mainTable.setItems(itemList);
 
+        ObservableList<String> data = FXCollections.observableArrayList();
+
+        mainTable.setEditable(true);
         mainTable.setMaxWidth(Double.MAX_VALUE);
         mainTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        mainTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         mainTable.prefWidthProperty().bind(mainLayout.widthProperty());
 
+        mainTable.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, selectedItem) -> {
+            if (selectedItem != null) {
+                selectedCheckoutItem = selectedItem;
+                amount.setText(String.valueOf(selectedItem.getAmount()));
+                discount.setText(String.valueOf(selectedItem.getDiscount()));
+
+                for (ItemDetail item : itemComboBox.getItems()) {
+                    if (item.getName().equals(selectedItem.getName()) &&
+                            item.getSize().equals(selectedItem.getItemSize())) {
+                        itemComboBox.getSelectionModel().select(item);
+                        break;
+                    }
+                    if (item.getName() != null && item.getSize() != null &&
+                            item.getName().equals(selectedItem.getName()) &&
+                            item.getSize().equals(selectedItem.getItemSize())) {
+                        itemComboBox.getSelectionModel().select(item);
+                        break;
+                    }
+                }
+            } else {
+                selectedCheckoutItem = null;
+                itemComboBox.getSelectionModel().clearSelection();
+                amount.clear();
+                discount.clear();
+            }
+        });
+
         // Bottom Section
-        TextField discountForAll = new TextField();
+        discountForAll = new TextField();
         discountForAll.setPromptText("Apply discount for all");
         discountForAll.getStyleClass().add("default-text-areas");
         UnaryOperator<TextFormatter.Change> filter = change -> {
@@ -314,6 +372,7 @@ public class Checkout implements ThemeObserver {
             }
             return null;
         };
+
         discountForAll.setTextFormatter(new TextFormatter<>(filter));
         discountForAll.focusedProperty().addListener((obs, oldV, newV) -> {
             if (!newV) {
@@ -324,7 +383,7 @@ public class Checkout implements ThemeObserver {
             }
         });
 
-        TextField receivedFund = new TextField();
+        receivedFund = new TextField();
         receivedFund.setPromptText("Received Fund");
         receivedFund.getStyleClass().add("default-text-areas");
 
@@ -363,26 +422,25 @@ public class Checkout implements ThemeObserver {
         totalDiscount.getStyleClass().add("information-label");
 
         Text grandTotalTxt = new Text("Grand Total:");
-        Label grandTotal = new Label("_");
+        grandTotal = new Label("_");
         grandTotalTxt.getStyleClass().add("information-texts");
         grandTotal.getStyleClass().add("information-label");
 
         Text balanceTxt = new Text("Due Balance:");
         balanceTxt.setStyle("-fx-font-weight: bold; -fx-font-size: 19px;");
-        Label balance = new Label("_");
+        balance = new Label("_");
         balance.setStyle("-fx-font-weight: bold; -fx-font-size: 19px;");
         balanceTxt.getStyleClass().add("information-texts");
         balance.getStyleClass().add("information-label");
-        Button checkOutButton = new Button("Check Out");
+        checkOutButton = new Button("Check Out");
         checkOutButton.getStyleClass().add("default-buttons");
 
-        // Focusting the next text areas and buttons
         discountForAll.setOnAction(e -> receivedFund.requestFocus());
         receivedFund.setOnAction(e -> checkOutButton.requestFocus());
 
         /*
-        *   This is the action of the adding button for items and this piece of code is here cause, to access for all the values in the above code.
-        */
+         *   This is the action of the adding button for items and this piece of code is here cause, to access for all the values in the above code.
+         */
         customerMessage = new Text("");
         stockMessage = new Text("");
         stockMessage.setVisible(false);
@@ -405,110 +463,114 @@ public class Checkout implements ThemeObserver {
         stockMessageContainer.getChildren().addAll(stockMessage);
 
         addButton.setOnAction(e -> {
+            selectedCheckoutItem = mainTable.getSelectionModel().getSelectedItem();
+
+            String discountItemValue = discount.getText();
             ItemDetail selectedItemDetail = itemComboBox.getSelectionModel().getSelectedItem();
-            int remainingAmount =  selectedItemDetail.getRemainingQty();
 
             if (selectedItemDetail == null || amount.getText().isEmpty()) {
                 System.out.println("Please select an item and enter the quantity.");
                 return;
             }
-            if (selectedItemDetail != null) {
-                int itemTotalCost = (int) (selectedItemDetail.getSellingPrice() * quantityValue);
-                selectedItemDetail.setItemTotalCost(String.valueOf(itemTotalCost));
-            }
-
-            if (checkoutJustCompleted) {
-                itemList.clear();
-                mainTable.refresh();
-                cumulativeTotalCost= 0;
-                cumulativeTotalDiscount = 0;
-                cumulativeGrandTotal = 0;
-                cumulativeReceivedFund = 0;
-
-                totalCost.setText("-");
-                totalDiscount.setText("-");
-                grandTotal.setText("-");
-                balance.setText("");
-                checkoutJustCompleted = false;
-            }
 
             try {
                 int quantityValue = Integer.parseInt(amount.getText().trim());
-            if ((remainingAmount > 0) && quantityValue <= remainingAmount) {
-                stockMessage.setText("");
-                int discountValue = 0;
-                if (!discount.getText().trim().isEmpty()) {
-                    discountValue = Integer.parseInt(discount.getText().trim());
+                int remainingAmount = selectedItemDetail.getRemainingQty();
+
+                if (remainingAmount > 0 && quantityValue <= remainingAmount) {
+                    int discountValue = 0;
+                    if (discountItemValue != null && !discountItemValue.trim().isEmpty()) {
+                        discountValue = Integer.parseInt(discountItemValue);
+                    }
+
+                    int price = selectedItemDetail.getPrice();
+                    double sellingPrice = selectedItemDetail.getSellingPrice();
+
+                    double totalCostValue = sellingPrice * quantityValue;
+                    double totalDiscountValue = totalCostValue * ((double) discountValue / 100);
+                    double grandTotalValue = totalCostValue - totalDiscountValue;
+
+                    dbConnection.storeSales(
+                            selectedItemDetail.getId(),
+                            selectedItemDetail.getItemHasSizeID(),
+                            quantityValue,
+                            price,
+                            1
+                    );
+
+                    if (selectedCheckoutItem != null) {
+                        selectedCheckoutItem.setItemHasSizeId(selectedItemDetail.getItemHasSizeID());
+                        selectedCheckoutItem.setDiscount((double) discountValue);
+                        selectedCheckoutItem.amountProperty().set(quantityValue);
+                        selectedCheckoutItem.itemTotalCostProperty().set(String.valueOf(totalCostValue));
+                        selectedCheckoutItem.sellingPriceProperty().set(sellingPrice);
+                        selectedCheckoutItem.priceProperty().set(price);
+                        selectedCheckoutItem.nameProperty().set(selectedItemDetail.getName());
+                        selectedCheckoutItem.itemSizeProperty().set(selectedItemDetail.getSize());
+                        mainTable.refresh();
+
+                    } else {
+                        CheckoutItem newItem = new CheckoutItem(
+                                selectedItemDetail.getName(),
+                                selectedItemDetail.getSize(),
+                                selectedItemDetail.getItemColor(),
+                                quantityValue,
+                                price,
+                                sellingPrice,
+                                discountValue,
+                                String.valueOf(totalCostValue)
+                        );
+                        newItem.setItemHasSizeId(selectedItemDetail.getItemHasSizeID());
+                        itemList.add(newItem);
+                    }
+
+                    // Update class-level cumulative totals here:
+                    cumulativeTotalCost = 0;
+                    cumulativeTotalDiscount = 0;
+                    cumulativeGrandTotal = 0;
+
+                    for (CheckoutItem item : itemList) {
+                        int qty = item.getAmount();
+                        double sellPrice = item.getSellingPrice();
+                        double itemTotal = qty * sellPrice;
+                        double itemDiscount = itemTotal * (item.getDiscount() / 100.0);
+                        double itemGrandTotal = itemTotal - itemDiscount;
+
+                        cumulativeTotalCost += itemTotal;
+                        cumulativeTotalDiscount += itemDiscount;
+                        cumulativeGrandTotal += itemGrandTotal;
+                    }
+
+                    totalCost.setText("$" + String.format("%.2f", cumulativeTotalCost));
+                    totalDiscount.setText("$" + String.format("%.2f", cumulativeTotalDiscount));
+                    grandTotal.setText("$" + String.format("%.2f", cumulativeGrandTotal));
+
+                    mainTable.refresh();
+
+                    // Clear selection and inputs
+                    itemComboBox.getSelectionModel().clearSelection();
+                    selectedCheckoutItem = null;
+
+                    stockMessage.setVisible(false);
+                    stockMessage.setManaged(false);
+                    addButton.setDisable(false);
+                    discount.clear();
+                    amount.clear();
+
+                } else {
+                    stockMessageContainer.setAlignment(Pos.CENTER);
+                    addButton.setDisable(true);
+                    stockMessage.setText("Not enough stock!");
+                    stockMessage.setTextAlignment(TextAlignment.CENTER);
+                    stockMessage.getStyleClass().add("stock-error-message");
+                    inputSection.setMaxWidth(Double.MAX_VALUE);
+                    stockMessageContainer.getChildren().addAll(stockMessage);
+                    inputSection.getChildren().addAll(stockMessageContainer);
+                    stockMessage.setVisible(true);
+                    stockMessage.setManaged(true);
                 }
-                int price = selectedItemDetail.getPrice();
-                double sellingPrice = selectedItemDetail.getSellingPrice();
-                double totalCostValue = selectedItemDetail.getSellingPrice() * quantityValue ;
-                double totalDiscountValue = totalCostValue * ((double) discountValue / 100);
-                double grandTotalValue = totalCostValue - totalDiscountValue;
 
-                dbConnection.storeSales(
-                        selectedItemDetail.getId(),
-                        selectedItemDetail.getItemHasSizeID(),
-                        quantityValue,
-                        price,
-                        1
-                );
-                String itemTotalCostStr = String.valueOf(selectedItemDetail.getSellingPrice() * quantityValue);
-
-                CheckoutItem newItem = new CheckoutItem(
-                        selectedItemDetail.getName(),
-                        selectedItemDetail.getSize(),
-                        selectedItemDetail.getItemColor(),
-                        quantityValue,
-                        price,
-                        sellingPrice,
-                        itemTotalCostStr
-                );
-
-                newItem.setItemHasSizeId(selectedItemDetail.getItemHasSizeID());
-                itemList.add(newItem);
-                checkOutButton.setDisable(false);
-                totalCost.setText("-");
-                totalDiscount.setText("-");
-                grandTotal.setText("-");
-                balance.setText("-");
-
-                mainTable.refresh();
-                itemComboBox.getSelectionModel().clearSelection();
-
-                cumulativeTotalCost += totalCostValue;
-                cumulativeTotalDiscount += totalDiscountValue;
-                cumulativeGrandTotal += grandTotalValue;
-
-                totalCost.setText("$" + cumulativeTotalCost);
-                totalDiscount.setText("$" + cumulativeTotalDiscount);
-                grandTotal.setText("$" + cumulativeGrandTotal);
-
-                stockMessage.setVisible(false);
-                stockMessage.setManaged(false);
-                addButton.setDisable(false);
-                amount.clear();
-                discount.clear();
-            }
-            else {
-                stockMessageContainer.setAlignment(Pos.CENTER);
-                addButton.setDisable(true);
-                stockMessage.setText("Not enough stock!");
-                stockMessage.setTextAlignment(TextAlignment.CENTER);
-                stockMessage.getStyleClass().add("stock-error-message");
-                inputSection.setMaxWidth(Double.MAX_VALUE);
-                stockMessageContainer.getChildren().addAll(stockMessage);
-                inputSection.getChildren().addAll(stockMessageContainer);
-                stockMessage.setVisible(true);
-                stockMessage.setManaged(true);
-
-                if (messageTimer != null) {
-                    messageTimer.stop();
-                }
-                messageTimer = new PauseTransition(Duration.seconds(3));
-                messageTimer.setOnFinished(ev -> stockMessage.setText(""));
-                messageTimer.play();
-            }
+                updateSelectedRow();
 
             } catch (NumberFormatException ex) {
                 System.out.println("Invalid quantity entered.");
@@ -541,14 +603,11 @@ public class Checkout implements ThemeObserver {
                     addButton.setDisable(true);
                 }
             } else {
-                // Empty or no item selected
                 addButton.setDisable(true);
             }
             if (stockMessageTimer != null) {
                 stockMessageTimer.stop();
             }
-
-            // Auto-hide after 3 seconds
             stockMessageTimer = new PauseTransition(Duration.seconds(3));
             stockMessageTimer.setOnFinished(ev -> stockMessage.setText(""));
             stockMessageTimer.play();
@@ -577,6 +636,9 @@ public class Checkout implements ThemeObserver {
                     return;
                 }
 
+                // Clear processed items to ensure all updates occur every checkout
+                processedItemIds.clear();
+
                 for (CheckoutItem item : itemList) {
                     if (!processedItemIds.contains(item.getitemHasSizeId())) {
                         String updateQuery = "UPDATE item_has_size SET remaining_qty = remaining_qty - ? WHERE id = ?";
@@ -602,36 +664,45 @@ public class Checkout implements ThemeObserver {
                         receivedFundValue = Double.parseDouble(cleaned);
                     }
                 }
-
                 cumulativeReceivedFund = receivedFundValue;
 
                 double discountValue = 0.0;
-                String  discountText = discountForAll.getText().trim();
+                String discountText = discountForAll.getText().trim();
 
                 if (discountText.endsWith("%")) {
-                    String numberPart = discountText.substring(0, discountText.length() -1);
+                    String numberPart = discountText.substring(0, discountText.length() - 1);
                     if (!numberPart.isEmpty()) {
                         discountValue = Double.parseDouble(numberPart);
                     }
                 } else if (!discountText.isEmpty()) {
+                    // Assuming this is an absolute discount amount
                     discountValue = Double.parseDouble(discountText);
                 }
 
-                double totalDiscountValue = cumulativeTotalCost * (discountValue / 100.0);
-                double adjustedTotal = cumulativeTotalCost - totalDiscountValue;
+                double totalDiscountValue;
+                double adjustedTotal;
 
-                totalDiscount.setText("$" + totalDiscountValue);
-                grandTotal.setText("$" + adjustedTotal);
+                if (discountText.endsWith("%")) {
+                    // percentage discount
+                    totalDiscountValue = cumulativeTotalCost * (discountValue / 100.0);
+                    adjustedTotal = cumulativeTotalCost - totalDiscountValue;
+                } else {
+                    // absolute discount
+                    totalDiscountValue = discountValue;
+                    adjustedTotal = cumulativeTotalCost - totalDiscountValue;
+                }
+
+                // Format output values to 2 decimals
+                totalDiscount.setText("$" + String.format("%.2f", totalDiscountValue));
+                grandTotal.setText("$" + String.format("%.2f", adjustedTotal));
 
                 cumulativeTotalDiscount = totalDiscountValue;
                 cumulativeGrandTotal = adjustedTotal;
 
                 double dueBalanceValue = cumulativeReceivedFund - adjustedTotal;
-                balance.setText("$" + dueBalanceValue);
+                balance.setText("$" + String.format("%.2f", dueBalanceValue));
 
                 mainTable.refresh();
-                discountForAll.clear();
-                receivedFund.clear();
 
                 if (!itemList.isEmpty()) {
                     checkOutButton.setDisable(true);
@@ -643,26 +714,108 @@ public class Checkout implements ThemeObserver {
             }
         });
 
+        if (!receivedFund.getText().trim().equals("")) {
+            checkOutButton.setDisable(false);
+        }
+
         // The floating section in the right_side
-        Button remove = new Button("❌ Remove All");
-        remove.getStyleClass().add("clear-button");
-        remove.setOnAction(e -> {
-            totalCost.setText("_");
-            totalDiscount.setText("_");
-            grandTotal.setText("_");
-            balance.setText("_");
-            mainTable.getItems().clear();
+        Button deleteRow = new Button("❌Remove Item");
+        deleteRow.setWrapText(false);
+        deleteRow.setPrefWidth(Region.USE_COMPUTED_SIZE);
+        deleteRow.setMinWidth(Region.USE_PREF_SIZE);
+        deleteRow.setMaxWidth(Region.USE_PREF_SIZE);
+        Label itemInformation = new Label("");
+        deleteRow.getStyleClass().add("clear-button");
+
+        deleteRow.setOnAction(e -> {
+            ObservableList<CheckoutItem> selectedItems = mainTable.getSelectionModel().getSelectedItems();
+
+            if (selectedItems.isEmpty()) {
+                itemMessageContainer.setText("No items to delete");
+                System.out.println("No items selected to delete.");
+                return;
+            }
+
+            List<CheckoutItem> itemsToRemove = new ArrayList<>(selectedItems);
+
+            itemList.removeAll(itemsToRemove);
+            mainTable.refresh();
+
+            double cumulativeTotalCost = 0;
+            double cumulativeTotalDiscount = 0;
+            double cumulativeGrandTotal = 0;
+
+            for (CheckoutItem item : itemList) {
+                int qty = item.getAmount();
+                double sellPrice = item.getSellingPrice();
+                double itemTotal = qty * sellPrice;
+                double itemDiscount = itemTotal * (item.getDiscount() / 100.0);
+                double itemGrandTotal = itemTotal - itemDiscount;
+
+                cumulativeTotalCost += itemTotal;
+                cumulativeTotalDiscount += itemDiscount;
+                cumulativeGrandTotal += itemGrandTotal;
+            }
+
+            totalCost.setText("$" + String.format("%.2f", cumulativeTotalCost));
+            totalDiscount.setText("$" + String.format("%.2f", cumulativeTotalDiscount));
+            grandTotal.setText("$" + String.format("%.2f", cumulativeGrandTotal));
+
+            double receivedFundValue = 0.0;
+            String receivedInput = receivedFund.getText();
+            if (receivedInput != null && !receivedInput.isEmpty()) {
+                String cleaned = receivedInput.replaceAll("[$,\\s]", "");
+                if (!cleaned.isEmpty()) {
+                    try {
+                        receivedFundValue = Double.parseDouble(cleaned);
+                    } catch (NumberFormatException ex) {
+                        System.err.println("Invalid received fund input");
+                    }
+                }
+            }
+
+            String deletedNames = itemsToRemove.stream()
+                    .map(CheckoutItem::getName)
+                    .collect(Collectors.joining(", "));
+            itemMessageContainer.setText("Deleted item(s): " + deletedNames);
+            System.out.println("Deleted items: " + deletedNames);
         });
+
+        Button remove = new Button("Remove All");
+        remove.setWrapText(false);
+        remove.setPrefWidth(Region.USE_COMPUTED_SIZE);
+        remove.setMinWidth(Region.USE_PREF_SIZE);
+        remove.setMaxWidth(Region.USE_PREF_SIZE);
+
+        remove.setOnAction(e-> {
+            mainTable.getItems().clear();
+            totalCost.setText("-");
+            totalDiscount.setText("-");
+            grandTotal.setText("-");
+            balance.setText("-");
+
+            checkOutButton.setDisable(false);
+        });
+
+        remove.getStyleClass().add("clear-button");
+
         // The tooltip
+        HoverTooltip removeItemTooltip = new HoverTooltip("Remove selected item row.");
+        removeItemTooltip.attachTo(deleteRow);
+        // Remove all Tool tip
         HoverTooltip removeItemsTooltip = new HoverTooltip("Remove all items from the checkout list.");
         removeItemsTooltip.attachTo(remove);
 
-        VBox actionSection = new VBox();
+        HBox actionSection = new HBox();
+        itemMessageContainer = new Label("");
+        itemMessageContainer.setMaxWidth(Double.MAX_VALUE);
         actionSection.setSpacing(10);
         actionSection.setPrefWidth(200);
         actionSection.setAlignment(Pos.TOP_RIGHT);
         actionSection.setPadding(new Insets(0, 0, 10, 0));
-        actionSection.getChildren().addAll(remove);
+        actionSection.getChildren().addAll(itemMessageContainer, itemInformation, deleteRow, remove);
+        actionSection.setMaxWidth(Double.MAX_VALUE);
+        actionSection.setAlignment(Pos.CENTER_RIGHT);
 
         AnchorPane floatingContainer = new AnchorPane();
         AnchorPane.setBottomAnchor(actionSection, 0.0);
@@ -725,27 +878,89 @@ public class Checkout implements ThemeObserver {
                 String.valueOf(InventoryManagementApplication.class.getResource("css/darkTheme.css"))
         );
     }
+
     private void showMessage(String message, Color color) {
         customerMessage.setText(message);
         customerMessage.setFill(color);
         customerMessage.setTextAlignment(TextAlignment.CENTER);
-        customerMessage.setStyle("-fx-padding: 20px 0px 0px 0px");
         customerMessage.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
         Region space = new Region();
         space.setMinHeight(40);
         if (!inputVerticalSec.getChildren().contains(customerMessage)) {
             inputVerticalSec.getChildren().add(customerMessage);
         }
-
-        // Cancel previous timer if still running
         if (messageTimer != null) {
             messageTimer.stop();
         }
 
-        // Auto-hide after 3 seconds
         messageTimer = new PauseTransition(Duration.seconds(2));
         messageTimer.setOnFinished(ev -> customerMessage.setText(""));
         messageTimer.play();
     }
 
+
+    // Update the selected row
+    private void updateSelectedRow() {
+        Object selectedObject = mainTable.getSelectionModel().getSelectedItem();
+
+        if (selectedObject == null || !(selectedObject instanceof CheckoutItem)) {
+            System.out.println("No valid row selected.");
+            return;
+        }
+
+        checkOutButton.setDisable(false);
+        CheckoutItem selected = (CheckoutItem) selectedObject;
+
+        try {
+            int newAmount = Integer.parseInt(amount.getText());
+            double newDiscount = Double.parseDouble(discount.getText());
+
+            selected.amountProperty().set(newAmount);
+            selected.setDiscount(newDiscount);
+
+            mainTable.refresh();
+
+        } catch (NumberFormatException ex) {
+            System.out.println("Invalid input. Amount must be an integer and discount a decimal.");
+        }
+    }
+
+    private <T> Callback<TableColumn<T, Integer>, TableCell<T, Integer>> dollarCellFactory() {
+        return column -> new TableCell<T, Integer>() {
+            @Override
+            protected void updateItem(Integer price, boolean empty) {
+                super.updateItem(price, empty);
+                if (empty || price == null) {
+                    setText(null);
+                } else {
+                    setText("$" + price);
+                }
+            }
+        };
+    }
+
+    private void recalculateTotals() {
+        double cumulativeTotalCost = 0;
+        double cumulativeTotalDiscount = 0;
+        double cumulativeGrandTotal = 0;
+
+        for (CheckoutItem item : itemList) {
+            int qty = item.getAmount();
+            double sellPrice = item.getSellingPrice();
+            double itemTotal = qty * sellPrice;
+            double itemDiscount = itemTotal * (item.getDiscount() / 100.0);
+            double itemGrandTotal = itemTotal - itemDiscount;
+
+            cumulativeTotalCost += itemTotal;
+            cumulativeTotalDiscount += itemDiscount;
+            cumulativeGrandTotal += itemGrandTotal;
+        }
+
+        totalCost.setText("$" + String.format("%.2f", cumulativeTotalCost));
+        totalDiscount.setText("$" + String.format("%.2f", cumulativeTotalDiscount));
+        grandTotal.setText("$" + String.format("%.2f", cumulativeGrandTotal));
+    }
+
+
 }
+

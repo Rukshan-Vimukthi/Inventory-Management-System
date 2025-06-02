@@ -709,6 +709,9 @@ public class Analytics extends VBox implements ThemeObserver {
         chartTableToggleComponent.setPrefHeight(Region.USE_COMPUTED_SIZE);
         HBox.setHgrow(chartTableToggleComponent, Priority.ALWAYS);
         return chartTableToggleComponent;
+
+
+
     }
 
     private ChartTableToggleComponent createRevenueToggleComponent() {
