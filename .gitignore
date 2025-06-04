@@ -47,3 +47,5 @@ bin/
 ./db.mwb
 ./db.mwb.bak
 db.env
+
+media/

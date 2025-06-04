@@ -12,15 +12,11 @@ import javafx.scene.chart.XYChart;
 //import org.apache.commons.configuration2.builder.fluent.Parameters;
 //import org.apache.commons.configuration2.ex.ConfigurationException;
 
-import javax.xml.transform.Result;
-import java.io.IOException;
 import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAmount;
 import java.util.*;
-import java.util.Date;
 
 /**
  * This is a singleton class. Use to do insert, update, delete, retrieve items from the database. to use methods to do those tasks with the
@@ -73,12 +69,12 @@ public class Connection {
         try{
             statement = connection.createStatement();
             ResultSet resultSet = statement.executeQuery(
-                    "SELECT *  FROM `item_has_size` " +
+                    "SELECT *  FROM `item_has_size` INNER JOIN `item_has_size_has_stock` ON `item_has_size`.`id` = `item_has_size_has_stock`.`item_has_size_id` " +
                             "WHERE `item_id` = %d AND `size_id` = %d".formatted(itemDetail.getId(), itemDetail.getSizeID()));
             while (resultSet.next()){
                 int id = resultSet.getInt("id");
                 int itemID = resultSet.getInt("item_id");
-                int stockID = resultSet.getInt("item_stock_id");
+                int stockID = resultSet.getInt("item_has_size_has_stock.stock_id");
                 int sizeID = resultSet.getInt("size_id");
                 int orderedQty = resultSet.getInt("ordered_qty");
                 int remainingQty = resultSet.getInt("remaining_qty");
@@ -193,9 +189,7 @@ public class Connection {
                 count++;
             }
         }
-
         return count;
-
     }
 
     public static List<String> getLowStockitemNames(Connection connection) {
@@ -253,7 +247,6 @@ public class Connection {
                 outOfStokesItems++;
             }
         }
-
         return outOfStokesItems;
     }
 
@@ -361,7 +354,8 @@ public class Connection {
      */
     public ArrayList<ItemHasSize> getAllItemHasSizes() {
         ArrayList<ItemHasSize> items = new ArrayList<>();
-        String query = "SELECT * FROM item_has_size";
+        String query = "SELECT * FROM item_has_size INNER JOIN `item_has_size_has_stock` ON `item_has_size`.`id` = " +
+                "`item_has_size_has_stock`.`item_has_size_id`";
         Set<Integer> seenItemIds = new HashSet<>();
 
         try  (PreparedStatement stmt = connection.prepareStatement(query);
@@ -370,7 +364,7 @@ public class Connection {
                 items.add(new ItemHasSize(
                         resultSet.getInt("id"),
                         resultSet.getInt("item_id"),
-                        resultSet.getInt("item_stock_id"),
+                        resultSet.getInt("item_has_size_has_stock.stock_id"),
                         resultSet.getInt("size_id"),
                         resultSet.getInt("ordered_qty"),
                         resultSet.getDouble("cost"),
@@ -506,13 +500,6 @@ public class Connection {
      * @return boolean - true if insertion is successful. false otherwise
      */
     public boolean addNewItem(String name, Integer qty, Double price, Double sellingPrice, int stockID, int sizeID, int colorID){
-        System.out.println(name);
-        System.out.println(qty);
-        System.out.println(price);
-        System.out.println(sellingPrice);
-        System.out.println(stockID);
-        System.out.println(sizeID);
-        System.out.println(colorID);
         try{
             statement = connection.createStatement();
             statement.execute(
@@ -525,12 +512,17 @@ public class Connection {
             generatedKeys.next();
             int id = generatedKeys.getInt(1);
             statement.execute("INSERT INTO `item_has_size` (" +
-                        "`item_id`, `item_stock_id`, `size_id`, `ordered_qty`, `cost`, `price`, `remaining_qty`) " +
-                                "VALUES(%d, %d, %d, %d, %f, %f, %d)".formatted(
-                                        id, stockID, sizeID, qty, price, sellingPrice, qty), Statement.RETURN_GENERATED_KEYS);
+                        "`item_id`, `size_id`, `ordered_qty`, `cost`, `price`, `remaining_qty`) " +
+                                "VALUES(%d, %d, %d, %f, %f, %d)".formatted(
+                                        id, sizeID, qty, price, sellingPrice, qty), Statement.RETURN_GENERATED_KEYS);
             generatedKeys = statement.getGeneratedKeys();
             generatedKeys.next();
             id = generatedKeys.getInt(1);
+
+            statement.execute("INSERT INTO `item_has_size_has_stock` (" +
+                    "`item_has_size_id`, `stock_id`) VALUES(%d, %d)".formatted(
+                            id, stockID), Statement.RETURN_GENERATED_KEYS);
+
             statement.execute("INSERT INTO `color_has_item_has_size` (" +
                             "`color_id`, `item_has_size_id`) VALUES('%d', '%d')".formatted(
                                     colorID, id
@@ -543,28 +535,85 @@ public class Connection {
         return false;
     }
 
+    public int addSingleItem(String itemName){
+        try{
+            statement = connection.createStatement();
+            statement.execute(
+                    "INSERT INTO `item` (`name`) VALUES('%s')".formatted(itemName), Statement.RETURN_GENERATED_KEYS
+            );
+
+            ResultSet generatedKeys = statement.getGeneratedKeys();
+            generatedKeys.next();
+
+            return generatedKeys.getInt(1);
+        }catch(SQLException e){
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
+    public boolean addNewVariant(int itemID, int stockID, int sizeID, int colorID, int orderedQty, double price, double sellingPrice){
+        try{
+            statement = connection.createStatement();
+            statement.execute("INSERT INTO `item_has_size` (" +
+                    "`item_id`, `item_stock_id`, `size_id`, `ordered_qty`, `cost`, `price`, `remaining_qty`) " +
+                    "VALUES(%d, %d, %d, %d, %f, %f, %d)".formatted(
+                            itemID, stockID, sizeID, orderedQty, price, sellingPrice, orderedQty), Statement.RETURN_GENERATED_KEYS);
+            ResultSet generatedKeys = statement.getGeneratedKeys();
+            generatedKeys.next();
+            int id = generatedKeys.getInt(1);
+            statement.execute("INSERT INTO `item_has_size_has_stock` (" +
+                    "`item_has_size_id`, `stock_id`) VALUES(%d, %d)".formatted(
+                            id, stockID), Statement.RETURN_GENERATED_KEYS);
+            statement.execute("INSERT INTO `color_has_item_has_size` (" +
+                    "`color_id`, `item_has_size_id`) VALUES('%d', '%d')".formatted(
+                            colorID, id
+                    ), Statement.RETURN_GENERATED_KEYS);
+            Data.getInstance().refreshItemDetails();
+            return true;
+        }catch(SQLException e){
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     /**
      * Update the information of the item selected
      * @return
      */
-    public boolean updateItem(int itemID, int itemHasSizeID, int colorHasItemHasSizeId, String name, Integer qty, Integer remainingQty, Double price, Double sellingPrice, int stockID, int sizeID, int colorID){
+    public boolean updateItem(int itemID, int itemHasSizeID, int itemHasSizeHasStockID, int colorHasItemHasSizeId, String name, Integer qty, Integer remainingQty, Double price, Double sellingPrice, int stockID, int sizeID, int colorID){
         try{
             statement = connection.createStatement();
             statement.execute(
-                    "UPDATE `item` SET `name` = '%s', `price` = %f, `stock_id` = %d WHERE `id` = %d".formatted(
-                            name, price, stockID, itemID
+                    "UPDATE `item` SET `name` = '%s' WHERE `id` = %d".formatted(
+                            name, itemID
                     ));
 
 
             statement.execute(
-                    "UPDATE `item_has_size` SET `item_id` = %d, `item_stock_id` = %d, `size_id` = %d, `ordered_qty` = %d, `cost` = %f, `price` = %f, `remaining_qty` = %d WHERE `id` = %d ".formatted(
-                            itemID, stockID, sizeID, qty, price, sellingPrice, remainingQty, itemHasSizeID
+                    "UPDATE `item_has_size` SET `item_id` = %d, `size_id` = %d, `ordered_qty` = %d, `cost` = %f, `price` = %f, `remaining_qty` = %d WHERE `id` = %d ".formatted(
+                            itemID, sizeID, qty, price, sellingPrice, remainingQty, itemHasSizeID
                     ));
 
-            statement.execute("UPDATE `color_has_item_has_size` SET " +
-                    "`color_id` = %d WHERE `id` = %d".formatted(
-                            colorID, colorHasItemHasSizeId
-                    ));
+            if (itemHasSizeHasStockID == 0){
+                statement.execute("INSERT INTO `item_has_size_has_stock` (" +
+                        "`item_has_size_id`, `stock_id`) VALUES(%d, %d)".formatted(
+                                itemHasSizeID, stockID));
+            }else {
+                statement.execute(("UPDATE `item_has_size_has_stock` " +
+                        "SET `item_has_size_id` = %d, `stock_id` = %d WHERE `id` = %d ").formatted(
+                        itemHasSizeID, stockID, itemHasSizeHasStockID));
+            }
+
+            if (colorHasItemHasSizeId == 0) {
+                statement.execute("INSERT INTO `color_has_item_has_size` (`color_id`, `item_has_size_id`) " +
+                        "VALUES('%d', '%d')");
+            }else{
+                statement.execute("UPDATE `color_has_item_has_size` SET " +
+                        "`color_id` = %d WHERE `id` = %d".formatted(
+                                colorID, colorHasItemHasSizeId
+                        ));
+            }
             Data.getInstance().refreshItemDetails();
             return true;
         }catch(SQLException sqlException){
@@ -604,7 +653,8 @@ public class Connection {
             ResultSet resultSet = statement.executeQuery("SELECT * FROM `item` " +
                     "LEFT JOIN `item_has_size` " +
                     "ON `item`.`id` = `item_has_size`.`item_id`" +
-                    "LEFT JOIN `stock` ON `item`.`stock_id` = `stock`.`id` " +
+                    "INNER JOIN `item_has_size_has_stock` ON `item_has_size`.`id` = `item_has_size_has_stock`.`item_has_size_id` " +
+                    "LEFT JOIN `stock` ON `item_has_size_has_stock`.`stock_id` = `stock`.`id` " +
                     "LEFT JOIN `size` ON `size`.`id` = `item_has_size`.`size_id` " +
                     "LEFT JOIN `color_has_item_has_size` " +
                     "ON `item_has_size`.`id` = `color_has_item_has_size`.`item_has_size_id` " +
@@ -617,6 +667,7 @@ public class Connection {
                 Double sellingPrice = resultSet.getDouble("item_has_size.price");
                 int orderedQty = resultSet.getInt("item_has_size.ordered_qty");
                 int remainingQty = resultSet.getInt("item_has_size.remaining_qty");
+                int itemHasSizeHasStockID = resultSet.getInt("item_has_size_has_stock.id");
                 int stockID = resultSet.getInt("stock.id");
                 String stockDate = resultSet.getString("stock.date");
                 String stockName = resultSet.getString("stock.name");
@@ -626,6 +677,7 @@ public class Connection {
                 int itemColorID = resultSet.getInt("color.id");
                 String itemColor = resultSet.getString("color.color");
                 int colorHasItemHasSizeID = resultSet.getInt("color_has_item_has_size.id");
+                String pathToImage = resultSet.getString("color_has_item_has_size.image_path");
 
                 ItemDetail itemDetail = new ItemDetail(
                         itemID,
@@ -641,9 +693,12 @@ public class Connection {
                         itemColor,
                         itemHasSizeID,
                         colorHasItemHasSizeID,
+                        itemHasSizeHasStockID,
                         orderedQty,
-                        remainingQty
+                        remainingQty,
+                        pathToImage
                 );
+
                 System.out.println(name);
 
                 itemDetails.add(itemDetail);
@@ -697,31 +752,142 @@ public class Connection {
     }
 
     public void filterItems(String color, String size, Stock stock, double price, String name, double sellingPrice){
+        List<ItemDetail> itemDetails = new ArrayList<>();
         try{
             statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery("SELECT * FROM `item` " +
+            String stockDate = null;
+            String stockName = null;
+
+            if(stock != null){
+                stockDate = stock.getDate();
+                stockName = stock.getName();
+            }
+
+            String query = "SELECT * FROM `item` " +
                     "INNER JOIN `item_has_size` " +
                     "ON `item`.`id` = `item_has_size`.`item_id`" +
-                    "INNER JOIN `stock` ON `item`.`stock_id` = `stock`.`id` " +
+                    "INNER JOIN `item_has_size_has_stock` ON `item_has_size`.`id` = `item_has_size_has_stock`.`item_has_size_id` " +
+                    "INNER JOIN `stock` ON `item_has_size_has_stock`.`stock_id` = `stock`.`id` " +
                     "INNER JOIN `size` ON `size`.`id` = `item_has_size`.`size_id` " +
                     "INNER JOIN `color_has_item_has_size` " +
                     "ON `item_has_size`.`id` = `color_has_item_has_size`.`item_has_size_id` " +
-                    "INNER JOIN `color` ON `color_has_item_has_size`.`color_id` = `color`.`id` WHERE " +
-                    "`color`.`color` = '%%s%' OR " +
-                    "`size`.`size` = '%%s%' OR " +
-                    "`item`.`name` = '%%s%' OR " +
-                    "`stock`.`date` = '%%s%' OR " +
-                    "`stock`.`name` = '%%s%' OR " +
-                    "`item_has_size`.`cost` LIKE %f OR " +
-                    "`item_has_size`.`price` LIKE %f".formatted(color, size, name, stock.getDate(), stock.getName(), price, sellingPrice
-                    ));
+                    "INNER JOIN `color` ON `color_has_item_has_size`.`color_id` = `color`.`id` WHERE ";
+
+            boolean addedFirstCondition = false;
+            if (color != null){
+                System.out.println("Color: " + color.split("0x")[1]);
+                if(!addedFirstCondition){
+                    query += "`color`.`color` = '#" + color.split("0x")[1].substring(0, 6).toUpperCase() + "' ";
+                    addedFirstCondition = true;
+                }else{
+                    query += " OR `color`.`color` = '#" + color.split("0x")[1].substring(0, 6).toUpperCase() + "'";
+                }
+            }
+
+            if(size != null){
+                if(!addedFirstCondition){
+                    addedFirstCondition = true;
+                    query += " `size`.`size` = '" + size + "' ";
+                }else {
+                    query += " OR `size`.`size` = '" + size + "' ";
+                }
+            }
+
+            if(name != null){
+                if(!addedFirstCondition){
+                    addedFirstCondition = true;
+                    query += "`item`.`name` = '" + name + "' ";
+                }else {
+                    query += " OR `item`.`name` = '" + name + "' ";
+                }
+            }
+
+            if(stockDate != null){
+                if(!addedFirstCondition){
+                    addedFirstCondition = true;
+                    query += "`stock`.`date` = '" + stockDate + "' ";
+                }else {
+                    query += " OR `stock`.`date` = '" + stockDate + "' ";
+                }
+            }
+
+            if(stockName != null){
+                if(!addedFirstCondition){
+                    addedFirstCondition = true;
+                    query += "`stock`.`name` = '" + stockName + "' ";
+                }else {
+                    query += " OR `stock`.`name` = '" + stockName + "' ";
+                }
+            }
+
+            if(price != 0.0D){
+                if(!addedFirstCondition){
+                    addedFirstCondition = true;
+                    query += "`item_has_size`.`cost` LIKE " + price;
+                }else {
+                    query += " OR `item_has_size`.`cost` LIKE " + price;
+                }
+            }
+
+            if(sellingPrice != 0.0D){
+                if(!addedFirstCondition){
+                    addedFirstCondition = true;
+                    query += "`item_has_size`.`price` LIKE " + sellingPrice;
+                }else {
+                    query += " OR `item_has_size`.`price` LIKE " + sellingPrice;
+                }
+            }
+
+            ResultSet resultSet = statement.executeQuery(query);
 
             while (resultSet.next()){
                 System.out.println(resultSet.getString("item.name"));
+                int itemID = resultSet.getInt("item.id");
+                String itemName = resultSet.getString("item.name");
+                Double itemPrice = resultSet.getDouble("item_has_size.cost");
+                Double itemSellingPrice = resultSet.getDouble("item_has_size.price");
+                int orderedQty = resultSet.getInt("item_has_size.ordered_qty");
+                int remainingQty = resultSet.getInt("item_has_size.remaining_qty");
+                int itemHasSizeHasStockID = resultSet.getInt("item_has_size_has_stock.id");
+                int stockID = resultSet.getInt("stock.id");
+                String itemStockDate = resultSet.getString("stock.date");
+                String itemStockName = resultSet.getString("stock.name");
+                int itemHasSizeID = resultSet.getInt("item_has_size.id");
+                int itemSizeID = resultSet.getInt("size.id");
+                String itemSize = resultSet.getString("size.size");
+                int itemColorID = resultSet.getInt("color.id");
+                String itemColor = resultSet.getString("color.color");
+                int colorHasItemHasSizeID = resultSet.getInt("color_has_item_has_size.id");
+                String pathToImage = resultSet.getString("color_has_item_has_size.image_path");
+
+                ItemDetail itemDetail = new ItemDetail(
+                        itemID,
+                        itemName,
+                        itemPrice,
+                        itemSellingPrice,
+                        stockID,
+                        itemStockDate,
+                        itemStockName,
+                        itemSizeID,
+                        itemSize,
+                        itemColorID,
+                        itemColor,
+                        itemHasSizeID,
+                        colorHasItemHasSizeID,
+                        itemHasSizeHasStockID,
+                        orderedQty,
+                        remainingQty,
+                        pathToImage
+                );
+
+                System.out.println(itemName);
+
+                itemDetails.add(itemDetail);
             }
         }catch(SQLException exception){
             exception.printStackTrace();
         }
+        Data.getInstance().setItemDetails(itemDetails);
     }
 
     /**
@@ -846,12 +1012,16 @@ public class Connection {
      * @param roleID - roleID - call getRoleIDs() method to get the roles available
      * @return boolean - true if the user is successfully added. false otherwise
      */
-    public int addNewUser(String firstName, String lastName, String userName, String email, String password, String registeredDate, int roleID){
+    public int addNewUser(String firstName, String lastName, String userName, String email, String password, String registeredDate, int roleID, String pathToImage){
+        String imagePath = pathToImage;
+        if (pathToImage == null){
+            imagePath = " ";
+        }
         try{
             statement = connection.createStatement();
             boolean isUserAdded = statement.execute("INSERT INTO `user` " +
-                    "(`firstName`, `lastName`, `username`, `email`, `password`, `registered_date`, `role_id`) " +
-                    "VALUES('%s', '%s', '%s', '%s', '%s', '%s', '%d')".formatted(firstName, lastName, userName, email, password, registeredDate, roleID));
+                    "(`firstName`, `lastName`, `username`, `email`, `password`, `registered_date`, `role_id`, `image_path`) " +
+                    "VALUES('%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s')".formatted(firstName, lastName, userName, email, password, registeredDate, roleID, imagePath));
             Data.getInstance().refreshUsers();
             return 1;
         }catch(SQLException exception){
@@ -894,10 +1064,11 @@ public class Connection {
                 String password = resultSet.getString("password");
                 String registeredDate = resultSet.getString("registered_date");
                 String role = resultSet.getString("role.role");
+                String imagePath = resultSet.getString("image_path");
 
                 System.out.println(firstName + " " + lastName);
 
-                User user = new User(id, firstName, lastName, userName, email, password, registeredDate, role);
+                User user = new User(id, firstName, lastName, userName, email, password, registeredDate, role, imagePath);
                 users.add(user);
             }
         }catch(SQLException exception){
@@ -906,15 +1077,27 @@ public class Connection {
         return users;
     }
 
+    public int updateUser(int userID, String firstName, String lastName, String userName, String email, String password, String registeredDate, int roleID){
+        try{
+            statement = connection.createStatement();
+            boolean isUserAdded = statement.execute(("UPDATE `user` " +
+                    "SET `firstName` = '%s', `lastName` = '%s', `username` = '%s', `email` = '%s', `password` = '%s', `registered_date` = '%s', `role_id` = %d WHERE `id` = %d ").formatted(
+                            firstName, lastName, userName, email, password, registeredDate, roleID, userID
+            ));
+            Data.getInstance().refreshUsers();
+            return 1;
+        }catch(SQLException exception){
+            exception.printStackTrace();
+        }
+        return -1;
+    }
+
     public ResultSet getUser(String userName, String password){
         try{
             statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery(
-                    ("SELECT * " +
-                            "FROM `user` " +
-                            "WHERE `username` = '%s' " +
-                            "AND `password` = '%s'"
-                    ).formatted(userName, password));
+            ResultSet resultSet = statement.executeQuery("SELECT * " +
+                            "FROM `user` INNER JOIN `role` ON `user`.`role_id` = `role`.`id` " +
+                            "WHERE `username` = '%s' AND `password` = '%s'".formatted(userName, password));
             resultSet.next();
             try {
                 System.out.println(resultSet.getString("username"));
@@ -995,10 +1178,11 @@ public class Connection {
                 String email = resultSet.getString("email");
                 String phone = resultSet.getString("phone");
                 String registeredDate = resultSet.getString("registered_date");
+                String pathToImage = resultSet.getString("image_path");
 
 //                System.out.println(firstName + " " + lastName);
 
-                Customer customer = new Customer(id, firstName, lastName, phone, email, registeredDate);
+                Customer customer = new Customer(id, firstName, lastName, phone, email, registeredDate, pathToImage);
                 customers.add(customer);
             }
         }catch(SQLException exception){
@@ -1019,10 +1203,11 @@ public class Connection {
                 String email = resultSet.getString("email");
                 String phone = resultSet.getString("phone");
                 String registeredDate = resultSet.getString("registered_date");
+                String pathToImage = resultSet.getString("image_path");
 
                 System.out.println(firstName + " " + lastName);
 
-                Customer customer = new Customer(id, firstName, lastName, phone, email, registeredDate);
+                Customer customer = new Customer(id, firstName, lastName, phone, email, registeredDate,pathToImage);
                 customers.add(customer);
             }
         }catch(SQLException exception){
@@ -1086,34 +1271,40 @@ public class Connection {
         return -1;
     }
 
-    /**
-     * Gets customers from the database and return the result
-     */
-    public void addCustomers(String first_name, String last_name, String phone, String email, String registeredDate){
+    public String addCustomers(String first_name, String last_name, String phone, String email, String registeredDate) {
         try {
             if (email == null || email.trim().isEmpty()) {
                 email = "Not included";
             }
-            PreparedStatement ps;
 
-            if(registeredDate == null) {
-                ps = connection.prepareStatement(
-                        "INSERT INTO customer (first_name, last_name, phone, email) VALUES (?, ?, ?, ?)"
-                );
-            }else{
-                ps = connection.prepareStatement(
-                        "INSERT INTO customer (first_name, last_name, phone, email, registered_date) VALUES (?, ?, ?, ?, ?)"
-                );
+            // Check if customer already exists
+            PreparedStatement checkPs = connection.prepareStatement(
+                    "SELECT COUNT(*) FROM customer WHERE first_name = ? AND last_name = ? AND phone = ? AND email = ?"
+            );
+            checkPs.setString(1, first_name);
+            checkPs.setString(2, last_name);
+            checkPs.setString(3, phone);
+            checkPs.setString(4, email);
+            ResultSet rs = checkPs.executeQuery();
+            if (rs.next() && rs.getInt(1) > 0) {
+                return "Customer already exists!";
             }
+
+            PreparedStatement ps = connection.prepareStatement(
+                    "INSERT INTO customer (first_name, last_name, phone, email, registered_date) VALUES (?, ?, ?, ?, ?)"
+            );
             ps.setString(1, first_name);
             ps.setString(2, last_name);
             ps.setString(3, phone);
             ps.setString(4, email);
-            ps.setString(5, registeredDate);
+            ps.setDate(5, java.sql.Date.valueOf(registeredDate));
             ps.executeUpdate();
+
             Data.getInstance().refreshCustomers();
+            return "Customer added successfully!";
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
+            return "Error: Could not add customer.";
         }
     }
 
@@ -1138,7 +1329,7 @@ public class Connection {
         return totalCustomers;
     }
 
-    public void storeSales (int customerId, int itemHasSizeId, int amount, int price, int item_status_id) {
+    public void storeSales (int customerId, int itemHasSizeId, int amount, double price, int item_status_id) {
         String theCurrentDate = LocalDate.now().toString();
         try {
             PreparedStatement stmt = connection.prepareStatement(
@@ -1147,7 +1338,7 @@ public class Connection {
             stmt.setInt(1, customerId);
             stmt.setInt(2, itemHasSizeId);
             stmt.setInt(3, amount);
-            stmt.setInt(4, price);
+            stmt.setDouble(4, price);
             stmt.setString(5, theCurrentDate);
             stmt.setInt(6, item_status_id);
 
@@ -1450,8 +1641,9 @@ public class Connection {
                 String phone = resultSet.getString("phone");
                 String email = resultSet.getString("email");
                 String registeredDate = resultSet.getString("registered_date");
+                String pathToImage = resultSet.getString("image_path");
 
-                Customer customer = new Customer(id, firstName, lastName, phone, email, registeredDate);
+                Customer customer = new Customer(id, firstName, lastName, phone, email, registeredDate, pathToImage);
                 customerList.add(customer);
             }
         }catch(SQLException e){
@@ -1467,7 +1659,7 @@ public class Connection {
 
         try{
             statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery("SELECT * FROM `user` INNER JOIN `role` WHERE `user`.`role_id` = `role`.`id`");
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM `user` INNER JOIN `role` ON `user`.`role_id` = `role`.`id`");
             while (resultSet.next()){
                 String role = resultSet.getString("role.role");
                 if (role.equals("Admin")){

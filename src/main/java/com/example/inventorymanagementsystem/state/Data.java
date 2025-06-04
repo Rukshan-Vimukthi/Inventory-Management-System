@@ -151,6 +151,7 @@ public class Data {
     }
 
     public void setItemDetails(List<ItemDetail> newItemDetails){
-
+        itemDetails.clear();
+        itemDetails.addAll(newItemDetails);
     }
 }

@@ -25,6 +25,12 @@ public class ChartTableToggleComponent extends VBox {
         ((Region) chart).prefWidthProperty().bind(this.widthProperty());
         ((Region) table).prefWidthProperty().bind(this.widthProperty());
 
+        ScrollPane chartScrollableContainer = new ScrollPane((Node) chart);
+        chartScrollableContainer.setFitToWidth(false);
+        chartScrollableContainer.setStyle("-fx-background-color: transparent;");
+        chartScrollableContainer.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        chartScrollableContainer.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+
         this.toggleButton = new Button("Show Table");
 
         this.container = new BorderPane();

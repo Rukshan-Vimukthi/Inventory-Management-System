@@ -26,16 +26,19 @@ public class TableKeeper {
         Connection connection = Connection.getInstance();
         ObservableList<StockRow> stockData = FXCollections.observableArrayList();
 
+        int soldQuantity;
         for (ItemHasSize item : connection.getAllItemHasSizes()) {
             int remainingQty = item.getRemainingQuantity();
 
             if (remainingQty > 40) {
                 int productId = item.getItemID();
+                int orderedQuantity = item.getOrderQuantity();
+                soldQuantity = (orderedQuantity - remainingQty);
                 String itemName = connection.getItemNameById(productId);
                 String itemSize = connection.getItemSizeById(productId);
                 String itemLabel = itemName + "-" + itemSize;
 
-                stockData.add(new StockRow(itemLabel, remainingQty));
+                stockData.add(new StockRow(itemLabel, remainingQty, soldQuantity));
             }
         }
 
@@ -48,7 +51,10 @@ public class TableKeeper {
         TableColumn<StockRow, Integer> qtyCol = new TableColumn<>("Remaining Quantity");
         qtyCol.setCellValueFactory(new PropertyValueFactory<>("quantity"));
 
-        table.getColumns().addAll(idCol, qtyCol);
+        TableColumn<StockRow, Integer> soldQty = new TableColumn<>("Sold Quantity");
+        soldQty.setCellValueFactory(new PropertyValueFactory<>("soldQuantity"));
+
+        table.getColumns().addAll(idCol, qtyCol, soldQty);
         table.setPrefHeight(400);
 
         return table;
@@ -57,10 +63,12 @@ public class TableKeeper {
     public static class StockRow {
         private final String ItemName;
         private final int quantity;
+        private final int soldQuantity;
 
-        public StockRow(String ItemName, int quantity) {
+        public StockRow(String ItemName, int quantity, int soldQuantity) {
             this.ItemName = ItemName;
             this.quantity = quantity;
+            this.soldQuantity = soldQuantity;
         }
 
         public String getItemName() {
@@ -70,6 +78,7 @@ public class TableKeeper {
         public int getQuantity() {
             return quantity;
         }
+        public int getSoldQuantity() { return soldQuantity; }
     }
 
     public static TableView<ItemHasSize> getReorderAlertTable() {
@@ -106,6 +115,7 @@ public class TableKeeper {
 
         TableColumn<ItemHasSize, Integer> priceCol = new TableColumn<>("Price");
         priceCol.setCellValueFactory(new PropertyValueFactory<>("price"));
+        priceCol.setCellFactory(CurrencyCellFactory.withPrefix("Rs."));
 
         table.getColumns().addAll(itemIdCol, orderedQtyCol, stockQtyCol, priceCol);
 
@@ -138,6 +148,7 @@ public class TableKeeper {
 
         TableColumn<SalesRow, Integer> priceCol = new TableColumn<>("Price");
         priceCol.setCellValueFactory(new PropertyValueFactory<>("price"));
+        priceCol.setCellFactory(CurrencyCellFactory.withPrefix("Rs."));
 
         TableColumn<SalesRow, Integer> amountCol = new TableColumn<>("Amount");
         amountCol.setCellValueFactory(new PropertyValueFactory<>("amount"));
@@ -213,6 +224,7 @@ public class TableKeeper {
 
         TableColumn<RevenueData, Double> revenueCol = new TableColumn<>("Revenue");
         revenueCol.setCellValueFactory(new PropertyValueFactory<>("revenue"));
+        revenueCol.setCellFactory(CurrencyCellFactory.withPrefix("Rs."));
 
         revenueTable.getColumns().addAll(nameCol, unitsSoldCol, revenueCol);
 

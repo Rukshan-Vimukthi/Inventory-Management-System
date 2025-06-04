@@ -285,16 +285,6 @@
     -fx-text-fill: black;
 }
 
-.card-heading{
-    -fx-font-size: 18px;
-    -fx-font-weight: bold;
-}
-
-.card-content{
-    -fx-font-size: 26px;
-    -fx-font-weight: bolder;
-}
-
 .user-preview{
     -fx-background-color: #AAAAAA;
     -fx-background-radius: 10px;
@@ -310,4 +300,34 @@
     -fx-alignment: CENTER_LEFT;
     -fx-cursor: hand;
     -fx-transition: all 0.3s ease;
+}
+
+.card-heading{
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #000;
+}
+
+.card-content{
+    -fx-font-size: 26px;
+    -fx-font-weight: bolder;
+    -fx-text-fill: #000;
+}
+
+.item-information-label-text{
+    -fx-text-fill: #000;
+}
+
+
+.custom-form-field-label{
+    -fx-text-fill: #000;
+}
+
+.custom-list-view .list-cell{
+    -fx-background-color: transparent;
+}
+
+.custom-list-view .list-cell:selected{
+    -fx-background-color: #0055AA;
+    -fx-text-fill: #EEE;
 }

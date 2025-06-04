@@ -1,27 +1,21 @@
 package com.example.inventorymanagementsystem;
 
+import com.example.inventorymanagementsystem.models.User;
+import com.example.inventorymanagementsystem.services.interfaces.AuthenticateStateListener;
 import com.example.inventorymanagementsystem.state.Constants;
-import com.example.inventorymanagementsystem.state.Data;
-
+import com.example.inventorymanagementsystem.state.Session;
 import com.example.inventorymanagementsystem.state.ThemeObserver;
 import com.example.inventorymanagementsystem.view.*;
 import com.example.inventorymanagementsystem.view.components.TabBuilder;
 import com.example.inventorymanagementsystem.view.dialogs.SignIn;
 import javafx.application.Application;
-import javafx.beans.binding.BooleanBinding;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.event.EventType;
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.geometry.Side;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Paint;
 import javafx.stage.Stage;
@@ -31,9 +25,15 @@ import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.io.IOException;
 
-public class InventoryManagementApplication extends Application implements com.example.inventorymanagementsystem.services.interfaces.ThemeObserver {
+public class InventoryManagementApplication extends Application implements com.example.inventorymanagementsystem.services.interfaces.ThemeObserver, AuthenticateStateListener {
 
     Scene scene;
+    Tab checkoutTab;
+    Tab analyticsTab;
+    Tab inventory;
+    Tab users;
+
+    TabPane tabPane;
     @Override
     public void start(Stage stage) throws IOException {
 
@@ -42,7 +42,7 @@ public class InventoryManagementApplication extends Application implements com.e
 
         TitleBar titleBar = new TitleBar(stage);
 
-        TabPane tabPane = new TabPane();
+        tabPane = new TabPane();
         tabPane.setStyle("-fx-background-color: #222;");
         
         tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
@@ -69,10 +69,10 @@ public class InventoryManagementApplication extends Application implements com.e
         userIcon.setFill(Paint.valueOf("#FFF"));
 
         // tabs in the main UI
-        Tab checkoutTab = TabBuilder.buildTab("Checkout", checkoutIcon);
-        Tab analyticsTab = TabBuilder.buildTab("Analytics", analyticsIcon);
-        Tab inventory = TabBuilder.buildTab("Inventory", inventoryIcon);
-        Tab users = TabBuilder.buildTab("Users", userIcon);
+        checkoutTab = TabBuilder.buildTab("Checkout", checkoutIcon);
+        analyticsTab = TabBuilder.buildTab("Analytics", analyticsIcon);
+        inventory = TabBuilder.buildTab("Inventory", inventoryIcon);
+        users = TabBuilder.buildTab("Users", userIcon);
 
         // create the inventory view (custom javaFX layout container ex. HBox, VBox)
         Inventory inventoryView = new Inventory();
@@ -138,6 +138,11 @@ public class InventoryManagementApplication extends Application implements com.e
         stage.setResizable(true);
         stage.setScene(scene);
         stage.show();
+
+        if (!Session.isLoggedIn()){
+            SignIn signIn = new SignIn(stage);
+            signIn.show();
+        }
     }
 
     public static void main(String[] args) {
@@ -154,5 +159,29 @@ public class InventoryManagementApplication extends Application implements com.e
     public void darkTheme() {
         scene.getStylesheets().remove(Constants.LIGHT_THEME_CSS);
         scene.getStylesheets().add(Constants.DARK_THEME_CSS);
+    }
+
+    @Override
+    public void onLoggedIn() {
+        User user = Session.getInstance().getSessionUser();
+        if (user.getRole().equals("Admin")){
+            checkoutTab.setDisable(false);
+            analyticsTab.setDisable(false);
+            inventory.setDisable(false);
+            users.setDisable(false);
+        }else{
+            checkoutTab.setDisable(false);
+            analyticsTab.setDisable(true);
+            inventory.setDisable(true);
+            users.setDisable(true);
+        }
+    }
+
+    @Override
+    public void onLoggedOut() {
+        checkoutTab.setDisable(false);
+        analyticsTab.setDisable(false);
+        inventory.setDisable(false);
+        users.setDisable(false);
     }
 }

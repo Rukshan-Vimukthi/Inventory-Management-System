@@ -8,6 +8,7 @@ import javafx.beans.property.*;
  * Recommended for using when showing all the item data and loading items in a checkout page.
  */
 public class ItemDetail implements DataModel {
+    private ItemDetail itemDetail;
     private IntegerProperty id;
     private StringProperty name;
     private DoubleProperty price;
@@ -31,6 +32,10 @@ public class ItemDetail implements DataModel {
     private IntegerProperty remainingQty;
     private IntegerProperty orderedQty;
 
+    private IntegerProperty itemHasSizeHasStockID;
+
+    private StringProperty imagePath;
+
 
     public ItemDetail(int id, String name, Double price,
                       Double sellingPrice, int stockID,
@@ -42,7 +47,8 @@ public class ItemDetail implements DataModel {
                       String itemColor,
                       int itemHasSizeID,
                       int colorHasItemHasSizeID,
-                      int orderedQty, int remainingQty){
+                      int itemHasSizeHasStockID,
+                      int orderedQty, int remainingQty, String imagePath){
         idProperty().setValue(id);
         nameProperty().setValue(name);
         priceProperty().setValue(price);
@@ -58,6 +64,8 @@ public class ItemDetail implements DataModel {
         colorHasItemHasSizeIDProperty().setValue(colorHasItemHasSizeID);
         orderedQtyProperty().setValue(orderedQty);
         remainingQtyProperty().setValue(remainingQty);
+        itemHasSizeHasStockIDProperty().setValue(itemHasSizeHasStockID);
+        imagePathProperty().setValue(imagePath);
     }
 
     public IntegerProperty idProperty(){
@@ -156,8 +164,22 @@ public class ItemDetail implements DataModel {
         return remainingQty;
     }
 
-    public int getPrice() {
-        return (int) priceProperty().get(); // Correctly retrieves the price value
+    public IntegerProperty itemHasSizeHasStockIDProperty(){
+        if (itemHasSizeHasStockID == null){
+            itemHasSizeHasStockID = new SimpleIntegerProperty(this, "itemHasSizeHasStockID");
+        }
+        return itemHasSizeHasStockID;
+    }
+
+    public StringProperty imagePathProperty(){
+        if (imagePath == null){
+            imagePath = new SimpleStringProperty(this, "image_path");
+        }
+        return imagePath;
+    }
+
+    public double getPrice() {
+        return priceProperty().get(); // Correctly retrieves the price value
     }
     public int getId() {
         return id.get();
@@ -238,8 +260,24 @@ public class ItemDetail implements DataModel {
         return orderedQty.get();
     }
 
+    public int getItemHasSizeHasStockID() {
+        return itemHasSizeHasStockID.get();
+    }
+
+    public String getImagePath(){
+        return imagePath.get();
+    }
+
     @Override
     public String toString() {
         return name.get();
+    }
+
+    public void setItemDetail(ItemDetail itemDetail) {
+        this.itemDetail = itemDetail;
+    }
+
+    public ItemDetail getItemDetail() {
+        return itemDetail;
     }
 }

@@ -77,6 +77,7 @@ public class Inventory extends HBox implements ThemeObserver {
         itemsTable.addFilter(stockFilter);
         itemsTable.addFilter(costFilter);
         itemsTable.addFilter(priceFilter);
+        itemsTable.setTableTitle("Items");
 
         itemsTable.setOnActionPerformed(new TableContainerInterface<ItemDetail>() {
 
@@ -112,7 +113,29 @@ public class Inventory extends HBox implements ThemeObserver {
 
             @Override
             public void onSearch(List<FormField<? extends Control, ?>> formFields, String searchBoxText) {
+                double cost = 0.0D;
+                double sellingPrice = 0.0D;
 
+                try{
+                    cost = Double.parseDouble((String)costFilter.getValue());
+                }catch(NumberFormatException e){
+                    e.printStackTrace();
+                }
+
+                try{
+                    sellingPrice = Double.parseDouble((String)priceFilter.getValue());
+                }catch(NumberFormatException e){
+                    e.printStackTrace();
+                }
+
+                Connection.getInstance().filterItems(
+                        (String)colorFilter.getValue(),
+                        ((Size)sizeFilter.getValue()).getSize(),
+                        (Stock)stockFilter.getValue(),
+                        cost,
+                        searchBoxText,
+                        sellingPrice
+                );
             }
 
         });
@@ -135,6 +158,7 @@ public class Inventory extends HBox implements ThemeObserver {
         stockTableContainer.addColumn("date", String.class);
         stockTableContainer.addColumn("name", String.class);
         stockTableContainer.addItems(Data.getInstance().getStocks());
+        stockTableContainer.setTableTitle("Stock");
         stockTableContainer.setOnActionPerformed(new TableContainerInterface<Stock>() {
             @Override
             public void addItem() {
@@ -179,7 +203,9 @@ public class Inventory extends HBox implements ThemeObserver {
         TableContainer<Color> colorTableContainer = new TableContainer<>(false, null, "Enter color code");
         colorTableContainer.addColumn("id", Integer.class);
         colorTableContainer.addColumn("color", String.class);
+        colorTableContainer.addColumn("color", "color view");
         colorTableContainer.addItems(Data.getInstance().getColors());
+        colorTableContainer.setTableTitle("Color");
         colorTableContainer.setOnActionPerformed(new TableContainerInterface<Color>() {
             @Override
             public void addItem() {
@@ -218,6 +244,8 @@ public class Inventory extends HBox implements ThemeObserver {
         itemSizeTableContainer.addColumn("id", Integer.class);
         itemSizeTableContainer.addColumn("size", String.class);
         itemSizeTableContainer.addItems(Data.getInstance().getSize());
+        itemSizeTableContainer.setTableTitle("Size");
+
         itemSizeTableContainer.setOnActionPerformed(new TableContainerInterface<Size>() {
             @Override
             public void addItem() {

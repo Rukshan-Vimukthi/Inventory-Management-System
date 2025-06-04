@@ -1,10 +1,12 @@
 package com.example.inventorymanagementsystem.view.components;
 
+import com.example.inventorymanagementsystem.InventoryManagementApplication;
 import com.example.inventorymanagementsystem.models.Customer;
 import com.example.inventorymanagementsystem.models.User;
 import com.example.inventorymanagementsystem.services.interfaces.ThemeObserver;
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -13,6 +15,10 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Paint;
 import org.kordamp.ikonli.fontawesome5.FontAwesomeSolid;
 import org.kordamp.ikonli.javafx.FontIcon;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
 
 public class UserPreview extends HBox implements ThemeObserver {
     Label firstName;
@@ -31,6 +37,10 @@ public class UserPreview extends HBox implements ThemeObserver {
     BorderPane emptyDataContainer;
     VBox informationContainer;
 
+    ImageView imageView;
+
+    Image defaultImage;
+
     private void init(){
         this.setFillHeight(true);
         this.setPadding(new Insets(10.0D));
@@ -42,10 +52,15 @@ public class UserPreview extends HBox implements ThemeObserver {
         phone = new Label("", phoneIcon);
         registeredDate = new Label("", calenderIcon);
 
-        ImageView imageView = new ImageView();
+        imageView = new ImageView();
         imageView.setFitWidth(300.0D);
         imageView.setFitHeight(300.0D);
-
+        try {
+            defaultImage = new Image(String.valueOf(InventoryManagementApplication.class.getResource("images/ChatGPT Image Jun 2, 2025, 07_50_06 AM.png").toURI()));
+            imageView.setImage(defaultImage);
+        }catch(URISyntaxException e){
+            e.printStackTrace();
+        }
         firstName.setStyle("-fx-font-size: 18px;");
         lastName.setStyle("-fx-font-size: 18px;");
         userName.setStyle("-fx-font-size: 18px;");
@@ -68,7 +83,9 @@ public class UserPreview extends HBox implements ThemeObserver {
         nameContainer.getChildren().addAll(firstAndLastnameContainer, userName);
 
         informationContainer.getChildren().addAll(nameContainer, email, phone, registeredDate);
+        informationContainer.setSpacing(5.0D);
         this.getChildren().addAll(imageView, informationContainer, emptyDataContainer);
+        this.setSpacing(10.0D);
         HBox.setHgrow(informationContainer, Priority.ALWAYS);
         com.example.inventorymanagementsystem.state.ThemeObserver.init().addObserver(this);
     }
@@ -82,6 +99,22 @@ public class UserPreview extends HBox implements ThemeObserver {
         lastName.setText(user.getLastName());
         userName.setText(user.getUserName());
         email.setText(user.getEmail());
+
+        String imageURI = null;
+        if (user.getImagePath() == null){
+            imageView.setImage(defaultImage);
+        }else if(user.getImagePath().isBlank() && user.getImagePath().isEmpty()){
+            imageView.setImage(defaultImage);
+        }else {
+            try {
+                File imageFile = new File(user.getImagePath());
+                imageURI = imageFile.toURI().toURL().toString();
+            } catch (IOException exception) {
+                exception.printStackTrace();
+            }
+            System.out.println(imageURI);
+            imageView.setImage(new Image(imageURI));
+        }
     }
 
     public UserPreview(Customer customer){
@@ -93,6 +126,23 @@ public class UserPreview extends HBox implements ThemeObserver {
         lastName.setText(customer.getLastName());
         email.setText(customer.getEmail());
         phone.setText(customer.getPhone());
+
+        String imageURI = null;
+        if (customer.getImagePath() == null){
+            imageView.setImage(defaultImage);
+        }else if(customer.getImagePath().isBlank() && customer.getImagePath().isEmpty()){
+            imageView.setImage(defaultImage);
+        }else {
+            try {
+                File imageFile = new File(customer.getImagePath());
+                imageURI = imageFile.toURI().toURL().toString();
+            } catch (IOException exception) {
+                exception.printStackTrace();
+            }
+            System.out.println(imageURI);
+            imageView.setImage(new Image(imageURI));
+        }
+
     }
 
     public UserPreview(){
@@ -110,6 +160,25 @@ public class UserPreview extends HBox implements ThemeObserver {
         userName.setText(user.getUserName());
         email.setText(user.getEmail());
         registeredDate.setText(user.getRegisteredDate());
+
+        String imageURI = null;
+        if (user.getImagePath() == null){
+            imageView.setImage(defaultImage);
+        }else if(user.getImagePath().isBlank() && user.getImagePath().isEmpty()){
+            imageView.setImage(defaultImage);
+        }else {
+            try {
+                System.out.println("Image Path Received: " + user.getImagePath());
+                File imageFile = new File(user.getImagePath());
+                System.out.println("Name: " + imageFile.getName());
+                System.out.println("URI" + imageFile.toURI());
+                imageURI = imageFile.toURI().toURL().toString();
+            } catch (IOException exception) {
+                exception.printStackTrace();
+            }
+            System.out.println(imageURI);
+            imageView.setImage(new Image(imageURI));
+        }
     }
 
     public void setCustomerData(Customer customer){
@@ -121,6 +190,22 @@ public class UserPreview extends HBox implements ThemeObserver {
         email.setText(customer.getEmail());
         phone.setText(customer.getPhone());
         registeredDate.setText(customer.getRegisteredDate());
+
+        String imageURI = null;
+        if (customer.getImagePath() == null){
+            imageView.setImage(defaultImage);
+        }else if(customer.getImagePath().isBlank() && customer.getImagePath().isEmpty()){
+            imageView.setImage(defaultImage);
+        }else {
+            try {
+                File imageFile = new File(customer.getImagePath());
+                imageURI = imageFile.toURI().toURL().toString();
+            } catch (IOException exception) {
+                exception.printStackTrace();
+            }
+            System.out.println(imageURI);
+            imageView.setImage(new Image(imageURI));
+        }
     }
 
     @Override

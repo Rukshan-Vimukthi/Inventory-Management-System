@@ -4,7 +4,9 @@ import com.example.inventorymanagementsystem.models.Size;
 import com.example.inventorymanagementsystem.models.Stock;
 import com.example.inventorymanagementsystem.services.interfaces.DataModel;
 import com.example.inventorymanagementsystem.services.interfaces.ThemeObserver;
+import com.example.inventorymanagementsystem.state.Constants;
 import javafx.collections.ObservableList;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.VBox;
@@ -20,7 +22,7 @@ public class FormField<C extends Control, M> extends VBox implements ThemeObserv
     public FormField(String labelText, Class<C> nodeClass){
         try {
             label = new Label(labelText);
-
+            label.getStyleClass().add("custom-form-field-label");
             if (nodeClass == TextField.class){
                 buildTextField();
             }else if(nodeClass == ComboBox.class){
@@ -43,7 +45,7 @@ public class FormField<C extends Control, M> extends VBox implements ThemeObserv
     public FormField(String labelText, Class<DatePicker> nodeClass, String value){
         try {
             label = new Label(labelText);
-
+            label.getStyleClass().add("custom-form-field-label");
             if(nodeClass == DatePicker.class){
                 try {
                     buildDatePicker(value);
@@ -63,6 +65,7 @@ public class FormField<C extends Control, M> extends VBox implements ThemeObserv
     public FormField(String labelText, Class<C> nodeClass, ObservableList<M> items){
         try {
             label = new Label(labelText);
+            label.getStyleClass().add("custom-form-field-label");
             if (nodeClass == TextField.class){
                 buildTextField();
             }else if(nodeClass == ComboBox.class){
@@ -82,6 +85,7 @@ public class FormField<C extends Control, M> extends VBox implements ThemeObserv
     public FormField(String labelText, Class<C> nodeClass, ObservableList<M> items, M selectedItem){
         try {
             label = new Label(labelText);
+            label.getStyleClass().add("custom-form-field-label");
             if (nodeClass == TextField.class){
                 buildTextField();
             }else if(nodeClass == ComboBox.class){
@@ -222,30 +226,43 @@ public class FormField<C extends Control, M> extends VBox implements ThemeObserv
         }
     }
 
+    public Node getControl(){
+        return node;
+    }
+
+    public ComboBox<M> getComboBox(){
+        return (ComboBox<M>) node;
+    }
+
     @Override
     public void lightTheme() {
-        try {
-            label.getStyleClass().remove("custom-form-field-label-dark");
-        }catch(Exception e){
-            e.printStackTrace();
-        }
-        label.getStyleClass().add("custom-form-field-label-light");
+        this.getStylesheets().clear();
+        this.getStylesheets().add(Constants.LIGHT_THEME_CSS);
 
-        if (node != null) {
-            node.getStyleClass().add("default-text-areas");
-        }
+//        try {
+//            label.getStyleClass().remove("custom-form-field-label-dark");
+//        }catch(Exception e){
+//            e.printStackTrace();
+//        }
+//        label.getStyleClass().add("custom-form-field-label-light");
+//
+//        if (node != null) {
+//            node.getStyleClass().add("default-text-areas");
+//        }
     }
 
     @Override
     public void darkTheme() {
-        try {
-            label.getStyleClass().remove("custom-form-field-label-light");
-        }catch(Exception e){
-            e.printStackTrace();
-        }
-        label.getStyleClass().add("custom-form-field-label-dark");
-        if(node != null) {
-            node.getStyleClass().add("default-text-areas");
-        }
+        this.getStylesheets().clear();
+        this.getStylesheets().add(Constants.DARK_THEME_CSS);
+//        try {
+//            label.getStyleClass().remove("custom-form-field-label-light");
+//        }catch(Exception e){
+//            e.printStackTrace();
+//        }
+//        label.getStyleClass().add("custom-form-field-label-dark");
+//        if(node != null) {
+//            node.getStyleClass().add("default-text-areas");
+//        }
     }
 }

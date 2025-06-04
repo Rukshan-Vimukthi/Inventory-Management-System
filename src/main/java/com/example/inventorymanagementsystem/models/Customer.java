@@ -14,13 +14,17 @@ public class Customer implements DataModel {
     private StringProperty email;
     private StringProperty registeredDate;
 
-    public Customer(int id, String firstName, String lastName, String phone, String email, String registeredDate){
+    private StringProperty imagePath;
+
+    public Customer(int id, String firstName, String lastName, String phone, String email, String registeredDate, String pathToImage){
         setId(id);
         setFirstName(firstName);
         setLastName(lastName);
         setEmail(email);
         setPhone(phone);
         setRegisteredDate(registeredDate);
+        imagePathProperty().setValue(pathToImage);
+
     }
 
     public IntegerProperty idProperty(){
@@ -63,6 +67,17 @@ public class Customer implements DataModel {
             registeredDate = new SimpleStringProperty(this, "registeredDate");
         }
         return registeredDate;
+    }
+
+    public StringProperty imagePathProperty(){
+        if (imagePath == null){
+            imagePath = new SimpleStringProperty(this, "image_path");
+        }
+        return imagePath;
+    }
+
+    public String getImagePath(){
+        return imagePath.get();
     }
 
 

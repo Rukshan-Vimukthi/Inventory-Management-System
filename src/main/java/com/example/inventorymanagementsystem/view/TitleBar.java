@@ -1,7 +1,10 @@
 package com.example.inventorymanagementsystem.view;
 
+import com.example.inventorymanagementsystem.services.interfaces.AuthenticateStateListener;
 import com.example.inventorymanagementsystem.state.Constants;
+import com.example.inventorymanagementsystem.state.Session;
 import com.example.inventorymanagementsystem.state.ThemeObserver;
+import com.example.inventorymanagementsystem.view.dialogs.SignIn;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
@@ -14,9 +17,9 @@ import javafx.stage.Stage;
 import org.kordamp.ikonli.fontawesome5.FontAwesomeSolid;
 import org.kordamp.ikonli.javafx.FontIcon;
 
-public class TitleBar extends HBox implements com.example.inventorymanagementsystem.services.interfaces.ThemeObserver {
+public class TitleBar extends HBox implements com.example.inventorymanagementsystem.services.interfaces.ThemeObserver, AuthenticateStateListener {
     Label label;
-    Button minimize, restore, close;
+    Button authenticateButton, minimize, restore, close;
 
     private final FontIcon minimizeIcon = new FontIcon(FontAwesomeSolid.WINDOW_MINIMIZE);
     private final FontIcon restoreIcon = new FontIcon(FontAwesomeSolid.WINDOW_RESTORE);
@@ -36,6 +39,24 @@ public class TitleBar extends HBox implements com.example.inventorymanagementsys
         menuBar.getMenus().addAll(file, about);
 
         HBox commandButtons = new HBox();
+
+        authenticateButton = new Button("Logout");
+        authenticateButton.setStyle("-fx-background-color: #FF0000; -fx-text-fill: #FFF; ");
+        authenticateButton.setMinWidth(100.0D);
+        HBox.setMargin(authenticateButton, new Insets(0.0D, 10.0D, 0.0D, 0.0D));
+        if (Session.isLoggedIn()){
+            authenticateButton.setText("Logout");
+        }else{
+            authenticateButton.setText("Login");
+        }
+
+        authenticateButton.setOnAction(actionEvent -> {
+            if(Session.isLoggedIn()){
+                Session.getInstance().destroy();
+            }
+            SignIn signIn = new SignIn(stage);
+            signIn.show();
+        });
 
         ToggleButton toggleTheme = new ToggleButton();
         toggleTheme.setGraphic(lightTheme);
@@ -74,7 +95,7 @@ public class TitleBar extends HBox implements com.example.inventorymanagementsys
             stage.close();
         });
 
-        commandButtons.getChildren().addAll(toggleTheme, minimize, restore, close);
+        commandButtons.getChildren().addAll(authenticateButton, toggleTheme, minimize, restore, close);
         commandButtons.setMinWidth(120);
         commandButtons.setMaxWidth(120);
         commandButtons.setAlignment(Pos.CENTER_RIGHT);
@@ -82,6 +103,7 @@ public class TitleBar extends HBox implements com.example.inventorymanagementsys
         this.getChildren().addAll(label, menuBar, commandButtons);
         HBox.setHgrow(menuBar, Priority.ALWAYS);
         ThemeObserver.init().addObserver(this);
+        Session.addListener(this);
     }
 
     @Override
@@ -92,6 +114,8 @@ public class TitleBar extends HBox implements com.example.inventorymanagementsys
         minimizeIcon.setFill(Paint.valueOf("#000"));
         restoreIcon.setFill(Paint.valueOf("#000"));
         closeIcon.setFill(Paint.valueOf("#000"));
+        this.getStylesheets().clear();
+        this.getStylesheets().add(Constants.LIGHT_THEME_CSS);
     }
 
     @Override
@@ -102,5 +126,18 @@ public class TitleBar extends HBox implements com.example.inventorymanagementsys
         minimizeIcon.setFill(Paint.valueOf("#FFF"));
         restoreIcon.setFill(Paint.valueOf("#FFF"));
         closeIcon.setFill(Paint.valueOf("#FFF"));
+
+        this.getStylesheets().clear();
+        this.getStylesheets().add(Constants.DARK_THEME_CSS);
+    }
+
+    @Override
+    public void onLoggedIn() {
+        authenticateButton.setText("Log Out");
+    }
+
+    @Override
+    public void onLoggedOut() {
+        authenticateButton.setText("Log In");
     }
 }

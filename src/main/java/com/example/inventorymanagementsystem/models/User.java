@@ -17,7 +17,9 @@ public class User {
 
     private StringProperty role;
 
-    public User( Integer id, String firstName, String lastName, String username, String email, String password, String registeredDate, String role) {
+    private StringProperty imagePath;
+
+    public User( Integer id, String firstName, String lastName, String username, String email, String password, String registeredDate, String role, String imagePath) {
 
         idProperty().setValue(id);
         firstNameProperty().setValue(firstName);
@@ -27,6 +29,7 @@ public class User {
         passwordProperty().setValue(password);
         registeredDateProperty().setValue(registeredDate);
         roleProperty().setValue(role);
+        imagePathProperty().setValue(imagePath);
 
     }
 
@@ -79,6 +82,13 @@ public class User {
         }
         return role;
     }
+
+    public StringProperty imagePathProperty(){
+        if (imagePath == null){
+            imagePath = new SimpleStringProperty(this, "image_path");
+        }
+        return imagePath;
+    }
     public Integer getId() { return id.get(); }
 
     public String getFirstName() { return firstName.get(); }
@@ -96,5 +106,9 @@ public class User {
     }
     public String getRole(){
         return role.get();
+    }
+
+    public String getImagePath(){
+        return imagePath.get();
     }
 }

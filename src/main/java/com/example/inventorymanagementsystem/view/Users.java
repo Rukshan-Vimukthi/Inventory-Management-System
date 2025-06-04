@@ -45,6 +45,13 @@ public class Users extends HBox implements ThemeObserver {
 
     private Label customersRegisteredOnATimeFrameValue;
 
+    FontIcon totalUsersIcon;
+    FontIcon adminUsersIcon;
+    FontIcon userIcon;
+    FontIcon customerIcon;
+    FontIcon userTimeIcon;
+    FontIcon topTenCustomersFontIcon;
+
     public Users(){
         totalNumberOfUsers = 0;
         totalAdmins = 0;
@@ -156,10 +163,10 @@ public class Users extends HBox implements ThemeObserver {
         // Analytics data
         int[] userCount = Connection.getInstance().getUserCounts();
 
-        FontIcon totalUsersIcon = new FontIcon(FontAwesomeSolid.USERS);
-        FontIcon adminUsersIcon = new FontIcon(FontAwesomeSolid.USER_SHIELD);
-        FontIcon userIcon = new FontIcon(FontAwesomeSolid.USER);
-        FontIcon customerIcon = new FontIcon(FontAwesomeSolid.USER_TAG);
+        totalUsersIcon = new FontIcon(FontAwesomeSolid.USERS);
+        adminUsersIcon = new FontIcon(FontAwesomeSolid.USER_SHIELD);
+        userIcon = new FontIcon(FontAwesomeSolid.USER);
+        customerIcon = new FontIcon(FontAwesomeSolid.USER_TAG);
 
         // Total number of users
         Label totalUsersCardHeader = new Label("Total Users", totalUsersIcon);
@@ -182,6 +189,8 @@ public class Users extends HBox implements ThemeObserver {
         Card adminUsersCard = new Card(adminUsersCardHeader, adminUserCountLabel, null);
         adminUsersCard.setPadding(new Insets(5.0D));
         adminUsersCard.setRoundedCorner(10.0D);
+        adminUsersCard.getStyleClass().add("user-analytics-card");
+
 
         // Users card
         Label userCardHeader = new Label("Users", userIcon);
@@ -193,6 +202,8 @@ public class Users extends HBox implements ThemeObserver {
         userCard.setCardWidth(100.0D);
         userCard.setPadding(new Insets(5.0D));
         userCard.setRoundedCorner(10.0D);
+        userCard.getStyleClass().add("user-analytics-card");
+
 
         // customer card
         Label customerCardHeader = new Label("Customers", customerIcon);
@@ -203,9 +214,11 @@ public class Users extends HBox implements ThemeObserver {
         Card customerCard = new Card(customerCardHeader, customerCountLabel, null);
         customerCard.setPadding(new Insets(5.0D));
         customerCard.setRoundedCorner(10.0D);
+        customerCard.getStyleClass().add("user-analytics-card");
+
 
         // Customers registered at certain time frame
-        FontIcon userTimeIcon = new FontIcon(FontAwesomeSolid.USER_CLOCK);
+        userTimeIcon = new FontIcon(FontAwesomeSolid.USER_CLOCK);
         HBox customerRegisteredOnTimeHeader = new HBox();
         customerRegisteredOnTimeHeader.setSpacing(10.0D);
         Label customersRegisteredOnATimeFrameLabel = new Label("Customers Registered", userTimeIcon);
@@ -225,21 +238,23 @@ public class Users extends HBox implements ThemeObserver {
         customersRegisteredOnATimeFrameValue = new Label("");
         customersRegisteredOnATimeFrameValue.getStyleClass().add("card-content");
         Card customerRegisteredOnATimeCard = new Card(customerRegisteredOnTimeHeader, customersRegisteredOnATimeFrameValue, null);
-        customerRegisteredOnATimeCard.setBackgroundColor("#DDD");
         customerRegisteredOnATimeCard.setPadding(new Insets(5.0D));
         customerRegisteredOnATimeCard.setRoundedCorner(10.0D);
+        customerRegisteredOnATimeCard.getStyleClass().add("user-analytics-card");
 
         // Top 10 customers
         HBox topTenCustomerCardHeaderContainer = new HBox();
         Label topTenCustomerCardHeader = new Label("Top 10 customers");
         topTenCustomerCardHeader.setGraphicTextGap(10.0D);
         topTenCustomerCardHeader.getStyleClass().add("card-heading");
-        FontIcon topTenCustomersFontIcon = new FontIcon(FontAwesomeSolid.USERS);
+        topTenCustomersFontIcon = new FontIcon(FontAwesomeSolid.USERS);
         topTenCustomersFontIcon.setFill(Paint.valueOf("#000"));
         topTenCustomerCardHeader.setGraphic(topTenCustomersFontIcon);
         topTenCustomerCardHeaderContainer.getChildren().addAll(topTenCustomerCardHeader);
 
         ListView<Customer> listView = new ListView<>();
+        listView.setBackground(Background.EMPTY);
+        listView.getStyleClass().add("custom-list-view");
         listView.setCellFactory(new Callback<ListView<Customer>, ListCell<Customer>>() {
             @Override
             public ListCell<Customer> call(ListView<Customer> param) {
@@ -261,6 +276,7 @@ public class Users extends HBox implements ThemeObserver {
         Card topTenCustomersCard = new Card(topTenCustomerCardHeaderContainer, listView, null);
         topTenCustomersCard.setPadding(new Insets(5.0D));
         topTenCustomersCard.setRoundedCorner(10.0D);
+        topTenCustomersCard.getStyleClass().add("user-analytics-card");
 
         analyticsContainer.setHgap(10.0D);
         analyticsContainer.setVgap(10.0D);
@@ -279,6 +295,12 @@ public class Users extends HBox implements ThemeObserver {
 
     @Override
     public void lightTheme() {
+        totalUsersIcon.setFill(Paint.valueOf("#000"));
+        adminUsersIcon.setFill(Paint.valueOf("#000"));
+        userIcon.setFill(Paint.valueOf("#000"));
+        customerIcon.setFill(Paint.valueOf("#000"));
+        userTimeIcon.setFill(Paint.valueOf("#000"));
+        topTenCustomersFontIcon.setFill(Paint.valueOf("#000"));
         this.getStylesheets().remove(Constants.DARK_THEME_CSS);
         this.getStylesheets().add(Constants.LIGHT_THEME_CSS);
         this.setStyle("-fx-background-color: #EEE;");
@@ -286,6 +308,12 @@ public class Users extends HBox implements ThemeObserver {
 
     @Override
     public void darkTheme() {
+        totalUsersIcon.setFill(Paint.valueOf("#BBB"));
+        adminUsersIcon.setFill(Paint.valueOf("#BBB"));
+        userIcon.setFill(Paint.valueOf("#BBB"));
+        customerIcon.setFill(Paint.valueOf("#BBB"));
+        userTimeIcon.setFill(Paint.valueOf("#BBB"));
+        topTenCustomersFontIcon.setFill(Paint.valueOf("#BBB"));
         this.getStylesheets().remove(Constants.LIGHT_THEME_CSS);
         this.getStylesheets().add(Constants.DARK_THEME_CSS);
         this.setStyle("-fx-background-color: #111; ");

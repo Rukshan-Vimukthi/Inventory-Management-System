@@ -2,6 +2,8 @@ package com.example.inventorymanagementsystem.view.dialogs;
 
 import com.example.inventorymanagementsystem.InventoryManagementApplication;
 import com.example.inventorymanagementsystem.db.Connection;
+import com.example.inventorymanagementsystem.models.User;
+import com.example.inventorymanagementsystem.state.Session;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -13,6 +15,7 @@ import javafx.scene.paint.Paint;
 import javafx.stage.Stage;
 
 import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class SignIn extends Dialog<Boolean> {
     TextField userNameField;
@@ -43,6 +46,21 @@ public class SignIn extends Dialog<Boolean> {
             errorLabel.setText("");
             ResultSet resultSet = Connection.getInstance().getUser(userNameField.getText(), passwordField.getText());
             if(resultSet != null){
+                try {
+                    int userID = resultSet.getInt("id");
+                    String firstName = resultSet.getString("firstName");
+                    String lastName = resultSet.getString("lastName");
+                    String userName = resultSet.getString("username");
+                    String email = resultSet.getString("email");
+                    String password = resultSet.getString("password");
+                    String registeredDate = resultSet.getString("registered_date");
+                    String role = resultSet.getString("role.role");
+                    String pathToImage = resultSet.getString("image_path");
+                    User user = new User(userID, firstName, lastName, userName, email, password, registeredDate, role, pathToImage);
+                    Session.getInstance().setSessionUser(user);
+                }catch(SQLException e){
+                    e.printStackTrace();
+                }
                 this.setResult(true);
             }else{
                 errorLabel.setText("Invalid username or password");

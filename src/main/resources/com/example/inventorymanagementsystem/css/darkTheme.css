@@ -96,11 +96,13 @@
 .card-heading{
     -fx-font-size: 18px;
     -fx-font-weight: bold;
+    -fx-text-fill: #EEE;
 }
 
 .card-content{
     -fx-font-size: 26px;
     -fx-font-weight: bolder;
+    -fx-text-fill: #EEE;
 }
 
 
@@ -121,3 +123,26 @@
     -fx-transition: all 0.3s ease;
 }
 
+.user-analytics-card-text{
+    -fx-text-fill: #EEEEEE;
+}
+
+.item-information-label-text{
+    -fx-text-fill: #BBB;
+}
+
+.custom-form-field-label{
+    -fx-text-fill: #22AAFF;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+.custom-list-view .list-cell{
+    -fx-background-color: transparent;
+    -fx-text-fill: #EEE;
+}
+
+.custom-list-view .list-cell:selected{
+    -fx-background-color: #0055AA;
+    -fx-text-fill: #EEE;
+}

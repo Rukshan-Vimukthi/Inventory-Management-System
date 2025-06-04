@@ -3,6 +3,7 @@ package com.example.inventorymanagementsystem.view.components;
 import com.example.inventorymanagementsystem.models.ItemDetail;
 import com.example.inventorymanagementsystem.services.interfaces.DataModel;
 import com.example.inventorymanagementsystem.services.interfaces.TableContainerInterface;
+import com.example.inventorymanagementsystem.services.interfaces.ThemeObserver;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -14,6 +15,8 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.util.Callback;
 import org.kordamp.ikonli.fontawesome5.FontAwesomeSolid;
 import org.kordamp.ikonli.javafx.FontIcon;
@@ -22,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class TableContainer<T> extends VBox {
+public class TableContainer<T> extends VBox implements ThemeObserver {
     private T model;
     private TableView<T> tableView;
     private TableContainerInterface<T> tableContainerInterface;
@@ -34,6 +37,7 @@ public class TableContainer<T> extends VBox {
 
     HBox extraButtonsContainer;
     HBox filters;
+    Label tableTitle;
 
 //    private final ObservableList<TableColumn<T, ?>> tableColumns = FXCollections.observableArrayList();
     public TableContainer(boolean advancedSearchBar, String defaultSearchBarLabelText, String placeHolder){
@@ -51,6 +55,10 @@ public class TableContainer<T> extends VBox {
         FontIcon searchIcon = new FontIcon(FontAwesomeSolid.SEARCH);
         searchIcon.setFill(Paint.valueOf("#FFF"));
 
+        tableTitle = new Label();
+        tableTitle.setFont(Font.font("Sans Serif", FontWeight.SEMI_BOLD, 22.0D));
+        this.getChildren().add(tableTitle);
+
         HBox searchBarContainer = new HBox();
         searchBarContainer.setSpacing(10.0D);
         VBox searchFieldContainer = new VBox();
@@ -67,7 +75,7 @@ public class TableContainer<T> extends VBox {
         searchTextField = new TextField();
         searchTextField.getStyleClass().add("default-text-areas");
         search = new Button("Search", searchIcon);
-        search.getStyleClass().add("default-buttons");
+        search.getStyleClass().add("primary-button");
         search.setOnAction(actionEvent -> {
             tableContainerInterface.onSearch(formFields, searchTextField.getText());
         });
@@ -88,13 +96,13 @@ public class TableContainer<T> extends VBox {
         }
 
         Button addItemButton = new Button("Add", addIcon);
-        addItemButton.getStyleClass().add("add-button");
+        addItemButton.getStyleClass().add("success-button");
         addItemButton.setOnAction((actionEvent) -> {
             tableContainerInterface.addItem();
         });
 
         Button refresh = new Button("Refresh", refreshIcon);
-        refresh.getStyleClass().add("default-buttons");
+        refresh.getStyleClass().add("primary-button");
         refresh.setOnAction(event -> {
             tableContainerInterface.refresh();
         });
@@ -141,11 +149,42 @@ public class TableContainer<T> extends VBox {
 
 //        tableView.getColumns().addAll(tableColumns);
         this.getChildren().addAll(toolBarContainer, tableView);
+        com.example.inventorymanagementsystem.state.ThemeObserver.init().addObserver(this);
     }
 
     public <DT> void addColumn(String name, DT dataType){
         TableColumn<T, DT> column = new TableColumn<>(name);
         column.setCellValueFactory(new PropertyValueFactory<>(name));
+        tableView.getColumns().add(column);
+    }
+
+    public <DT> void addColumn(String name, String columnName){
+        TableColumn<T, DT> column = new TableColumn<>(columnName);
+        column.setCellValueFactory(new PropertyValueFactory<>(name));
+        column.setCellFactory(new Callback<TableColumn<T, DT>, TableCell<T, DT>>() {
+            @Override
+            public TableCell<T, DT> call(TableColumn<T, DT> param) {
+                return new TableCell<T, DT>(){
+                    @Override
+                    protected void updateItem(DT item, boolean empty) {
+                        super.updateItem(item, empty);
+                        HBox pane = new HBox();
+                        pane.setMaxWidth(20.0D);
+                        pane.setMinWidth(20.0D);
+                        pane.setMaxHeight(20.0D);
+                        pane.setMinHeight(20.0D);
+                        System.out.println("Background Color: " + item);
+                        if (item != null){
+                            pane.setStyle("-fx-background-color: " + String.valueOf(item) + "; ");
+                        }
+//                        pane.setStyle("-fx-background-color: #FFF; ");
+                        setText(null);
+                        setGraphic(pane);
+                        setGraphicTextGap(10.0D);
+                    }
+                };
+            }
+        });
         tableView.getColumns().add(column);
     }
 
@@ -170,4 +209,17 @@ public class TableContainer<T> extends VBox {
         extraButtonsContainer.getChildren().add(button);
     }
 
+    public void setTableTitle(String tableTitle){
+        this.tableTitle.setText(tableTitle);
+    }
+
+    @Override
+    public void lightTheme() {
+        tableTitle.setTextFill(Paint.valueOf("#000"));
+    }
+
+    @Override
+    public void darkTheme() {
+        tableTitle.setTextFill(Paint.valueOf("#BBB"));
+    }
 }

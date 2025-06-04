@@ -7,29 +7,48 @@ import javafx.beans.property.*;
  * Represents a single item entry in the checkout table.
  */
 public class CheckoutItem implements DataModel {
+    private ItemDetail itemDetail;
     private final StringProperty name;
     private final StringProperty itemSize;
     private final StringProperty itemColor;
     private final IntegerProperty amount;
-    private final IntegerProperty price;
+    private final DoubleProperty price;
     private final DoubleProperty sellingPrice;
     private final StringProperty itemTotalCost;
     private int itemHasSizeId;
+    private DoubleProperty discount;
     private boolean isCheckedout = false;
 
+
+
     public CheckoutItem(String name, String itemSize, String itemColor,
-                        int amount, int price, double sellingPrice, String itemTotalCost) {
+                        int amount, double price, double sellingPrice, String itemTotalCost) {
+        this(name, itemSize, itemColor, amount, price, sellingPrice, 0.0, itemTotalCost); // Default discount = 0.0%
+    }
+
+    public CheckoutItem(String name, String itemSize, String itemColor,
+                        int amount, double price, double sellingPrice, double discountValue, String itemTotalCost) {
+        this.itemDetail = itemDetail;
         this.name = new SimpleStringProperty(name);
         this.itemSize = new SimpleStringProperty(itemSize);
         this.itemColor = new SimpleStringProperty(itemColor);
         this.amount = new SimpleIntegerProperty(amount);
-        this.price = new SimpleIntegerProperty(price);
+        this.price = new SimpleDoubleProperty(price);
         this.sellingPrice = new SimpleDoubleProperty(sellingPrice);
         this.itemTotalCost = new SimpleStringProperty(itemTotalCost);
+        this.discount = new SimpleDoubleProperty(discountValue);
         this.itemHasSizeId = itemHasSizeId;
     }
 
+    public void function(){
+        System.out.println(this.isCheckedout);
+    }
+
     // Getters for TableView
+    public ItemDetail getItemDetail() {
+        return itemDetail;
+    }
+
     public String getName() {
         return name.get();
     }
@@ -62,11 +81,11 @@ public class CheckoutItem implements DataModel {
         return amount;
     }
 
-    public int getPrice() {
+    public double getPrice() {
         return price.get();
     }
 
-    public IntegerProperty priceProperty() {
+    public DoubleProperty priceProperty() {
         return price;
     }
 
@@ -102,4 +121,15 @@ public class CheckoutItem implements DataModel {
         return itemHasSizeId;
     }
 
+    public double getDiscount() {
+        return discount.get();
+    }
+
+    public void setDiscount(double discountValue) {
+        discount.set(discountValue);
+    }
+
+    public DoubleProperty discountProperty() {
+        return discount;
+    }
 }
