@@ -3,10 +3,12 @@ package com.example.inventorymanagementsystem.view.forms;
 import com.example.inventorymanagementsystem.db.Connection;
 import com.example.inventorymanagementsystem.models.Customer;
 import com.example.inventorymanagementsystem.view.components.FormField;
+import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 import java.time.LocalDate;
@@ -40,6 +42,10 @@ public class AddUpdateCustomer extends VBox {
             dialog.setResult(false);
         });
 
+        HBox footer = new HBox();
+        footer.getChildren().addAll(addCustomerButton, closeButton);
+        footer.setAlignment(Pos.CENTER_RIGHT);
+
         if (customer != null){
             firstNameField.setValue(customer.getFirstName());
             lastNameField.setValue(customer.getLastName());
@@ -54,7 +60,7 @@ public class AddUpdateCustomer extends VBox {
                 emailField,
                 phoneNumberField,
                 registeredDateField,
-                addCustomerButton, closeButton
+                footer
         );
     }
 

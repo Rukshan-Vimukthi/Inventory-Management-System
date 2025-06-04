@@ -303,7 +303,7 @@ public class Checkout implements ThemeObserver {
         TableColumn<CheckoutItem, Integer> amountCol = new TableColumn<>("Amount");
         amountCol.setCellValueFactory(cellData -> cellData.getValue().amountProperty().asObject());
 
-        TableColumn<CheckoutItem, Integer> priceCol = new TableColumn<>("Price");
+        TableColumn<CheckoutItem, Double> priceCol = new TableColumn<>("Price");
         priceCol.setCellValueFactory(cellData -> cellData.getValue().priceProperty().asObject());
         priceCol.setCellFactory(CurrencyCellFactory.withPrefix("Rs."));
 
@@ -528,7 +528,7 @@ public class Checkout implements ThemeObserver {
                         discountValue = Integer.parseInt(discountItemValue);
                     }
 
-                    int price = selectedItemDetail.getPrice();
+                    double price = selectedItemDetail.getPrice();
                     double sellingPrice = selectedItemDetail.getSellingPrice();
 
                     double totalCostValue = sellingPrice * quantityValue;
@@ -830,21 +830,21 @@ public class Checkout implements ThemeObserver {
             itemMessageContainer.setText("Deleted item: " + deletedNames);
             itemMessageContainer.setStyle(
                     "-fx-font-size: 14px;" +
-                    "-fx-text-fill: white;" +
-                    "-fx-background-color: #264653;" +
-                    "-fx-padding: 5 10;" +
-                    "-fx-border-color: #2a9d8f;"  +
-                    "-fx-border-radius: 9;" +
-                    "-fx-background-radius: 6;" +
-                    "-fx-font-weight: bold;" +
-                    "-fx-effect: dropshadow(gaussian,  rgba(0,0,0,0.4), 4, 0, 1, 1);"
+                            "-fx-text-fill: white;" +
+                            "-fx-background-color: #264653;" +
+                            "-fx-padding: 5 10;" +
+                            "-fx-border-color: #2a9d8f;"  +
+                            "-fx-border-radius: 9;" +
+                            "-fx-background-radius: 6;" +
+                            "-fx-font-weight: bold;" +
+                            "-fx-effect: dropshadow(gaussian,  rgba(0,0,0,0.4), 4, 0, 1, 1);"
             );
 
             itemsDeletingMsgTimer = new PauseTransition(Duration.seconds(2));
             itemsDeletingMsgTimer.setOnFinished(ev -> {
-                        itemMessageContainer.setText("");
-                        itemMessageContainer.setStyle("");
-                    });
+                itemMessageContainer.setText("");
+                itemMessageContainer.setStyle("");
+            });
             itemsDeletingMsgTimer.play();
 
             System.out.println("Deleted items: " + deletedNames);
@@ -1025,4 +1025,3 @@ public class Checkout implements ThemeObserver {
 
 
 }
-

@@ -326,23 +326,13 @@
     -fx-fill: #D32F2F;
 }
 
-.custom-form-field-label-light{
-    -fx-text-fill: #000;
-}
-
-.custom-form-field-label-dark{
-    -fx-text-fill: #22AAFF;
-    -fx-font-size: 16px;
-    -fx-font-weight: bold;
-}
-
 
 .delete-button{
     -fx-background-color: #FF0000;
     -fx-text-fill: white;
     -fx-font-weight: bold;
-    -fx-padding: 6px;
-    -fx-background-radius: 8px;
+    -fx-padding: 5px;
+    -fx-background-radius: 5px;
 }
 
 .delete-button:hover{
@@ -355,14 +345,30 @@
     -fx-background-color: #FF8800;
     -fx-text-fill: white;
     -fx-font-weight: bold;
-    -fx-padding: 6px;
-    -fx-background-radius: 8px;
+    -fx-padding: 5px;
+    -fx-background-radius: 5px;
 }
 
 .update-button:hover{
     -fx-background-color: #BB5500;
     -fx-cursor: pointer;
     -fx-font-weight: bold;
+}
+
+.success-button{
+    -fx-background-color: #00BB00;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 5px;
+    -fx-background-radius: 5px;
+}
+
+.primary-button{
+    -fx-background-color: #0055FF;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 5px;
+    -fx-background-radius: 5px;
 }
 
 .menu-bar{

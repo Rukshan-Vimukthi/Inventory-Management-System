@@ -12,30 +12,36 @@ public class CheckoutItem implements DataModel {
     private final StringProperty itemSize;
     private final StringProperty itemColor;
     private final IntegerProperty amount;
-    private final IntegerProperty price;
+    private final DoubleProperty price;
     private final DoubleProperty sellingPrice;
     private final StringProperty itemTotalCost;
     private int itemHasSizeId;
     private DoubleProperty discount;
     private boolean isCheckedout = false;
 
+
+
     public CheckoutItem(String name, String itemSize, String itemColor,
-                        int amount, int price, double sellingPrice, String itemTotalCost) {
+                        int amount, double price, double sellingPrice, String itemTotalCost) {
         this(name, itemSize, itemColor, amount, price, sellingPrice, 0.0, itemTotalCost); // Default discount = 0.0%
     }
 
     public CheckoutItem(String name, String itemSize, String itemColor,
-                        int amount, int price, double sellingPrice, double discountValue, String itemTotalCost) {
+                        int amount, double price, double sellingPrice, double discountValue, String itemTotalCost) {
         this.itemDetail = itemDetail;
         this.name = new SimpleStringProperty(name);
         this.itemSize = new SimpleStringProperty(itemSize);
         this.itemColor = new SimpleStringProperty(itemColor);
         this.amount = new SimpleIntegerProperty(amount);
-        this.price = new SimpleIntegerProperty(price);
+        this.price = new SimpleDoubleProperty(price);
         this.sellingPrice = new SimpleDoubleProperty(sellingPrice);
         this.itemTotalCost = new SimpleStringProperty(itemTotalCost);
         this.discount = new SimpleDoubleProperty(discountValue);
         this.itemHasSizeId = itemHasSizeId;
+    }
+
+    public void function(){
+        System.out.println(this.isCheckedout);
     }
 
     // Getters for TableView
@@ -75,11 +81,11 @@ public class CheckoutItem implements DataModel {
         return amount;
     }
 
-    public int getPrice() {
+    public double getPrice() {
         return price.get();
     }
 
-    public IntegerProperty priceProperty() {
+    public DoubleProperty priceProperty() {
         return price;
     }
 
