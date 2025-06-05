@@ -528,7 +528,7 @@ public class Checkout implements ThemeObserver {
                         discountValue = Integer.parseInt(discountItemValue);
                     }
 
-                    double price = selectedItemDetail.getPrice();
+                    int price = (int) selectedItemDetail.getPrice();
                     double sellingPrice = selectedItemDetail.getSellingPrice();
 
                     double totalCostValue = sellingPrice * quantityValue;
@@ -830,21 +830,21 @@ public class Checkout implements ThemeObserver {
             itemMessageContainer.setText("Deleted item: " + deletedNames);
             itemMessageContainer.setStyle(
                     "-fx-font-size: 14px;" +
-                            "-fx-text-fill: white;" +
-                            "-fx-background-color: #264653;" +
-                            "-fx-padding: 5 10;" +
-                            "-fx-border-color: #2a9d8f;"  +
-                            "-fx-border-radius: 9;" +
-                            "-fx-background-radius: 6;" +
-                            "-fx-font-weight: bold;" +
-                            "-fx-effect: dropshadow(gaussian,  rgba(0,0,0,0.4), 4, 0, 1, 1);"
+                    "-fx-text-fill: white;" +
+                    "-fx-background-color: #264653;" +
+                    "-fx-padding: 5 10;" +
+                    "-fx-border-color: #2a9d8f;"  +
+                    "-fx-border-radius: 9;" +
+                    "-fx-background-radius: 6;" +
+                    "-fx-font-weight: bold;" +
+                    "-fx-effect: dropshadow(gaussian,  rgba(0,0,0,0.4), 4, 0, 1, 1);"
             );
 
             itemsDeletingMsgTimer = new PauseTransition(Duration.seconds(2));
             itemsDeletingMsgTimer.setOnFinished(ev -> {
-                itemMessageContainer.setText("");
-                itemMessageContainer.setStyle("");
-            });
+                        itemMessageContainer.setText("");
+                        itemMessageContainer.setStyle("");
+                    });
             itemsDeletingMsgTimer.play();
 
             System.out.println("Deleted items: " + deletedNames);

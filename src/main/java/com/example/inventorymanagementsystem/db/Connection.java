@@ -42,7 +42,7 @@ public class Connection {
 
             String dbLink = "jdbc:mysql://localhost:3306/sandyafashioncorner";
             String username = "root";
-            String password = "root@techlix2002";
+            String password = "Sandun@2008.sd";
             connection = DriverManager.getConnection(dbLink, username, password);
         }catch(SQLException e){
             e.printStackTrace();
@@ -222,7 +222,7 @@ public class Connection {
             }
         }
         if (overStockNames.isEmpty()) {
-            overStockNames.add("No low stocks");
+            overStockNames.add("No over stocks");
         }
         return overStockNames;
     }
@@ -264,7 +264,7 @@ public class Connection {
             }
         }
         if (outOfrStockNames.isEmpty()) {
-            outOfrStockNames.add("No low stocks");
+            outOfrStockNames.add("No out of stocks");
         }
         return outOfrStockNames;
     }

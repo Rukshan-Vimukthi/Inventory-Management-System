@@ -79,12 +79,12 @@
 
 .sub-cards-heading {
     -fx-fill: white;
-    -fx-font-weight: bold;
     -fx-font-size: 19px;
 }
 
 .sub-cards-value {
     -fx-fill: gray;
+    -fx-font-weight: bold;
 }
 
 .alert-cards {
@@ -106,15 +106,15 @@
 }
 
 .alert-heading {
-    -fx-font-size: 20px;
+    -fx-font-size: 16px;
     -fx-font-weight: bold;
-    -fx-fill: white;
+    -fx-fill: #666666;
 }
 
 .alert-content {
-    -fx-font-size: 16;
+    -fx-font-size: 19px;
     -fx-font-weight: bold;
-    -fx-fill: #666666;
+    -fx-fill: white;
 }
 
 .default-buttons {

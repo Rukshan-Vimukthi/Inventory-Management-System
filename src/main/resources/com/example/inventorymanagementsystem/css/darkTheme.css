@@ -25,7 +25,6 @@
 }
 
 .default-dropdowns {
-    -fx-background-color: #2F2F2F, #1F1F1F;
     -fx-border-color: #3B82F6;
     -fx-border-radius: 6px;
     -fx-background-radius: 6px;
@@ -40,6 +39,10 @@
 
 .default-dropdowns .prompt-text {
     -fx-fill: white;
+}
+
+.default-dropdowns {
+    -fx-text-fill: white;
 }
 
 .default-dropdowns .text{
