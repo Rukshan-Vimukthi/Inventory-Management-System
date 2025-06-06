@@ -321,7 +321,7 @@ public class Checkout implements ThemeObserver {
         colorCol.setCellValueFactory(cellData -> cellData.getValue().itemColorProperty());
 
         colorCol.setCellFactory(column -> new TableCell<>() {
-            private final Circle colorCircle = new Circle(8); 
+            private final Circle colorCircle = new Circle(8);
 
             @Override
             protected void updateItem(String colorCode, boolean empty) {
@@ -343,15 +343,15 @@ public class Checkout implements ThemeObserver {
 
         TableColumn<CheckoutItem, Double> priceCol = new TableColumn<>("Price");
         priceCol.setCellValueFactory(cellData -> cellData.getValue().priceProperty().asObject());
-        priceCol.setCellFactory(CurrencyCellFactory.withPrefix("Rs."));
+        priceCol.setCellFactory(CurrencyCellFactory.withPrefix("$"));
 
         TableColumn<CheckoutItem, Double> sellingPriceCol = new TableColumn<>("Selling Price");
         sellingPriceCol.setCellValueFactory(cellData -> cellData.getValue().sellingPriceProperty().asObject());
-        sellingPriceCol.setCellFactory(CurrencyCellFactory.withPrefix("Rs."));
+        sellingPriceCol.setCellFactory(CurrencyCellFactory.withPrefix("$"));
 
         TableColumn<CheckoutItem, String> totalCostCol = new TableColumn<>("Total Cost");
         totalCostCol.setCellValueFactory(new PropertyValueFactory<>("itemTotalCost"));
-        totalCostCol.setCellFactory(CurrencyCellFactory.withPrefix("Rs."));
+        totalCostCol.setCellFactory(CurrencyCellFactory.withPrefix("$"));
 
         TableColumn<CheckoutItem, Double> discountCol = new TableColumn<>("Discount");
         discountCol.setCellValueFactory(cellData -> cellData.getValue().discountProperty().asObject());
@@ -624,9 +624,9 @@ public class Checkout implements ThemeObserver {
                         cumulativeGrandTotal += itemGrandTotal;
                     }
 
-                    totalCost.setText("Rs." + String.format("%.2f", cumulativeTotalCost));
-                    totalDiscount.setText("Rs." + String.format("%.2f", cumulativeTotalDiscount));
-                    grandTotal.setText("Rs." + String.format("%.2f", cumulativeGrandTotal));
+                    totalCost.setText("$" + String.format("%.2f", cumulativeTotalCost));
+                    totalDiscount.setText("$" + String.format("%.2f", cumulativeTotalDiscount));
+                    grandTotal.setText("$" + String.format("%.2f", cumulativeGrandTotal));
 
                     mainTable.refresh();
 
@@ -776,14 +776,14 @@ public class Checkout implements ThemeObserver {
                 }
 
                 // Format output values to 2 decimals
-                totalDiscount.setText("Rs." + String.format("%.2f", totalDiscountValue));
-                grandTotal.setText("Rs." + String.format("%.2f", adjustedTotal));
+                totalDiscount.setText("$" + String.format("%.2f", totalDiscountValue));
+                grandTotal.setText("$" + String.format("%.2f", adjustedTotal));
 
                 cumulativeTotalDiscount = totalDiscountValue;
                 cumulativeGrandTotal = adjustedTotal;
 
                 double dueBalanceValue = cumulativeReceivedFund - adjustedTotal;
-                balance.setText("Rs." + String.format("%.2f", dueBalanceValue));
+                balance.setText("$" + String.format("%.2f", dueBalanceValue));
 
                 mainTable.refresh();
 

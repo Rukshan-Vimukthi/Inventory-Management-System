@@ -73,7 +73,6 @@ public class ChartKeeper {
         reOrdrdColumnmChart.getStyleClass().add("charts");
         reOrdrdColumnmChart.setBarGap(10);
         reOrdrdColumnmChart.setCategoryGap(20);
-        reOrdrdColumnmChart.lookupAll(".chart-bar").forEach(node -> node.setStyle("-fx-bar-fill: blue;"));
         reordrXAxis.setTickLabelRotation(45);
 
         ArrayList<ItemHasSize> reorderItems = connection.getAllItemHasSizes();
