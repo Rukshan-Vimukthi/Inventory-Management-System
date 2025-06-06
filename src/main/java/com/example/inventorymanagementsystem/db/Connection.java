@@ -858,7 +858,6 @@ public class Connection {
                 int itemColorID = resultSet.getInt("color.id");
                 String itemColor = resultSet.getString("color.color");
                 int colorHasItemHasSizeID = resultSet.getInt("color_has_item_has_size.id");
-
                 String pathToImage = resultSet.getString("color_has_item_has_size.image_path");
 
                 ItemDetail itemDetail = new ItemDetail(
@@ -877,6 +876,7 @@ public class Connection {
                         colorHasItemHasSizeID,
                         itemHasSizeHasStockID,
                         orderedQty,
+
                         remainingQty,
                         pathToImage
                 );

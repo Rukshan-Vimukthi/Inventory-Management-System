@@ -10,10 +10,13 @@ import com.example.inventorymanagementsystem.view.*;
 import com.example.inventorymanagementsystem.view.components.TabBuilder;
 import com.example.inventorymanagementsystem.view.dialogs.SignIn;
 import javafx.application.Application;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Side;
 import javafx.scene.Scene;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.SingleSelectionModel;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.BorderPane;
@@ -44,6 +47,9 @@ public class InventoryManagementApplication extends Application implements com.e
         TitleBar titleBar = new TitleBar(stage);
 
         tabPane = new TabPane();
+
+        tabPane.setStyle("-fx-background-color: #222;");
+
         tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
         tabPane.setSide(Side.LEFT);
         tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
@@ -111,12 +117,12 @@ public class InventoryManagementApplication extends Application implements com.e
         ThemeObserver.init().applyDarkThemeChange();
 
         // Add tabs to the tabPane
-//        tabPane.getTabs().addAll(
-//                checkoutTab,
-//                analyticsTab,
-//                inventory,
-//                users
-//        );
+        tabPane.getTabs().addAll(
+                checkoutTab,
+                analyticsTab,
+                inventory,
+                users
+        );
 
         rootContainer.getChildren().addAll(titleBar, tabPane);
 
@@ -179,6 +185,6 @@ public class InventoryManagementApplication extends Application implements com.e
         analyticsTab.setDisable(false);
         inventory.setDisable(false);
         users.setDisable(false);
-
     }
+
 }

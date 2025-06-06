@@ -1,11 +1,14 @@
 package com.example.inventorymanagementsystem.view.components;
 
 import com.example.inventorymanagementsystem.state.Fonts;
+import javafx.event.Event;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.paint.Paint;
@@ -65,6 +68,21 @@ public class TabBuilder {
 //        tab.setContent(hbox);
         tab.setGraphic(hbox);
         tab.setClosable(false);
+        tab.setOnSelectionChanged(new EventHandler<Event>() {
+            @Override
+            public void handle(Event event) {
+                if (tab.isDisable() && tab.isSelected()){
+                    TabPane tabPane = tab.getTabPane();
+                    if (tabPane != null){
+                        for (Tab tab : tabPane.getTabs()){
+                            if (!tab.isDisable()){
+                                tabPane.getSelectionModel().select(tab);
+                            }
+                        }
+                    }
+                }
+            }
+        });
         return tab;
     }
 }

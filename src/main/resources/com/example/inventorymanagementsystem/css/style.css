@@ -29,6 +29,17 @@
     -fx-transition: all 0.3s;
 }
 
+.tab:disabled {
+    -fx-background-color: transparent;
+    -fx-padding: 8 15;
+    -fx-text-base-color: -fx-text-inner-color;
+    -fx-border-color: transparent transparent #000044 transparent; /* subtle underline */
+    -fx-border-width: 0 0 2px 0;
+    -fx-font-weight: normal;
+    -fx-opacity: 0.85;
+    -fx-transition: all 0.3s;
+}
+
 .tab:selected {
     -fx-background-color: rgba(52, 152, 219, 0.1);
     -fx-border-color: transparent transparent #3498db transparent; /* blue underline */
@@ -377,6 +388,22 @@
 
 .primary-button:hover {
     -fx-cursor: hand;
+}
+
+.success-button{
+    -fx-background-color: #00BB00;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 5px;
+    -fx-background-radius: 5px;
+}
+
+.primary-button{
+    -fx-background-color: #0055FF;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 5px;
+    -fx-background-radius: 5px;
 }
 
 .menu-bar{

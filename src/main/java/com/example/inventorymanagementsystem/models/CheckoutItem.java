@@ -28,6 +28,7 @@ public class CheckoutItem implements DataModel {
     }
 
     public CheckoutItem(String name, String itemSize, String itemColor,
+
                         int amount, double price, double sellingPrice, double discountValue, String itemTotalCost) {
         this.itemDetail = itemDetail;
 

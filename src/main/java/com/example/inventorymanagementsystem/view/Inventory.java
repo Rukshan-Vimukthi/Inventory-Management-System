@@ -144,6 +144,7 @@ public class Inventory extends HBox implements ThemeObserver {
 
         itemPreview = new ItemPreview();
 
+        VBox.setVgrow(itemsTable, Priority.ALWAYS);
 
         itemTableContainer.getChildren().addAll(itemsTable, itemPreview);
         HBox.setHgrow(itemTableContainer, Priority.ALWAYS);
