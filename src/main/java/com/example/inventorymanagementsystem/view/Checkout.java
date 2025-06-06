@@ -25,6 +25,8 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
@@ -156,10 +158,28 @@ public class Checkout implements ThemeObserver {
         }
 
         itemComboBox.setCellFactory(lv -> new ListCell<>() {
+            private final Circle colorCircle = new Circle(6);
+            private final HBox hbox = new HBox(10);
+            private final Label textLabel = new Label();
+
+            {
+                hbox.getChildren().addAll(textLabel, colorCircle);
+                hbox.setAlignment(Pos.CENTER_LEFT);
+                HBox.setHgrow(textLabel, Priority.ALWAYS);
+            }
+
             @Override
             protected void updateItem(ItemDetail item, boolean empty) {
                 super.updateItem(item, empty);
-                setText(empty || item == null ? null : item.nameProperty().get() + " (" + item.getSize() + ")");
+                if (empty || item == null) {
+                    setText(null);
+                    setGraphic(null);
+                } else {
+                    textLabel.setText(item.getName() + " (" + item.getSize() + ")");
+                    colorCircle.setFill(Color.web(item.getItemColor()));
+                    colorCircle.setStroke(Color.GRAY); // Optional: slight border
+                    setGraphic(hbox);
+                }
             }
         });
 
@@ -299,6 +319,24 @@ public class Checkout implements ThemeObserver {
 
         TableColumn<CheckoutItem, String> colorCol = new TableColumn<>("Item Color");
         colorCol.setCellValueFactory(cellData -> cellData.getValue().itemColorProperty());
+
+        colorCol.setCellFactory(column -> new TableCell<>() {
+            private final Circle colorCircle = new Circle(8); 
+
+            @Override
+            protected void updateItem(String colorCode, boolean empty) {
+                super.updateItem(colorCode, empty);
+                if (empty || colorCode == null || colorCode.isBlank()) {
+                    setGraphic(null);
+                    setText(null);
+                } else {
+                    colorCircle.setFill(Color.web(colorCode));
+                    colorCircle.setStroke(Color.GRAY);
+                    setGraphic(colorCircle);
+                    setText(null);
+                }
+            }
+        });
 
         TableColumn<CheckoutItem, Integer> amountCol = new TableColumn<>("Amount");
         amountCol.setCellValueFactory(cellData -> cellData.getValue().amountProperty().asObject());

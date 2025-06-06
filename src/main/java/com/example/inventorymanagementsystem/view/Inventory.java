@@ -6,6 +6,7 @@ import com.example.inventorymanagementsystem.models.*;
 import com.example.inventorymanagementsystem.models.Stock;
 import com.example.inventorymanagementsystem.services.interfaces.TableContainerInterface;
 import com.example.inventorymanagementsystem.services.interfaces.ThemeObserver;
+import com.example.inventorymanagementsystem.state.Constants;
 import com.example.inventorymanagementsystem.state.Data;
 import com.example.inventorymanagementsystem.view.components.FormField;
 import com.example.inventorymanagementsystem.view.components.ItemPreview;
@@ -289,10 +290,14 @@ public class Inventory extends HBox implements ThemeObserver {
     @Override
     public void lightTheme() {
         this.setStyle("-fx-background-color: #EEE; ");
+        this.getStylesheets().remove(Constants.DARK_THEME_CSS);
+        this.getStylesheets().add(Constants.LIGHT_THEME_CSS);
     }
 
     @Override
     public void darkTheme() {
         this.setStyle("-fx-background-color: #222; ");
+        this.getStylesheets().remove(Constants.LIGHT_THEME_CSS);
+        this.getStylesheets().add(Constants.DARK_THEME_CSS);
     }
 }

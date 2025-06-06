@@ -43,14 +43,8 @@ public class InventoryManagementApplication extends Application implements com.e
         TitleBar titleBar = new TitleBar(stage);
 
         tabPane = new TabPane();
-        tabPane.setStyle("-fx-background-color: #222;");
-        
         tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
         tabPane.setSide(Side.LEFT);
-        tabPane.getStylesheets().add(
-                String.valueOf(InventoryManagementApplication.class.getResource("css/style.css"))
-        );
-
         tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
         tabPane.setRotateGraphic(true);
         tabPane.setTabMinWidth(30.0D);
@@ -96,7 +90,6 @@ public class InventoryManagementApplication extends Application implements com.e
                 }
             }
         };
-
 
         // The Stock Section
         Analytics analyticsView = new Analytics(handler);
@@ -153,12 +146,14 @@ public class InventoryManagementApplication extends Application implements com.e
     public void lightTheme() {
         scene.getStylesheets().remove(Constants.DARK_THEME_CSS);
         scene.getStylesheets().add(Constants.LIGHT_THEME_CSS);
+        tabPane.setStyle("-fx-background-color: blue;");
     }
 
     @Override
     public void darkTheme() {
         scene.getStylesheets().remove(Constants.LIGHT_THEME_CSS);
         scene.getStylesheets().add(Constants.DARK_THEME_CSS);
+        tabPane.setStyle("-fx-background-color: black;");
     }
 
     @Override
