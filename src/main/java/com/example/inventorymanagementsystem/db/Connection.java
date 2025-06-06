@@ -222,7 +222,7 @@ public class Connection {
             }
         }
         if (overStockNames.isEmpty()) {
-            overStockNames.add("No low stocks");
+            overStockNames.add("No over stocks");
         }
         return overStockNames;
     }
@@ -264,7 +264,7 @@ public class Connection {
             }
         }
         if (outOfrStockNames.isEmpty()) {
-            outOfrStockNames.add("No low stocks");
+            outOfrStockNames.add("No out of stocks");
         }
         return outOfrStockNames;
     }
@@ -876,6 +876,7 @@ public class Connection {
                         colorHasItemHasSizeID,
                         itemHasSizeHasStockID,
                         orderedQty,
+
                         remainingQty,
                         pathToImage
                 );

@@ -49,6 +49,7 @@ public class ItemDetail implements DataModel {
                       int colorHasItemHasSizeID,
                       int itemHasSizeHasStockID,
                       int orderedQty, int remainingQty, String imagePath){
+
         idProperty().setValue(id);
         nameProperty().setValue(name);
         priceProperty().setValue(price);

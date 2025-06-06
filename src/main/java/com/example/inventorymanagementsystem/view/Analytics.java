@@ -378,7 +378,7 @@ public class Analytics extends VBox implements ThemeObserver {
 
         // Alerts Low Stoke Card
         VBox lowStockAlertCard = new VBox();
-        Text lowStockTxt = new Text("LOW-STOKES ALERT");
+        Text lowStockTxt = new Text("\uD83D\uDD34 LOW-STOKES ALERT");
         lowStockTxt.getStyleClass().add("alert-heading");
         Text lowStocks = new Text("You currently have " + lowStokeProducts + " low stokes");
         lowStocks.getStyleClass().add("alert-content");
@@ -408,9 +408,9 @@ public class Analytics extends VBox implements ThemeObserver {
         // Alerts Over Stoke Card
         int overStokesItems = Connection.getOverStockItems(dbConnection);
         VBox overStockAlertCard = new VBox();
-        Text overStockTxt = new Text("OVER-STOCKS ALERT");
+        Text overStockTxt = new Text("\uD83D\uDD34 OVER-STOCKS ALERT");
         overStockTxt.getStyleClass().add("alert-heading");
-        Text overStocks = new Text("You have " + overStokesItems + " out of stokes");
+        Text overStocks = new Text("You have " + overStokesItems + " over stokes");
         overStocks.getStyleClass().add("alert-content");
         overStockAlertCard.setSpacing(10);
         overStocks.getStyleClass().add("alert-content");

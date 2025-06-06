@@ -3,16 +3,20 @@ package com.example.inventorymanagementsystem;
 import com.example.inventorymanagementsystem.models.User;
 import com.example.inventorymanagementsystem.services.interfaces.AuthenticateStateListener;
 import com.example.inventorymanagementsystem.state.Constants;
+
 import com.example.inventorymanagementsystem.state.Session;
 import com.example.inventorymanagementsystem.state.ThemeObserver;
 import com.example.inventorymanagementsystem.view.*;
 import com.example.inventorymanagementsystem.view.components.TabBuilder;
 import com.example.inventorymanagementsystem.view.dialogs.SignIn;
 import javafx.application.Application;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Side;
 import javafx.scene.Scene;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.SingleSelectionModel;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.BorderPane;
@@ -43,14 +47,11 @@ public class InventoryManagementApplication extends Application implements com.e
         TitleBar titleBar = new TitleBar(stage);
 
         tabPane = new TabPane();
+
         tabPane.setStyle("-fx-background-color: #222;");
-        
+
         tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
         tabPane.setSide(Side.LEFT);
-        tabPane.getStylesheets().add(
-                String.valueOf(InventoryManagementApplication.class.getResource("css/style.css"))
-        );
-
         tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
         tabPane.setRotateGraphic(true);
         tabPane.setTabMinWidth(30.0D);
@@ -96,7 +97,6 @@ public class InventoryManagementApplication extends Application implements com.e
                 }
             }
         };
-
 
         // The Stock Section
         Analytics analyticsView = new Analytics(handler);
@@ -153,12 +153,14 @@ public class InventoryManagementApplication extends Application implements com.e
     public void lightTheme() {
         scene.getStylesheets().remove(Constants.DARK_THEME_CSS);
         scene.getStylesheets().add(Constants.LIGHT_THEME_CSS);
+        tabPane.setStyle("-fx-background-color: blue;");
     }
 
     @Override
     public void darkTheme() {
         scene.getStylesheets().remove(Constants.LIGHT_THEME_CSS);
         scene.getStylesheets().add(Constants.DARK_THEME_CSS);
+        tabPane.setStyle("-fx-background-color: black;");
     }
 
     @Override
@@ -184,4 +186,5 @@ public class InventoryManagementApplication extends Application implements com.e
         inventory.setDisable(false);
         users.setDisable(false);
     }
+
 }

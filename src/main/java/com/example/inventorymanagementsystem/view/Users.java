@@ -65,10 +65,11 @@ public class Users extends HBox implements ThemeObserver {
 
         TableContainer<User> userTableContainer = new TableContainer<>(false, null, null);
         userTableContainer.addColumn("id", Integer.class);
-        userTableContainer.addColumn("firstName", Integer.class);
-        userTableContainer.addColumn("lastName", Integer.class);
-        userTableContainer.addColumn("email", Integer.class);
-        userTableContainer.addColumn("role", Integer.class);
+        userTableContainer.addColumn("firstName", String.class);
+        userTableContainer.addColumn("lastName", String.class);
+        userTableContainer.addColumn("username", String.class);
+        userTableContainer.addColumn("email", String.class);
+        userTableContainer.addColumn("role", String.class);
         userTableContainer.addItems(Data.getInstance().getUsers());
         userTableContainer.setOnActionPerformed(new TableContainerInterface<User>() {
             @Override

@@ -126,6 +126,7 @@ public class AddUpdateUser extends VBox {
                     (String) emailField.getValue(),
                     (String) passwordField.getValue(),
                     ((LocalDate) registeredDate.getValue()).toString(),
+
                     ((Role) role.getValue()).getId(),
                     selectedFilePath
             );

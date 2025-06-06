@@ -7,13 +7,13 @@
 }
 
 .tab-header-area {
-    -fx-background-color: black;
+    -fx-background-color: #3a506b;
     -fx-border-color: derive(-fx-base, -20%);
     -fx-border-width: 0 0 1px 0;
 }
 
 .tab-header-area .tab-header-background {
-    -fx-background-color: black;
+    -fx-background-color: #3a506b;
     -fx-border-color: derive(-fx-base, -20%);
     -fx-border-width: 0 0 1px 0;
 }
@@ -23,6 +23,17 @@
     -fx-padding: 8 15;
     -fx-text-base-color: -fx-text-inner-color;
     -fx-border-color: transparent transparent #3498db transparent; /* subtle underline */
+    -fx-border-width: 0 0 2px 0;
+    -fx-font-weight: normal;
+    -fx-opacity: 0.85;
+    -fx-transition: all 0.3s;
+}
+
+.tab:disabled {
+    -fx-background-color: transparent;
+    -fx-padding: 8 15;
+    -fx-text-base-color: -fx-text-inner-color;
+    -fx-border-color: transparent transparent #000044 transparent; /* subtle underline */
     -fx-border-width: 0 0 2px 0;
     -fx-font-weight: normal;
     -fx-opacity: 0.85;
@@ -79,12 +90,12 @@
 
 .sub-cards-heading {
     -fx-fill: white;
-    -fx-font-weight: bold;
     -fx-font-size: 19px;
 }
 
 .sub-cards-value {
     -fx-fill: gray;
+    -fx-font-weight: bold;
 }
 
 .alert-cards {
@@ -106,15 +117,15 @@
 }
 
 .alert-heading {
-    -fx-font-size: 20px;
+    -fx-font-size: 16px;
     -fx-font-weight: bold;
-    -fx-fill: white;
+    -fx-fill: #666666;
 }
 
 .alert-content {
-    -fx-font-size: 16;
+    -fx-font-size: 19px;
     -fx-font-weight: bold;
-    -fx-fill: #666666;
+    -fx-fill: white;
 }
 
 .default-buttons {
@@ -130,6 +141,7 @@
 
 .default-buttons:hover {
     -fx-background-color: #2563EB;
+    -fx-cursor: hand;
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 6, 0, 0, 3);
 }
 
@@ -289,6 +301,7 @@
 }
 
 .add-button:hover {
+    -fx-cursor: hand;
     -fx-background-color: darkGreen;
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 6, 0, 0, 3);
 }
@@ -326,7 +339,6 @@
     -fx-fill: #D32F2F;
 }
 
-
 .delete-button{
     -fx-background-color: #FF0000;
     -fx-text-fill: white;
@@ -337,7 +349,7 @@
 
 .delete-button:hover{
     -fx-background-color: #BB0000;
-    -fx-cursor: pointer;
+    -fx-cursor: hand;
     -fx-font-weight: bold;
 }
 
@@ -351,8 +363,31 @@
 
 .update-button:hover{
     -fx-background-color: #BB5500;
-    -fx-cursor: pointer;
+    -fx-cursor: hand;
     -fx-font-weight: bold;
+}
+
+.success-button{
+    -fx-background-color: #00BB00;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 5px;
+    -fx-background-radius: 5px;
+}
+.success-button:hover {
+    -fx-cursor: hand;
+}
+
+.primary-button{
+    -fx-background-color: #0055FF;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 5px;
+    -fx-background-radius: 5px;
+}
+
+.primary-button:hover {
+    -fx-cursor: hand;
 }
 
 .success-button{
