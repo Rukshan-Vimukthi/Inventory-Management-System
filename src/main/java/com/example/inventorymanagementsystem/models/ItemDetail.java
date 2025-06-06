@@ -36,7 +36,6 @@ public class ItemDetail implements DataModel {
 
     private StringProperty imagePath;
 
-
     public ItemDetail(int id, String name, Double price,
                       Double sellingPrice, int stockID,
                       String stockDate,
@@ -48,6 +47,7 @@ public class ItemDetail implements DataModel {
                       int itemHasSizeID,
                       int colorHasItemHasSizeID,
                       int itemHasSizeHasStockID,
+
                       int orderedQty, int remainingQty, String imagePath){
         idProperty().setValue(id);
         nameProperty().setValue(name);
@@ -65,7 +65,9 @@ public class ItemDetail implements DataModel {
         orderedQtyProperty().setValue(orderedQty);
         remainingQtyProperty().setValue(remainingQty);
         itemHasSizeHasStockIDProperty().setValue(itemHasSizeHasStockID);
+
         imagePathProperty().setValue(imagePath);
+
     }
 
     public IntegerProperty idProperty(){
@@ -171,6 +173,7 @@ public class ItemDetail implements DataModel {
         return itemHasSizeHasStockID;
     }
 
+
     public StringProperty imagePathProperty(){
         if (imagePath == null){
             imagePath = new SimpleStringProperty(this, "image_path");
@@ -263,6 +266,7 @@ public class ItemDetail implements DataModel {
     public int getItemHasSizeHasStockID() {
         return itemHasSizeHasStockID.get();
     }
+
 
     public String getImagePath(){
         return imagePath.get();

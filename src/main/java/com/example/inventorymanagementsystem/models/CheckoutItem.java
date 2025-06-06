@@ -23,12 +23,14 @@ public class CheckoutItem implements DataModel {
 
     public CheckoutItem(String name, String itemSize, String itemColor,
                         int amount, double price, double sellingPrice, String itemTotalCost) {
+
         this(name, itemSize, itemColor, amount, price, sellingPrice, 0.0, itemTotalCost); // Default discount = 0.0%
     }
 
     public CheckoutItem(String name, String itemSize, String itemColor,
                         int amount, double price, double sellingPrice, double discountValue, String itemTotalCost) {
         this.itemDetail = itemDetail;
+
         this.name = new SimpleStringProperty(name);
         this.itemSize = new SimpleStringProperty(itemSize);
         this.itemColor = new SimpleStringProperty(itemColor);

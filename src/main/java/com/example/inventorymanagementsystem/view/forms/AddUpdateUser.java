@@ -118,7 +118,9 @@ public class AddUpdateUser extends VBox {
     public void addUser(){
         int result = 0;
         if (this.user == null) {
+
             System.out.println(selectedFilePath);
+
             result = Connection.getInstance().addNewUser(
                     (String) firstNameField.getValue(),
                     (String) lastNameField.getValue(),
@@ -126,6 +128,7 @@ public class AddUpdateUser extends VBox {
                     (String) emailField.getValue(),
                     (String) passwordField.getValue(),
                     ((LocalDate) registeredDate.getValue()).toString(),
+
                     ((Role) role.getValue()).getId(),
                     selectedFilePath
             );

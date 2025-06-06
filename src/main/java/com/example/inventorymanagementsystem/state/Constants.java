@@ -14,4 +14,5 @@ public class Constants {
     public static final String usersMediaDirectory = "media\\users";
     public static final String customersMediaDirectory = "media\\customers";
     public static final String itemsMediaDirectory = "media\\products";
+
 }

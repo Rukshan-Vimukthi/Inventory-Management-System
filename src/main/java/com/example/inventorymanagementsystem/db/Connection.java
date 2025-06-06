@@ -42,7 +42,7 @@ public class Connection {
 
             String dbLink = "jdbc:mysql://localhost:3306/sandyafashioncorner";
             String username = "root";
-            String password = "Sandun@2008.sd";
+            String password = "root@techlix2002";
             connection = DriverManager.getConnection(dbLink, username, password);
         }catch(SQLException e){
             e.printStackTrace();
@@ -858,6 +858,7 @@ public class Connection {
                 int itemColorID = resultSet.getInt("color.id");
                 String itemColor = resultSet.getString("color.color");
                 int colorHasItemHasSizeID = resultSet.getInt("color_has_item_has_size.id");
+
                 String pathToImage = resultSet.getString("color_has_item_has_size.image_path");
 
                 ItemDetail itemDetail = new ItemDetail(

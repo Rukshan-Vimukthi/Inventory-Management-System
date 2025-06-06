@@ -3,6 +3,7 @@ package com.example.inventorymanagementsystem;
 import com.example.inventorymanagementsystem.models.User;
 import com.example.inventorymanagementsystem.services.interfaces.AuthenticateStateListener;
 import com.example.inventorymanagementsystem.state.Constants;
+
 import com.example.inventorymanagementsystem.state.Session;
 import com.example.inventorymanagementsystem.state.ThemeObserver;
 import com.example.inventorymanagementsystem.view.*;
@@ -110,12 +111,12 @@ public class InventoryManagementApplication extends Application implements com.e
         ThemeObserver.init().applyDarkThemeChange();
 
         // Add tabs to the tabPane
-        tabPane.getTabs().addAll(
-                checkoutTab,
-                analyticsTab,
-                inventory,
-                users
-        );
+//        tabPane.getTabs().addAll(
+//                checkoutTab,
+//                analyticsTab,
+//                inventory,
+//                users
+//        );
 
         rootContainer.getChildren().addAll(titleBar, tabPane);
 
@@ -178,5 +179,6 @@ public class InventoryManagementApplication extends Application implements com.e
         analyticsTab.setDisable(false);
         inventory.setDisable(false);
         users.setDisable(false);
+
     }
 }

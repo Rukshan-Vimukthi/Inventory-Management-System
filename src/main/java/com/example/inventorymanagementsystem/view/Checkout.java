@@ -560,6 +560,45 @@ public class Checkout implements ThemeObserver {
                 int quantityValue = Integer.parseInt(amount.getText().trim());
                 int remainingAmount = selectedItemDetail.getRemainingQty();
 
+//            if ((remainingAmount > 0) && quantityValue <= remainingAmount) {
+//                stockMessage.setText("");
+//                int discountValue = 0;
+//                if (!discount.getText().trim().isEmpty()) {
+//                    discountValue = Integer.parseInt(discount.getText().trim());
+//                }
+//                double price = selectedItemDetail.getPrice();
+//                double sellingPrice = selectedItemDetail.getSellingPrice();
+//                double totalCostValue = selectedItemDetail.getSellingPrice() * quantityValue ;
+//                double totalDiscountValue = totalCostValue * ((double) discountValue / 100);
+//                double grandTotalValue = totalCostValue - totalDiscountValue;
+//
+//                dbConnection.storeSales(
+//                        selectedItemDetail.getId(),
+//                        selectedItemDetail.getItemHasSizeID(),
+//                        quantityValue,
+//                        price,
+//                        1
+//                );
+//                String itemTotalCostStr = String.valueOf(selectedItemDetail.getSellingPrice() * quantityValue);
+//
+//                CheckoutItem newItem = new CheckoutItem(
+//                        selectedItemDetail.getName(),
+//                        selectedItemDetail.getSize(),
+//                        selectedItemDetail.getItemColor(),
+//                        quantityValue,
+//                        price,
+//                        sellingPrice,
+//                        itemTotalCostStr
+//                );
+//
+//                newItem.setItemHasSizeId(selectedItemDetail.getItemHasSizeID());
+//                itemList.add(newItem);
+//                checkOutButton.setDisable(false);
+//                totalCost.setText("-");
+//                totalDiscount.setText("-");
+//                grandTotal.setText("-");
+//                balance.setText("-");
+
                 if (remainingAmount > 0 && quantityValue <= remainingAmount) {
                     int discountValue = 0;
                     if (discountItemValue != null && !discountItemValue.trim().isEmpty()) {

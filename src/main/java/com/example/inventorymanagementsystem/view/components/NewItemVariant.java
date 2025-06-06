@@ -6,9 +6,16 @@ import com.example.inventorymanagementsystem.models.ItemDetail;
 import com.example.inventorymanagementsystem.models.Size;
 import com.example.inventorymanagementsystem.models.Stock;
 import com.example.inventorymanagementsystem.state.Data;
+
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.util.Callback;
+
+import javafx.scene.control.ColorPicker;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.HBox;
+
 
 public class NewItemVariant extends HBox {
     FormField<ComboBox, Stock> stock;
@@ -33,6 +40,7 @@ public class NewItemVariant extends HBox {
             stock = new FormField<>("Stock", ComboBox.class, Data.getInstance().getStocks(), Connection.getInstance().getStock(itemDetail.getStockID()));
             sizeOfItem = new FormField<>("Size", ComboBox.class, Data.getInstance().getSize(), Connection.getInstance().getSize((itemDetail.getSizeID())));
             colorOfItem = new FormField<>("Color", ComboBox.class, Data.getInstance().getColors(), Connection.getInstance().getColorByCode(itemDetail.getItemColor()));
+
             ((ComboBox<Color>)colorOfItem.getComboBox()).setCellFactory(new Callback<ListView<Color>, ListCell<Color>>() {
                 @Override
                 public ListCell<Color> call(ListView<Color> param) {
@@ -57,6 +65,7 @@ public class NewItemVariant extends HBox {
                     };
                 }
             });
+
             priceOfItem = new FormField<>("Cost", TextField.class);
             priceOfItem.setValue(String.valueOf(itemDetail.getPrice()));
             sellingPriceOfItem = new FormField<>("Selling Price", TextField.class);

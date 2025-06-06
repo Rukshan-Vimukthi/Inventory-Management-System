@@ -55,8 +55,10 @@ public class SignIn extends Dialog<Boolean> {
                     String password = resultSet.getString("password");
                     String registeredDate = resultSet.getString("registered_date");
                     String role = resultSet.getString("role.role");
+
                     String pathToImage = resultSet.getString("image_path");
                     User user = new User(userID, firstName, lastName, userName, email, password, registeredDate, role, pathToImage);
+
                     Session.getInstance().setSessionUser(user);
                 }catch(SQLException e){
                     e.printStackTrace();
