@@ -62,8 +62,23 @@ test {
 jlink {
     imageZip = project.file("${buildDir}/distributions/app-${javafx.platform.classifier}.zip")
     options = ['--strip-debug', '--compress', '2', '--no-header-files', '--no-man-pages']
+    imageName = 'SFC Inventory Management Application'
     launcher {
-        name = 'app'
+        name = 'SFC Inventory Management Application'
+    }
+
+    jpackage {
+        installerType = 'exe' // Use 'dmg' or 'deb' as needed
+        appVersion = '1.0.0'
+        vendor = 'NXTDEV Co.'
+//        icon = 'src/main/resources/icon.ico' // optional
+        installerName = 'SFC Inventory Management Application Installer'
+
+        installerOptions = [
+                '--win-dir-chooser',
+                '--win-menu',
+                '--win-shortcut' // Optional for Windows only
+        ]
     }
 }
 
