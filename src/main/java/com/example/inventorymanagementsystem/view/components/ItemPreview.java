@@ -50,6 +50,16 @@ public class ItemPreview extends HBox implements ItemPreviewObserver, ThemeObser
     Label remainingStockCountLabel;
     Label totalItemsInStockLabel;
 
+    Label itemStockName;
+    Label itemColor;
+
+    Label totalItemsInStock;
+
+    Label itemsAvailableLabel;
+    Label itemsAvailable;
+
+    private final HBox colorPreview = new HBox();
+
     /**
      *
      */
@@ -59,9 +69,15 @@ public class ItemPreview extends HBox implements ItemPreviewObserver, ThemeObser
         this.setPadding(new Insets(10.0D));
         imageView = new ImageView();
         imageView.setImage(new Image(Constants.IMAGE_UNAVAILABLE));
-        imageView.setFitWidth(300.0D);
-        imageView.setFitHeight(300.0D);
+        imageView.setFitWidth(280.0D);
+        imageView.setFitHeight(280.0D);
         imageView.setStyle("-fx-background-color: #888888;");
+
+        colorPreview.setMinWidth(20.0D);
+        colorPreview.setMaxWidth(20.0D);
+        colorPreview.setMinHeight(20.0D);
+        colorPreview.setMaxHeight(20.0D);
+
         this.getChildren().add(imageView);
         this.setAlignment(Pos.CENTER_LEFT);
         clearContent();
@@ -113,9 +129,18 @@ public class ItemPreview extends HBox implements ItemPreviewObserver, ThemeObser
                 itemStockNameLabel.getStyleClass().add("item-information-label-text");
                 itemStockNameLabel.setFont(Font.font("Sans Serif", FontWeight.SEMI_BOLD, 16.0D));
 
+                itemStockName = new Label();
+                itemStockName.getStyleClass().add("item-information-label-text");
+                itemStockName.setFont(Font.font("Sans Serif", FontWeight.SEMI_BOLD, 16.0D));
+
                 itemColorLabel = new Label("Color");
                 itemColorLabel.getStyleClass().add("item-information-label-text");
                 itemColorLabel.setFont(Font.font("Sans Serif", FontWeight.SEMI_BOLD, 16.0D));
+
+                itemColor = new Label();
+                itemColor.getStyleClass().add("item-information-label-text");
+                itemColor.setFont(Font.font("Sans Serif", FontWeight.SEMI_BOLD, 16.0D));
+                itemColor.setGraphic(colorPreview);
 
 
                 remainingStockCountLabel = new Label("Remaining Items");
@@ -128,6 +153,18 @@ public class ItemPreview extends HBox implements ItemPreviewObserver, ThemeObser
                 totalItemsInStockLabel = new Label("Total Items Received");
                 totalItemsInStockLabel.getStyleClass().add("item-information-label-text");
                 totalItemsInStockLabel.setFont(Font.font("Sans Serif", FontWeight.SEMI_BOLD, 16.0D));
+
+                totalItemsInStock = new Label("Total Items Received");
+                totalItemsInStock.getStyleClass().add("item-information-label-text");
+                totalItemsInStock.setFont(Font.font("Sans Serif", FontWeight.SEMI_BOLD, 16.0D));
+
+                itemsAvailableLabel = new Label("Items Remaining");
+                itemsAvailableLabel.getStyleClass().add("item-information-label-text");
+                itemsAvailableLabel.setFont(Font.font("Sans Serif", FontWeight.SEMI_BOLD, 16.0D));
+
+                itemsAvailable = new Label("Items Remaining");
+                itemsAvailable.getStyleClass().add("item-information-label-text");
+                itemsAvailable.setFont(Font.font("Sans Serif", FontWeight.SEMI_BOLD, 16.0D));
 
 
                 gridPane = new GridPane();
@@ -144,14 +181,21 @@ public class ItemPreview extends HBox implements ItemPreviewObserver, ThemeObser
                 gridPane.add(itemStock, 1,3);
 
                 gridPane.add(itemStockNameLabel, 0,4);
+                gridPane.add(itemStockName, 1,4);
 
                 gridPane.add(itemColorLabel, 0,5);
+                gridPane.add(itemColor, 1,5);
 
                 gridPane.add(remainingStockCountLabel, 0,6);
                 gridPane.add(remainingStock, 1,6);
 
                 gridPane.add(totalItemsInStockLabel, 0,7);
+                gridPane.add(totalItemsInStock, 1,7);
 
+                gridPane.add(itemsAvailableLabel, 0,8);
+                gridPane.add(itemsAvailable, 1,8);
+
+                gridPane.setHgap(15.0D);
 
                 itemName = new Label();
                 itemName.getStyleClass().add("item-information-label-text");
@@ -190,8 +234,32 @@ public class ItemPreview extends HBox implements ItemPreviewObserver, ThemeObser
             sellingPrice.setText(String.valueOf(itemDetail.getSellingPrice()));
             size.setText(itemDetail.getSize());
             itemStock.setText(itemDetail.getStockDate());
+            itemStockName.setText(itemDetail.getStockName());
+            itemColor.setStyle("-fx-background-color: " + itemDetail.getItemColor() + "; ");
             remainingStock.setText(itemDetail.getName());
             stockStatus.setText("In Stock");
+            totalItemsInStock.setText(String.valueOf(itemDetail.getOrderedQty()));
+            itemsAvailable.setText(String.valueOf(itemDetail.getRemainingQty()));
+
+            if (itemDetail.getRemainingQty() == 0){
+                stockStatus.setText("Out of Stock");
+                stockStatus.setStyle("" +
+                        "-fx-background-color: #FF000033; " +
+                        "-fx-border-color: #FF0000; " +
+                        "-fx-border-radius: 5px;" +
+                        "-fx-border-radius: 5px;" +
+                        "-fx-background-radius: 5px; " +
+                        "-fx-padding: 5px;");
+            }else if(itemDetail.getRemainingQty() <= 10){
+                stockStatus.setText("Low Stock");
+                stockStatus.setStyle("" +
+                        "-fx-background-color: #88550033; " +
+                        "-fx-border-color: #FFDD00; " +
+                        "-fx-border-radius: 5px;" +
+                        "-fx-border-radius: 5px;" +
+                        "-fx-background-radius: 5px; " +
+                        "-fx-padding: 5px;");
+            }
 
             if (itemHasSize != null){
                 orderedPrice.setText(String.valueOf(itemHasSize.getCost()));

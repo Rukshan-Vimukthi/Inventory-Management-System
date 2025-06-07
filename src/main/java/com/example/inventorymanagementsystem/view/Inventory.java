@@ -42,6 +42,7 @@ public class Inventory extends HBox implements ThemeObserver {
         itemsTable.addColumn("stockName", Integer.class);
         itemsTable.addColumn("size", Integer.class);
         itemsTable.addColumn("itemColor", Integer.class);
+        itemsTable.addColumn("itemColor", "Color View");
         itemsTable.addItems(Data.getInstance().getItemDetails());
 
         Button addSizeButton = new Button("Add Size");
@@ -145,6 +146,7 @@ public class Inventory extends HBox implements ThemeObserver {
         itemPreview = new ItemPreview();
 
         VBox.setVgrow(itemsTable, Priority.ALWAYS);
+        itemTableContainer.setPadding(new Insets(5.0D, 0.0D, 10.0D, 0.0D));
 
         itemTableContainer.getChildren().addAll(itemsTable, itemPreview);
         HBox.setHgrow(itemTableContainer, Priority.ALWAYS);
