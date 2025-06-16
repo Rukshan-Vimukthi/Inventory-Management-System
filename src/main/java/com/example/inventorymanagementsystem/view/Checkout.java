@@ -1,13 +1,11 @@
 package com.example.inventorymanagementsystem.view;
 import com.example.inventorymanagementsystem.InventoryManagementApplication;
 import com.example.inventorymanagementsystem.db.Connection;
-import com.example.inventorymanagementsystem.models.CheckoutItem;
-import com.example.inventorymanagementsystem.models.Item;
-import com.example.inventorymanagementsystem.models.ItemDetail;
-import com.example.inventorymanagementsystem.models.ItemStatus;
+import com.example.inventorymanagementsystem.models.*;
 import com.example.inventorymanagementsystem.services.interfaces.ThemeObserver;
 import com.example.inventorymanagementsystem.state.Data;
 import com.example.inventorymanagementsystem.view.components.CurrencyCellFactory;
+import com.example.inventorymanagementsystem.view.components.FormField;
 import com.example.inventorymanagementsystem.view.components.HoverTooltip;
 import javafx.animation.KeyFrame;
 import javafx.animation.PauseTransition;
@@ -97,7 +95,7 @@ public class Checkout implements ThemeObserver {
     TextField amount;
     Button checkOutButton;
 
-    public Checkout() {
+    public Checkout() throws SQLException{
         dbConnection = Connection.getInstance();
         // The main container
         mainLayout = new BorderPane();
@@ -150,12 +148,14 @@ public class Checkout implements ThemeObserver {
         itemTxt.getStyleClass().add("paragraph-texts");
 
         itemComboBox = new ComboBox<>();
-        List<ItemDetail> itemDetails = dbConnection.getItemDetails();
-        if (itemDetails.isEmpty()) {
-            System.out.println("No items found!");
-        } else {
-            itemComboBox.getItems().setAll(itemDetails);
-        }
+        itemComboBox.setItems(Data.getInstance().getItemDetails());
+
+//        List<ItemDetail> itemDetails = dbConnection.getItemDetails();
+//        if (itemDetails.isEmpty()) {
+//            System.out.println("No items found!");
+//        } else {
+//            itemComboBox.getItems().setAll(itemDetails);
+//        }
 
         itemComboBox.setCellFactory(lv -> new ListCell<>() {
             private final Circle colorCircle = new Circle(6);
@@ -221,6 +221,15 @@ public class Checkout implements ThemeObserver {
         theSpace.setMinHeight(15);
 
         Text customerTxt = new Text("Customer Information");
+
+        // let the user select already registered customers for faster checkout
+        FormField<ComboBox, Customer> registeredCustomers = registeredCustomers = new FormField<>("Select Customer", ComboBox.class);
+        try {
+            registeredCustomers = new FormField<>("Select Customer", ComboBox.class, Data.getInstance().getCustomers());
+        }catch(SQLException exception){
+            exception.printStackTrace();
+        }
+
         customerTxt.getStyleClass().add("paragraph-texts");
         TextField firstName = new TextField();
         firstName.setPromptText("First Name");
@@ -271,14 +280,14 @@ public class Checkout implements ThemeObserver {
             }
 
             LocalDateTime now = LocalDateTime.now();
-            Connection connection = new Connection();
 
-            String result = connection.addCustomers(
+            String result = dbConnection.addCustomers(
                     firstNameField,
                     lastNameField,
                     phoneField,
                     emailField,
-                    now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+                    now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
+                    null
             );
 
             // Show message
@@ -343,20 +352,24 @@ public class Checkout implements ThemeObserver {
 
         TableColumn<CheckoutItem, Double> priceCol = new TableColumn<>("Price");
         priceCol.setCellValueFactory(cellData -> cellData.getValue().priceProperty().asObject());
-        priceCol.setCellFactory(CurrencyCellFactory.withPrefix("$"));
+        priceCol.setCellFactory(CurrencyCellFactory.withPrefix("Rs."));
 
         TableColumn<CheckoutItem, Double> sellingPriceCol = new TableColumn<>("Selling Price");
         sellingPriceCol.setCellValueFactory(cellData -> cellData.getValue().sellingPriceProperty().asObject());
-        sellingPriceCol.setCellFactory(CurrencyCellFactory.withPrefix("$"));
+        sellingPriceCol.setCellFactory(CurrencyCellFactory.withPrefix("Rs."));
 
         TableColumn<CheckoutItem, String> totalCostCol = new TableColumn<>("Total Cost");
         totalCostCol.setCellValueFactory(new PropertyValueFactory<>("itemTotalCost"));
-        totalCostCol.setCellFactory(CurrencyCellFactory.withPrefix("$"));
+        totalCostCol.setCellFactory(CurrencyCellFactory.withPrefix("Rs."));
 
         TableColumn<CheckoutItem, Double> discountCol = new TableColumn<>("Discount");
         discountCol.setCellValueFactory(cellData -> cellData.getValue().discountProperty().asObject());
 
-        mainTable.getColumns().addAll(nameCol, sizeCol, colorCol, amountCol, priceCol, sellingPriceCol, totalCostCol);
+        TableColumn<CheckoutItem, Double> costWithDiscountCol = new TableColumn<>("CostWithDiscount");
+        costWithDiscountCol.setCellValueFactory(cellData -> cellData.getValue().costWithDiscountProperty().asObject());
+        costWithDiscountCol.setCellFactory(CurrencyCellFactory.withPrefix("Rs."));
+
+        mainTable.getColumns().addAll(nameCol, sizeCol, colorCol, amountCol, priceCol, sellingPriceCol, totalCostCol, costWithDiscountCol);
         mainTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
         mainTable.getColumns().addAll(discountCol);
@@ -560,65 +573,18 @@ public class Checkout implements ThemeObserver {
                 int quantityValue = Integer.parseInt(amount.getText().trim());
                 int remainingAmount = selectedItemDetail.getRemainingQty();
 
-//            if ((remainingAmount > 0) && quantityValue <= remainingAmount) {
-//                stockMessage.setText("");
-//                int discountValue = 0;
-//                if (!discount.getText().trim().isEmpty()) {
-//                    discountValue = Integer.parseInt(discount.getText().trim());
-//                }
-//                double price = selectedItemDetail.getPrice();
-//                double sellingPrice = selectedItemDetail.getSellingPrice();
-//                double totalCostValue = selectedItemDetail.getSellingPrice() * quantityValue ;
-//                double totalDiscountValue = totalCostValue * ((double) discountValue / 100);
-//                double grandTotalValue = totalCostValue - totalDiscountValue;
-//
-//                dbConnection.storeSales(
-//                        selectedItemDetail.getId(),
-//                        selectedItemDetail.getItemHasSizeID(),
-//                        quantityValue,
-//                        price,
-//                        1
-//                );
-//                String itemTotalCostStr = String.valueOf(selectedItemDetail.getSellingPrice() * quantityValue);
-//
-//                CheckoutItem newItem = new CheckoutItem(
-//                        selectedItemDetail.getName(),
-//                        selectedItemDetail.getSize(),
-//                        selectedItemDetail.getItemColor(),
-//                        quantityValue,
-//                        price,
-//                        sellingPrice,
-//                        itemTotalCostStr
-//                );
-//
-//                newItem.setItemHasSizeId(selectedItemDetail.getItemHasSizeID());
-//                itemList.add(newItem);
-//                checkOutButton.setDisable(false);
-//                totalCost.setText("-");
-//                totalDiscount.setText("-");
-//                grandTotal.setText("-");
-//                balance.setText("-");
-
                 if (remainingAmount > 0 && quantityValue <= remainingAmount) {
-                    int discountValue = 0;
+                    double discountValue = 0;
                     if (discountItemValue != null && !discountItemValue.trim().isEmpty()) {
-                        discountValue = Integer.parseInt(discountItemValue);
+                        discountValue = Double.parseDouble(discountItemValue);
                     }
 
                     int price = (int) selectedItemDetail.getPrice();
                     double sellingPrice = selectedItemDetail.getSellingPrice();
 
                     double totalCostValue = sellingPrice * quantityValue;
-                    double totalDiscountValue = totalCostValue * ((double) discountValue / 100);
+                    double totalDiscountValue = totalCostValue * (discountValue / 100);
                     double grandTotalValue = totalCostValue - totalDiscountValue;
-
-                    dbConnection.storeSales(
-                            selectedItemDetail.getId(),
-                            selectedItemDetail.getItemHasSizeID(),
-                            quantityValue,
-                            price,
-                            1
-                    );
 
                     if (selectedCheckoutItem != null) {
                         selectedCheckoutItem.setItemHasSizeId(selectedItemDetail.getItemHasSizeID());
@@ -629,8 +595,8 @@ public class Checkout implements ThemeObserver {
                         selectedCheckoutItem.priceProperty().set(price);
                         selectedCheckoutItem.nameProperty().set(selectedItemDetail.getName());
                         selectedCheckoutItem.itemSizeProperty().set(selectedItemDetail.getSize());
+                        selectedCheckoutItem.costWithDiscountProperty().set(grandTotalValue);
                         mainTable.refresh();
-
                     } else {
                         CheckoutItem newItem = new CheckoutItem(
                                 selectedItemDetail.getName(),
@@ -640,7 +606,8 @@ public class Checkout implements ThemeObserver {
                                 price,
                                 sellingPrice,
                                 discountValue,
-                                String.valueOf(totalCostValue)
+                                String.valueOf(totalCostValue),
+                                grandTotalValue
                         );
                         newItem.setItemHasSizeId(selectedItemDetail.getItemHasSizeID());
                         itemList.add(newItem);
@@ -653,19 +620,18 @@ public class Checkout implements ThemeObserver {
 
                     for (CheckoutItem item : itemList) {
                         int qty = item.getAmount();
-                        double sellPrice = item.getSellingPrice();
-                        double itemTotal = qty * sellPrice;
-                        double itemDiscount = itemTotal * (item.getDiscount() / 100.0);
-                        double itemGrandTotal = itemTotal - itemDiscount;
+                        double itemTotal = Double.parseDouble(item.getItemTotalCost());
+                        double itemDiscount = itemTotal - item.getCostWithDiscount();
+                        double itemGrandTotal = item.getCostWithDiscount();
 
                         cumulativeTotalCost += itemTotal;
                         cumulativeTotalDiscount += itemDiscount;
                         cumulativeGrandTotal += itemGrandTotal;
                     }
 
-                    totalCost.setText("$" + String.format("%.2f", cumulativeTotalCost));
-                    totalDiscount.setText("$" + String.format("%.2f", cumulativeTotalDiscount));
-                    grandTotal.setText("$" + String.format("%.2f", cumulativeGrandTotal));
+                    totalCost.setText("Rs." + String.format("%.2f", cumulativeTotalCost));
+                    totalDiscount.setText("Rs." + String.format("%.2f", cumulativeTotalDiscount));
+                    grandTotal.setText("Rs." + String.format("%.2f", cumulativeGrandTotal));
 
                     mainTable.refresh();
 
@@ -736,21 +702,26 @@ public class Checkout implements ThemeObserver {
         });
 
         amount.textProperty().addListener((observable, oldValue, newValue) -> {
-            ItemDetail selectedItemDetail = itemComboBox.getSelectionModel().getSelectedItem();
-            int typedAmount = Integer.parseInt(amount.getText().trim());
-            int remainingAmount = selectedItemDetail.getRemainingQty();
+            try {
+                ItemDetail selectedItemDetail = itemComboBox.getSelectionModel().getSelectedItem();
+                int typedAmount = Integer.parseInt(amount.getText().trim());
+                int remainingAmount = selectedItemDetail.getRemainingQty();
 
-            if (typedAmount >= remainingAmount) {
-                stockMessage.setText("Not enough stock!");
+                if (typedAmount >= remainingAmount) {
+                    stockMessage.setText("Not enough stock!");
 
-                if (!(inputSection.getChildren().contains(stockMessageContainer))) {
-                    inputSection.getChildren().add(stockMessageContainer);
+                    if (!(inputSection.getChildren().contains(stockMessageContainer))) {
+                        inputSection.getChildren().add(stockMessageContainer);
+                    }
+                } else {
+                    inputSection.getChildren().remove(stockMessageContainer);
                 }
-            } else {
-                inputSection.getChildren().remove(stockMessageContainer);
+            }catch(NumberFormatException numberFormatException){
+                System.out.println("Amount text field is empty");
             }
         });
 
+        FormField<ComboBox, Customer> finalRegisteredCustomers = registeredCustomers;
         checkOutButton.setOnAction(e -> {
             try {
                 if (itemList.isEmpty()) {
@@ -760,6 +731,31 @@ public class Checkout implements ThemeObserver {
 
                 // Clear processed items to ensure all updates occur every checkout
                 processedItemIds.clear();
+
+                String receivedInput = receivedFund.getText();
+                double receivedFundValue = 0.0;
+                if (receivedInput != null && !receivedInput.isEmpty()) {
+                    String cleaned = receivedInput.replaceAll("[$,\\s]", "");
+                    if (!cleaned.isEmpty()) {
+                        receivedFundValue = Double.parseDouble(cleaned);
+                    }
+                }
+                cumulativeReceivedFund = receivedFundValue;
+
+                double discountValue = 0.0;
+                String discountText = discountForAll.getText().trim();
+                if (discountText.endsWith("%")) {
+                    String numberPart = discountText.substring(0, discountText.length() - 1);
+                    if (!numberPart.isEmpty()) {
+                        discountValue = Double.parseDouble(numberPart);
+                    }
+                } else if (!discountText.isEmpty()) {
+                    // Assuming this is an absolute discount amount
+                    discountValue = Double.parseDouble(discountText);
+                }
+
+                // contains the amount reduced from items when the discount get added for all the items
+                double totalReductionForDiscount = 0.0D;
 
                 for (CheckoutItem item : itemList) {
                     if (!processedItemIds.contains(item.getitemHasSizeId())) {
@@ -775,54 +771,67 @@ public class Checkout implements ThemeObserver {
                         } catch (SQLException ex) {
                             System.out.println("Database error while updating quantity: " + ex.getMessage());
                         }
+
+                        Customer selectedCustomer = (Customer) finalRegisteredCustomers.getValue();
+
+                        /*
+                         * When adding discount for all the items, add the discount for only the items which does not
+                         * have specific discounts. When adding discounts for all items, discount get applied only for
+                         * the items to which we didn't provide any discount value when adding the items to the checkout
+                         * list
+                         */
+                        double currentItemDiscount = item.getDiscount();
+                        if (currentItemDiscount == 0.0D && discountValue != 0.0D){
+                            item.setDiscount(discountValue);
+                            totalReductionForDiscount += Double.parseDouble(item.getItemTotalCost()) - item.getCostWithDiscount();
+                        }
+
+                        if (selectedCustomer != null) {
+                            dbConnection.insertCustomerItem(
+                                    selectedCustomer.getId(),
+                                    item.getitemHasSizeId(),
+                                    item.getAmount(),
+                                    item.getSellingPrice(),
+                                    LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
+                                    1,
+                                    item.getDiscount(),
+                                    item.getCostWithDiscount(),
+                                    cumulativeReceivedFund,
+                                    1
+                                    );
+                        }
                     }
                 }
 
-                String receivedInput = receivedFund.getText();
-                double receivedFundValue = 0.0;
-                if (receivedInput != null && !receivedInput.isEmpty()) {
-                    String cleaned = receivedInput.replaceAll("[$,\\s]", "");
-                    if (!cleaned.isEmpty()) {
-                        receivedFundValue = Double.parseDouble(cleaned);
-                    }
-                }
-                cumulativeReceivedFund = receivedFundValue;
+                /*
+                    Update the points column of the customer table if the customer did not take the remainders and
+                    give the shop the permission to save remainders as points
+                */
 
-                double discountValue = 0.0;
-                String discountText = discountForAll.getText().trim();
+                // add the code from here to do that.
 
-                if (discountText.endsWith("%")) {
-                    String numberPart = discountText.substring(0, discountText.length() - 1);
-                    if (!numberPart.isEmpty()) {
-                        discountValue = Double.parseDouble(numberPart);
-                    }
-                } else if (!discountText.isEmpty()) {
-                    // Assuming this is an absolute discount amount
-                    discountValue = Double.parseDouble(discountText);
-                }
 
-                double totalDiscountValue;
-                double adjustedTotal;
+                /*
+                * cumulativeGrandTotal contains the grand total calculated when the item get added to the checkout
+                * list with the discount if the item has a specific discount provided when adding to the checkout
+                * list
+                *
+                * so decrease the total reduction for discount calculated if we have provided discount for all the
+                * items
+                */
+                cumulativeGrandTotal -= totalReductionForDiscount;
 
-                if (discountText.endsWith("%")) {
-                    // percentage discount
-                    totalDiscountValue = cumulativeTotalCost * (discountValue / 100.0);
-                    adjustedTotal = cumulativeTotalCost - totalDiscountValue;
-                } else {
-                    // absolute discount
-                    totalDiscountValue = discountValue;
-                    adjustedTotal = cumulativeTotalCost - totalDiscountValue;
-                }
+                /*
+                * add totalReductionForDiscount to calculate how much was the discount reduced from the total cost
+                */
+                cumulativeTotalDiscount += totalReductionForDiscount;
 
                 // Format output values to 2 decimals
-                totalDiscount.setText("$" + String.format("%.2f", totalDiscountValue));
-                grandTotal.setText("$" + String.format("%.2f", adjustedTotal));
+                totalDiscount.setText("Rs." + String.format("%.2f", cumulativeTotalDiscount));
+                grandTotal.setText("Rs." + String.format("%.2f", cumulativeGrandTotal));
 
-                cumulativeTotalDiscount = totalDiscountValue;
-                cumulativeGrandTotal = adjustedTotal;
-
-                double dueBalanceValue = cumulativeReceivedFund - adjustedTotal;
-                balance.setText("$" + String.format("%.2f", dueBalanceValue));
+                double dueBalanceValue = cumulativeReceivedFund - cumulativeGrandTotal;
+                balance.setText("Rs." + String.format("%.2f", dueBalanceValue));
 
                 mainTable.refresh();
 
@@ -1000,7 +1009,7 @@ public class Checkout implements ThemeObserver {
         mainFooterSec.getChildren().addAll(bottomSection, balanceSec);
         wholeBottomSec.getChildren().addAll(floatingContainer, mainFooterSec);
         headerSection.getChildren().addAll(navbar, inputVerticalSec);
-        inputSection.getChildren().addAll(itemTxt, itemComboBox, amount, discount, addButton, theSpace, customerTxt, firstName, lastName, phone, eMail, addCustomerSec);
+        inputSection.getChildren().addAll(itemTxt, itemComboBox, amount, discount, addButton, theSpace, customerTxt, registeredCustomers.getComboBox(), firstName, lastName, phone, eMail, addCustomerSec);
         inputVerticalSec.getChildren().addAll(inputSection);
         centerContainer.getChildren().addAll(inputVerticalSec, mainTable);
 

@@ -45,7 +45,8 @@ public class Card extends VBox implements ThemeObserver {
         this.headerContainer = new HBox();
         this.bodyContainer = new BorderPane();
         this.footerContainer = new HBox();
-
+        this.setMinWidth(200.0D);
+        this.setMinHeight(100.0D);
         System.out.println(this.getStyle());
     }
 

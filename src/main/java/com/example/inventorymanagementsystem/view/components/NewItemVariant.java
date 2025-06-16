@@ -5,10 +5,14 @@ import com.example.inventorymanagementsystem.models.Color;
 import com.example.inventorymanagementsystem.models.ItemDetail;
 import com.example.inventorymanagementsystem.models.Size;
 import com.example.inventorymanagementsystem.models.Stock;
+import com.example.inventorymanagementsystem.state.Constants;
 import com.example.inventorymanagementsystem.state.Data;
 
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
+import javafx.stage.FileChooser;
 import javafx.util.Callback;
 
 
@@ -16,6 +20,14 @@ import javafx.scene.control.ColorPicker;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.sql.SQLException;
 
 
 public class NewItemVariant extends HBox {
@@ -33,7 +45,11 @@ public class NewItemVariant extends HBox {
     int itemHasSizeHasStockID = 0;
 
     int id = 0;
-    public NewItemVariant(ItemDetail itemDetail){
+
+    File selectedImage;
+
+    Button selectImageButton;
+    public NewItemVariant(ItemDetail itemDetail) throws SQLException {
         super();
 
         if (itemDetail != null){
@@ -60,6 +76,14 @@ public class NewItemVariant extends HBox {
             priceOfItem = new FormField<>("Cost", TextField.class);
             sellingPriceOfItem = new FormField<>("Selling Price", TextField.class);
             orderedQty = new FormField<>("Ordered Qty", TextField.class);
+            selectImageButton = new Button("Select an Image");
+            selectImageButton.setOnAction(new EventHandler<ActionEvent>() {
+                @Override
+                public void handle(ActionEvent event) {
+                    FileChooser fileChooser = new FileChooser();
+                    selectedImage = fileChooser.showOpenDialog(null);
+                }
+            });
         }
 
         ((ComboBox<Color>)colorOfItem.getComboBox()).setCellFactory(new Callback<ListView<Color>, ListCell<Color>>() {
@@ -86,8 +110,7 @@ public class NewItemVariant extends HBox {
             }
         });
         this.setSpacing(5.0D);
-        this.getChildren().addAll(stock, sizeOfItem, colorOfItem, priceOfItem, sellingPriceOfItem, orderedQty);
-
+        this.getChildren().addAll(stock, sizeOfItem, colorOfItem, priceOfItem, sellingPriceOfItem, orderedQty, selectImageButton);
     }
 
     public int getStockID(){
@@ -132,5 +155,9 @@ public class NewItemVariant extends HBox {
 
     public int getItemHasSizeHasStockID() {
         return itemHasSizeHasStockID;
+    }
+
+    public File getSelectedImage(){
+        return selectedImage;
     }
 }

@@ -20,6 +20,8 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.TextAlignment;
 
+import java.sql.SQLException;
+
 /**
  * Class that extends VBox to show the information of the selected item.
  */
@@ -88,7 +90,7 @@ public class ItemPreview extends HBox implements ItemPreviewObserver, ThemeObser
     }
 
     @Override
-    public void update(ItemDetail itemDetail) {
+    public void update(ItemDetail itemDetail) throws SQLException {
         ItemHasSize itemHasSize = null;
         if(itemDetail != null){
             itemHasSize = Connection.getInstance().getItemHasSize(itemDetail);
@@ -225,6 +227,7 @@ public class ItemPreview extends HBox implements ItemPreviewObserver, ThemeObser
                 this.getChildren().add(informationContainer);
                 this.setAlignment(Pos.TOP_LEFT);
             }
+            imageView.setImage(new Image(itemDetail.getImagePath()));
 
             System.out.println(itemDetail.getName());
             System.out.println(itemDetail.getPrice());

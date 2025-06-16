@@ -13,5 +13,8 @@ public class Constants {
     public static final String usersMediaDirectory = "media\\users";
     public static final String customersMediaDirectory = "media\\customers";
     public static final String itemsMediaDirectory = "media\\products";
+    public static final String CURRENCY_UNIT = "Rs.";
+    public static final int MAX_USERS = 10;
+    public static final int MAX_ITEMS = 500;
 
 }

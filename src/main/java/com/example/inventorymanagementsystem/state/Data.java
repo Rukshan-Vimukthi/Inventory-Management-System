@@ -4,8 +4,11 @@ import com.example.inventorymanagementsystem.db.Connection;
 import com.example.inventorymanagementsystem.models.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.ObservableMap;
 
+import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
 
 public class Data {
     private static Data instance;
@@ -26,15 +29,19 @@ public class Data {
 
     private ObservableList<Customer> customers;
 
+    private ObservableList<LiableCustomers> liableCustomers;
+
+    private Double totalAccountsReceivable = 0.0D;
+
     /**
      * initializes the Data object instance when the class get loaded
      */
-    static {
-        Data.getInstance();
-        System.out.println("Data instance created!");
-    }
+//    static{
+//        Data.getInstance();
+//        System.out.println("Data instance created!");
+//    }
 
-    private Data(){
+    private Data() throws SQLException {
         connection = Connection.getInstance();
         stocks = FXCollections.observableArrayList(connection.getStocks());
         colors = FXCollections.observableArrayList(connection.getColors());
@@ -45,6 +52,25 @@ public class Data {
         userAnalytics = connection.getUserAnalyticsResult();
         users = FXCollections.observableArrayList(connection.getUsers());
         customers = FXCollections.observableArrayList(connection.getCustomers());
+
+        // Turn the liabilities map into an observable list which contains LiableCustomers objects
+        liableCustomers = FXCollections.observableArrayList();
+        for (Map.Entry<Customer, Map<Integer, Sale>> entry : connection.getLiabilities().entrySet()){
+            Customer customer = entry.getKey();
+
+            double totalLiabilities = 0;
+
+            for (Map.Entry<Integer, Sale> saleEntry : entry.getValue().entrySet()){
+                totalLiabilities += (saleEntry.getValue().getReceivedMoney() - saleEntry.getValue().getTotalCost());
+            }
+
+            totalAccountsReceivable += totalLiabilities;
+
+            System.out.println("Customer First Name: " + customer.getFirstName());
+            System.out.println("Total Liabilities: " + totalLiabilities);
+            LiableCustomers liableCustomer = new LiableCustomers(customer, totalLiabilities);
+            liableCustomers.add(liableCustomer);
+        }
     }
 
     public void refreshStock(){
@@ -87,7 +113,7 @@ public class Data {
         customers.addAll(connection.getCustomers());
     }
 
-    public static Data getInstance(){
+    public static Data getInstance() throws SQLException{
         if (instance == null){
             instance = new Data();
         }
@@ -153,5 +179,23 @@ public class Data {
     public void setItemDetails(List<ItemDetail> newItemDetails){
         itemDetails.clear();
         itemDetails.addAll(newItemDetails);
+    }
+
+    public void setUsers(List<User> filteredUsers){
+        users.clear();
+        users.addAll(filteredUsers);
+    }
+
+    public void setCustomers(List<Customer> filteredCustomers){
+        customers.clear();
+        customers.addAll(filteredCustomers);
+    }
+
+    public ObservableList<LiableCustomers> getLiableCustomers() {
+        return liableCustomers;
+    }
+
+    public double getTotalAccountsReceivable(){
+        return totalAccountsReceivable * -1;
     }
 }

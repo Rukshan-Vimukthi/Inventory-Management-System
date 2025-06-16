@@ -353,6 +353,20 @@
     -fx-font-weight: bold;
 }
 
+.button-danger{
+    -fx-background-color: #FF0000;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 5px;
+    -fx-background-radius: 5px;
+}
+
+.button-danger:hover{
+    -fx-background-color: #BB0000;
+    -fx-cursor: hand;
+    -fx-font-weight: bold;
+}
+
 .update-button{
     -fx-background-color: #FF8800;
     -fx-text-fill: white;
@@ -405,26 +419,3 @@
     -fx-padding: 5px;
     -fx-background-radius: 5px;
 }
-
-.menu-bar{
-    -fx-background-color: transparent;
-}
-
-.menu-bar .menu{
-    -fx-background-color: transparent;
-    -fx-text-fill: white;
-}
-
-.menu-bar .menu:hover{
-    -fx-background-color: #303030;
-}
-
-.menu-bar .menu-button{
-     -fx-background-color: transparent;
-     -fx-text-fill: white;
- }
-
-.menu-bar .menu-button:hover{
-     -fx-background-color: #303030;
-}
-

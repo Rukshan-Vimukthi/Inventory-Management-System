@@ -18,6 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.sql.SQLException;
 import java.time.LocalDate;
 
 public class AddUpdateUser extends VBox {
@@ -31,6 +32,7 @@ public class AddUpdateUser extends VBox {
     FormField<DatePicker, String> registeredDate;
 
     FormField<ComboBox, Role> role;
+    FormField<TextField, Role> phoneNumber;
 
     Button openFileChooserButton;
 //    FormField<DatePicker, String> registeredDateField;
@@ -43,7 +45,7 @@ public class AddUpdateUser extends VBox {
 
     private String selectedFilePath = null;
 
-    public AddUpdateUser(User user, Dialog dialog){
+    public AddUpdateUser(User user, Dialog<Boolean> dialog) throws SQLException {
         this.user = user;
         parentDialog = dialog;
         firstNameField = new FormField<>("First Name", TextField.class);
@@ -52,6 +54,7 @@ public class AddUpdateUser extends VBox {
         emailField = new FormField<>("Email", TextField.class);
         passwordField = new FormField<>("Password", PasswordField.class);
         registeredDate = new FormField<>("Registered Date", DatePicker.class);
+        phoneNumber = new FormField<>("Phone Number", TextField.class);
         role = new FormField<>("Role", ComboBox.class, Data.getInstance().getRoles());
 
         openFileChooserButton = new Button("Select the image");
@@ -70,7 +73,8 @@ public class AddUpdateUser extends VBox {
 
             try {
                 Files.copy(sourcePath, destinationFilePath, StandardCopyOption.REPLACE_EXISTING);
-                selectedFilePath = destinationFilePath.toAbsolutePath().toString();
+                selectedFilePath = destinationFilePath.toAbsolutePath().toString().replace('\\', '/');
+                System.out.println(selectedFilePath);
             }catch (IOException exception){
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setContentText("Could not copy the image to the destination location");
@@ -99,6 +103,7 @@ public class AddUpdateUser extends VBox {
             userNameField.setValue(user.getUserName());
             emailField.setValue(user.getEmail());
             passwordField.setValue(user.getPassword());
+            phoneNumber.setValue(user.getPhoneNumber());
             addUserButton.setText("Update");
         }
 
@@ -109,6 +114,7 @@ public class AddUpdateUser extends VBox {
                 emailField,
                 passwordField,
                 registeredDate,
+                phoneNumber,
                 role,
                 openFileChooserButton,
                 buttonContainer
@@ -117,34 +123,38 @@ public class AddUpdateUser extends VBox {
 
     public void addUser(){
         int result = 0;
-        if (this.user == null) {
-            System.out.println(selectedFilePath);
-            result = Connection.getInstance().addNewUser(
-                    (String) firstNameField.getValue(),
-                    (String) lastNameField.getValue(),
-                    (String) userNameField.getValue(),
-                    (String) emailField.getValue(),
-                    (String) passwordField.getValue(),
-                    ((LocalDate) registeredDate.getValue()).toString(),
+        try {
+            if (this.user == null) {
+                System.out.println(selectedFilePath);
+                result = Connection.getInstance().addNewUser(
+                        (String) firstNameField.getValue(),
+                        (String) lastNameField.getValue(),
+                        (String) userNameField.getValue(),
+                        (String) emailField.getValue(),
+                        (String) passwordField.getValue(),
+                        ((LocalDate) registeredDate.getValue()).toString(),
+                        ((Role) role.getValue()).getId(),
+                        selectedFilePath,
+                        (String) phoneNumber.getValue()
+                );
+            } else {
+                result = Connection.getInstance().updateUser(
+                        this.user.getId(),
+                        (String) firstNameField.getValue(),
+                        (String) lastNameField.getValue(),
+                        (String) userNameField.getValue(),
+                        (String) emailField.getValue(),
+                        (String) passwordField.getValue(),
+                        ((LocalDate) registeredDate.getValue()).toString(),
+                        ((Role) role.getValue()).getId()
+                );
+            }
 
-                    ((Role) role.getValue()).getId(),
-                    selectedFilePath
-            );
-        }else{
-            result = Connection.getInstance().updateUser(
-                    this.user.getId(),
-                    (String) firstNameField.getValue(),
-                    (String) lastNameField.getValue(),
-                    (String) userNameField.getValue(),
-                    (String) emailField.getValue(),
-                    (String) passwordField.getValue(),
-                    ((LocalDate) registeredDate.getValue()).toString(),
-                    ((Role) role.getValue()).getId()
-            );
-        }
-
-        if(result == 1 && parentDialog != null){
-            parentDialog.setResult(true);
+            if(result == 1 && parentDialog != null){
+                parentDialog.setResult(true);
+            }
+        }catch(SQLException e){
+            e.printStackTrace();
         }
     }
 }

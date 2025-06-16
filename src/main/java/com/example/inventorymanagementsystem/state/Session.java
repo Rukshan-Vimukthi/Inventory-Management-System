@@ -35,12 +35,8 @@ public class Session {
     }
 
     public void setSessionUser(User user){
-        if(user == null) {
-            notifyObservers(false);
-        }else{
-            notifyObservers(true);
-        }
         this.user = user;
+        notifyObservers(user != null);
     }
 
     public User getSessionUser(){

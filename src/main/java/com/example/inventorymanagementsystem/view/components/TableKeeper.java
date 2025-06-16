@@ -22,7 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class TableKeeper {
-    public static TableView<StockRow> getStockLevelTable() {
+    public static TableView<StockRow> getStockLevelTable() throws SQLException{
         Connection connection = Connection.getInstance();
         ObservableList<StockRow> stockData = FXCollections.observableArrayList();
 
@@ -81,7 +81,7 @@ public class TableKeeper {
         public int getSoldQuantity() { return soldQuantity; }
     }
 
-    public static TableView<ItemHasSize> getReorderAlertTable() {
+    public static TableView<ItemHasSize> getReorderAlertTable() throws SQLException {
         Connection connection = Connection.getInstance();
 
         TableView<ItemHasSize> table = new TableView<>();
@@ -132,7 +132,7 @@ public class TableKeeper {
         return table;
     }
 
-    public static TableView<SalesRow> getSalesTable(String filter) {
+    public static TableView<SalesRow> getSalesTable(String filter) throws SQLException {
         Connection connection = Connection.getInstance(); // Your DB connection
 
         TableView<SalesRow> salesTable = new TableView<>();
@@ -208,7 +208,7 @@ public class TableKeeper {
         public Integer getAmount(){return amount;}
     }
 
-    public static TableView<RevenueData> getRevenueTable() {
+    public static TableView<RevenueData> getRevenueTable() throws SQLException {
         Connection connection = Connection.getInstance(); // Your singleton DB connection
 
         TableView<RevenueData> revenueTable = new TableView<>();

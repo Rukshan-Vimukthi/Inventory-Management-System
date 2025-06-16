@@ -4,6 +4,7 @@ import com.example.inventorymanagementsystem.models.User;
 import com.example.inventorymanagementsystem.services.interfaces.AuthenticateStateListener;
 import com.example.inventorymanagementsystem.state.Constants;
 
+import com.example.inventorymanagementsystem.state.Data;
 import com.example.inventorymanagementsystem.state.Session;
 import com.example.inventorymanagementsystem.state.ThemeObserver;
 import com.example.inventorymanagementsystem.view.*;
@@ -12,14 +13,17 @@ import com.example.inventorymanagementsystem.view.dialogs.SignIn;
 import javafx.application.Application;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.event.Event;
+import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.geometry.Side;
 import javafx.scene.Scene;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.SingleSelectionModel;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TabPane;
+import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Paint;
 import javafx.stage.Stage;
@@ -28,28 +32,91 @@ import org.kordamp.ikonli.fontawesome5.FontAwesomeSolid;
 import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.io.IOException;
+import java.sql.SQLException;
 
 public class InventoryManagementApplication extends Application implements com.example.inventorymanagementsystem.services.interfaces.ThemeObserver, AuthenticateStateListener {
 
+    Stage stage;
     Scene scene;
+    VBox rootContainer;
     Tab checkoutTab;
     Tab analyticsTab;
     Tab inventory;
     Tab users;
-
+    Tab liabilitiesTab;
+    TitleBar titleBar;
     TabPane tabPane;
+
+    Checkout checkoutLayout;
+    Inventory inventoryView;
+    Analytics analyticsView;
+    Users userTabView;
+    Liabilities liabilities;
+
+    BorderPane borderPane;
+    VBox messageContainer;
+    Label message;
+    Label icon;
+    HBox buttonContainer;
+    ProgressIndicator progressIndicator;
+
+    SignIn signIn;
     @Override
-    public void start(Stage stage) throws IOException {
+    public void start(Stage stage) {
+        System.out.println("Initializing application...");
+        this.stage = stage;
+        rootContainer = new VBox();
+        Session.addListener(this);
 
-        FXMLLoader fxmlLoader = new FXMLLoader(InventoryManagementApplication.class.getResource("ApplicationUI.fxml"));
-        VBox rootContainer = new VBox();
+        borderPane = new BorderPane();
+        borderPane.setStyle("-fx-background-color: #112;");
 
-        TitleBar titleBar = new TitleBar(stage);
+        messageContainer = new VBox();
+        messageContainer.setMaxWidth(400.0D);
+        messageContainer.setMinWidth(400.0D);
+        messageContainer.setMaxHeight(300.0D);
+        messageContainer.setMinHeight(300.0D);
+        messageContainer.setStyle("-fx-background-color: #335; -fx-background-radius: 10px;");
+        message = new Label("Connecting to the database failed!");
+        message.setStyle("-fx-text-fill: #FFAA00; -fx-font-size: 18px;");
+
+        FontIcon fontIcon = new FontIcon(FontAwesomeSolid.EXCLAMATION_TRIANGLE);
+        fontIcon.setFill(Paint.valueOf("#FFAA00"));
+        icon = new Label("", fontIcon);
+        icon.setStyle("-fx-font-size: 82px;");
+
+        buttonContainer = new HBox();
+        Button retry = new Button("Retry");
+        retry.getStyleClass().add("primary-button");
+        retry.setStyle("-fx-font-size: 24px;");
+        retry.setPadding(new Insets(15.0D, 10.0D, 15.0D, 10.0D));
+
+        Button closeApplication = new Button("Close");
+        closeApplication.getStyleClass().add("button-danger");
+        closeApplication.setStyle("-fx-font-size: 24px;");
+        closeApplication.setPadding(new Insets(15.0D, 10.0D, 15.0D, 10.0D));
+        closeApplication.setOnAction(actionEvent -> stage.close());
+
+        buttonContainer.getChildren().addAll(retry, closeApplication);
+        buttonContainer.setSpacing(10.0D);
+        buttonContainer.setAlignment(Pos.CENTER);
+
+        retry.setOnAction(actionEvent -> reconnectAndInitComponent());
+
+        progressIndicator = new ProgressIndicator();
+        progressIndicator.setProgress(50.0D);
+
+//        messageContainer.getChildren().addAll(icon, message, buttonContainer);
+        messageContainer.setSpacing(20.0D);
+        borderPane.setCenter(messageContainer);
+        messageContainer.setFillWidth(true);
+        messageContainer.setAlignment(Pos.CENTER);
+        VBox.setVgrow(message, Priority.ALWAYS);
+
+        titleBar = new TitleBar(stage);
 
         tabPane = new TabPane();
-
         tabPane.setStyle("-fx-background-color: #222;");
-
         tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
         tabPane.setSide(Side.LEFT);
         tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
@@ -60,76 +127,10 @@ public class InventoryManagementApplication extends Application implements com.e
         tabPane.setTabMaxHeight(200.0D);
         tabPane.setFocusTraversable(false);
 
-        FontIcon checkoutIcon = new FontIcon(FontAwesomeSolid.SHOPPING_CART);
-        checkoutIcon.setFill(Paint.valueOf("#FFF"));
-        FontIcon analyticsIcon = new FontIcon(FontAwesomeSolid.CHART_LINE);
-        analyticsIcon.setFill(Paint.valueOf("#FFF"));
-        FontIcon inventoryIcon = new FontIcon(FontAwesomeSolid.BOXES);
-        inventoryIcon.setFill(Paint.valueOf("#FFF"));
-        FontIcon userIcon = new FontIcon(FontAwesomeSolid.USERS);
-        userIcon.setFill(Paint.valueOf("#FFF"));
-
-        // tabs in the main UI
-        checkoutTab = TabBuilder.buildTab("Checkout", checkoutIcon);
-        analyticsTab = TabBuilder.buildTab("Analytics", analyticsIcon);
-        inventory = TabBuilder.buildTab("Inventory", inventoryIcon);
-        users = TabBuilder.buildTab("Users", userIcon);
-
-        // create the inventory view (custom javaFX layout container ex. HBox, VBox)
-        Inventory inventoryView = new Inventory();
-        // set the custom view as the content of the tab created for inventory (inventory)
-        inventory.setContent(inventoryView);
-
-        // The checkout Section
-        Checkout checkoutLayout = new Checkout();
-        BorderPane checkoutContainer = checkoutLayout.getLayout();
-        checkoutTab.setContent(checkoutContainer);
-
-        InventoryManagementApplicationController.NavigationHandler handler = new InventoryManagementApplicationController.NavigationHandler() {
-            @Override
-            public void goToInventory() {
-                navigate("Inventory");
-            }
-
-            public void navigate(String destination) {
-                if (destination.equals("Inventory")) {
-                    tabPane.getSelectionModel().select(inventory);
-                }
-            }
-        };
-
-        // The Stock Section
-        Analytics analyticsView = new Analytics(handler);
-        VBox analyticsViewContainer = analyticsView.getLayout();
-
-        ScrollPane scrollableAnalytics = new ScrollPane(analyticsViewContainer);
-        scrollableAnalytics.setFitToWidth(true);
-        scrollableAnalytics.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        analyticsTab.setContent(scrollableAnalytics);
-
-        Users userTabView = new Users();
-        users.setContent(userTabView);
-
-        ThemeObserver.init().addObserver(inventoryView);
-        ThemeObserver.init().addObserver(analyticsView);
-        ThemeObserver.init().addObserver(checkoutLayout);
-
-        ThemeObserver.init().applyDarkThemeChange();
-
-        // Add tabs to the tabPane
-        tabPane.getTabs().addAll(
-                checkoutTab,
-                analyticsTab,
-                inventory,
-                users
-        );
-
-        rootContainer.getChildren().addAll(titleBar, tabPane);
-
-        scene = new Scene(rootContainer);
+        scene = new Scene(borderPane);
 
         scene.getStylesheets().add(
-            String.valueOf(InventoryManagementApplication.class.getResource("css/style.css"))
+                String.valueOf(InventoryManagementApplication.class.getResource("css/style.css"))
         );
 
         // remove the frame of the window
@@ -139,9 +140,36 @@ public class InventoryManagementApplication extends Application implements com.e
         stage.setScene(scene);
         stage.show();
 
-        if (!Session.isLoggedIn()){
-            SignIn signIn = new SignIn(stage);
-            signIn.show();
+        try{
+            /**
+            /* try to create the instance of the Data object. under the hood, it creates the connection instance to
+            /* load data. if initializing database connection fails, this throws a SQLException
+             */
+            messageContainer.getChildren().removeAll(messageContainer.getChildren());
+            messageContainer.getChildren().add(progressIndicator);
+            Data.getInstance();
+            authenticate();
+
+//            initComponents();
+        }catch (SQLException e) {
+            messageContainer.getChildren().remove(progressIndicator);
+            messageContainer.getChildren().addAll(icon, message, buttonContainer);
+            scene.setRoot(borderPane);
+        }
+    }
+
+    public void switchTabs(){
+        for (Tab tab : tabPane.getTabs()){
+            if (tab.isSelected()) {
+                User loggedInUser = Session.getInstance().getSessionUser();
+                if (loggedInUser != null) {
+                    if (!loggedInUser.getRole().equals("Admin")){
+                        if (tab == analyticsTab || tab == inventory || tab == users) {
+                            tabPane.getSelectionModel().select(checkoutTab);
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -166,25 +194,161 @@ public class InventoryManagementApplication extends Application implements com.e
     @Override
     public void onLoggedIn() {
         User user = Session.getInstance().getSessionUser();
-        if (user.getRole().equals("Admin")){
-            checkoutTab.setDisable(false);
-            analyticsTab.setDisable(false);
-            inventory.setDisable(false);
-            users.setDisable(false);
-        }else{
-            checkoutTab.setDisable(false);
-            analyticsTab.setDisable(true);
-            inventory.setDisable(true);
-            users.setDisable(true);
+        System.out.println("Logged In!");
+        System.out.println(user);
+        if (user != null) {
+            if (!user.getRole().equals("Admin")) {
+                tabPane.getSelectionModel().select(checkoutTab);
+            }
+            messageContainer.getChildren().removeAll(messageContainer.getChildren());
+            try {
+                initComponents();
+            }catch(SQLException exception){
+                exception.printStackTrace();
+            }
         }
     }
 
     @Override
     public void onLoggedOut() {
-        checkoutTab.setDisable(false);
-        analyticsTab.setDisable(false);
-        inventory.setDisable(false);
-        users.setDisable(false);
+        tabPane.getSelectionModel().select(checkoutTab);
+        authenticate();
     }
+
+
+    public void reconnectAndInitComponent(){
+        try{
+            /**
+             /* try to create the instance of the Data object. under the hood, it creates the connection instance to
+             /* load data. if initializing database connection fails, this throws a SQLException
+             */
+            messageContainer.getChildren().removeAll(messageContainer.getChildren());
+            messageContainer.getChildren().add(progressIndicator);
+            Data.getInstance();
+            authenticate();
+//            initComponents();
+        }catch (SQLException e){
+            messageContainer.getChildren().removeAll(messageContainer.getChildren());
+            messageContainer.getChildren().addAll(icon, message, buttonContainer);
+            scene.setRoot(borderPane);
+        }
+    }
+
+    private void initComponents() throws SQLException{
+        if (rootContainer.getChildren().size() == 0) {
+            FontIcon checkoutIcon = new FontIcon(FontAwesomeSolid.SHOPPING_CART);
+            checkoutIcon.setFill(Paint.valueOf("#FFF"));
+            FontIcon analyticsIcon = new FontIcon(FontAwesomeSolid.CHART_LINE);
+            analyticsIcon.setFill(Paint.valueOf("#FFF"));
+            FontIcon inventoryIcon = new FontIcon(FontAwesomeSolid.BOXES);
+            inventoryIcon.setFill(Paint.valueOf("#FFF"));
+            FontIcon userIcon = new FontIcon(FontAwesomeSolid.USERS);
+            userIcon.setFill(Paint.valueOf("#FFF"));
+            FontIcon liabilitiesIcon = new FontIcon(FontAwesomeSolid.MONEY_BILL_WAVE);
+            liabilitiesIcon.setFill(Paint.valueOf("#FFF"));
+
+            FontIcon userLiabilitiesIcon = new FontIcon(FontAwesomeSolid.USER_MINUS);
+            userLiabilitiesIcon.setFill(Paint.valueOf("#FFF"));
+
+            // tabs in the main UI
+            checkoutTab = TabBuilder.buildTab("Checkout", checkoutIcon);
+            analyticsTab = TabBuilder.buildTab("Analytics", analyticsIcon);
+            inventory = TabBuilder.buildTab("Inventory", inventoryIcon);
+            users = TabBuilder.buildTab("Users", userIcon);
+            liabilitiesTab = TabBuilder.buildTab("Liabilities", liabilitiesIcon);
+
+            if (inventoryView == null) {
+                // create the inventory view (custom javaFX layout container ex. HBox, VBox)
+                inventoryView = new Inventory();
+                // set the custom view as the content of the tab created for inventory (inventory)
+                inventory.setContent(inventoryView);
+            }
+
+
+            if (checkoutLayout == null) {
+                // The checkout Section
+                checkoutLayout = new Checkout();
+
+                BorderPane checkoutContainer = checkoutLayout.getLayout();
+                checkoutTab.setContent(checkoutContainer);
+            }
+
+            InventoryManagementApplicationController.NavigationHandler handler = new InventoryManagementApplicationController.NavigationHandler() {
+                @Override
+                public void goToInventory() {
+                    navigate("Inventory");
+                }
+
+                public void navigate(String destination) {
+                    if (destination.equals("Inventory")) {
+                        tabPane.getSelectionModel().select(inventory);
+                    }
+                }
+            };
+
+            if (analyticsView == null) {
+                // The Stock Section
+                analyticsView = new Analytics(handler);
+                VBox analyticsViewContainer = analyticsView.getLayout();
+
+                ScrollPane scrollableAnalytics = new ScrollPane(analyticsViewContainer);
+                scrollableAnalytics.setFitToWidth(true);
+                scrollableAnalytics.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+                analyticsTab.setContent(scrollableAnalytics);
+            }
+
+            if (userTabView == null) {
+                userTabView = new Users();
+                users.setContent(userTabView);
+            }
+
+            if (liabilities == null) {
+                liabilities = new Liabilities();
+                liabilitiesTab.setContent(liabilities);
+            }
+
+            ThemeObserver.init().addObserver(inventoryView);
+            ThemeObserver.init().addObserver(analyticsView);
+            ThemeObserver.init().addObserver(checkoutLayout);
+
+            ThemeObserver.init().applyDarkThemeChange();
+
+            // Add tabs to the tabPane
+            tabPane.getTabs().addAll(
+                    checkoutTab,
+                    analyticsTab,
+                    inventory,
+                    users,
+                    liabilitiesTab
+            );
+
+            rootContainer.getChildren().addAll(titleBar, tabPane);
+
+            for (Tab tab : tabPane.getTabs()) {
+                tab.setOnSelectionChanged(new EventHandler<Event>() {
+                    @Override
+                    public void handle(Event event) {
+                        switchTabs();
+                    }
+                });
+            }
+        }
+
+        scene.setRoot(rootContainer);
+
+        System.out.println("Application Initialized!");
+    }
+
+
+
+    public void authenticate(){
+        if (!Session.isLoggedIn()){
+            scene.setRoot(borderPane);
+            signIn = new SignIn(stage);
+            messageContainer.getChildren().removeAll(messageContainer.getChildren());
+            messageContainer.getChildren().add(signIn);
+        }
+    }
+
 
 }

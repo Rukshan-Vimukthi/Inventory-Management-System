@@ -21,6 +21,7 @@ import javafx.util.Callback;
 import org.kordamp.ikonli.fontawesome5.FontAwesomeSolid;
 import org.kordamp.ikonli.javafx.FontIcon;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -143,7 +144,11 @@ public class TableContainer<T> extends VBox implements ThemeObserver {
             public void changed(ObservableValue<? extends T> observable, T oldValue, T newValue) {
                 update.setDisable(false);
                 delete.setDisable(false);
-                tableContainerInterface.onSelectItem(newValue);
+                try {
+                    tableContainerInterface.onSelectItem(newValue);
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
             }
         });
 

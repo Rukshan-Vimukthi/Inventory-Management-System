@@ -5,6 +5,7 @@ import com.example.inventorymanagementsystem.state.Data;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.chart.XYChart;
+import org.controlsfx.dialog.ExceptionDialog;
 //import org.apache.commons.configuration2.Configuration;
 //import org.apache.commons.configuration2.FileBasedConfiguration;
 //import org.apache.commons.configuration2.PropertiesConfiguration;
@@ -12,6 +13,7 @@ import javafx.scene.chart.XYChart;
 //import org.apache.commons.configuration2.builder.fluent.Parameters;
 //import org.apache.commons.configuration2.ex.ConfigurationException;
 
+import javax.xml.transform.Result;
 import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -29,31 +31,19 @@ public class Connection {
     private Statement statement;
     private double price;
 
-    public Connection(){
-        try {
-//            Parameters parameters = new Parameters();
-//            FileBasedConfigurationBuilder<FileBasedConfiguration> fileBasedConfigurationBuilder = new FileBasedConfigurationBuilder<FileBasedConfiguration>(PropertiesConfiguration.class)
-//                    .configure(parameters.properties().setFileName("db.env"));
-//
-//            Configuration config = fileBasedConfigurationBuilder.getConfiguration();
-//            String dbLink = config.getString("DBURL");
-//            String username = config.getString("USERNAME");
-//            String password = config.getString("PASSWORD");
-
-            String dbLink = "jdbc:mysql://localhost:3306/sandyafashioncorner";
-            String username = "root";
-            String password = "root@techlix2002";
-            connection = DriverManager.getConnection(dbLink, username, password);
-        }catch(SQLException e){
-            e.printStackTrace();
-        }
+    private Connection() throws SQLException{
+        String dbLink = "jdbc:mysql://localhost:3306/sandyafashioncorner?useSSL=false&allowPublicKeyRetrieval=true";
+        String username = "root";
+        String password = "root@techlix2002";
+//            String password = "root@2025sfc";
+        connection = DriverManager.getConnection(dbLink, username, password);
     }
 
     /**
      * create the instance of the Connection object if there is not any instance created.
      * @return Connection instance to perform CRUD operations with the database
      */
-    public static Connection getInstance(){
+    public static Connection getInstance() throws SQLException{
         if (connectionObject == null){
             connectionObject = new Connection();
         }
@@ -552,7 +542,7 @@ public class Connection {
         return -1;
     }
 
-    public boolean addNewVariant(int itemID, int stockID, int sizeID, int colorID, int orderedQty, double price, double sellingPrice){
+    public boolean addNewVariant(int itemID, int stockID, int sizeID, int colorID, int orderedQty, double price, double sellingPrice, String imagePath){
         try{
             statement = connection.createStatement();
             statement.execute("INSERT INTO `item_has_size` (" +
@@ -566,8 +556,8 @@ public class Connection {
                     "`item_has_size_id`, `stock_id`) VALUES(%d, %d)".formatted(
                             id, stockID), Statement.RETURN_GENERATED_KEYS);
             statement.execute("INSERT INTO `color_has_item_has_size` (" +
-                    "`color_id`, `item_has_size_id`) VALUES('%d', '%d')".formatted(
-                            colorID, id
+                    "`color_id`, `item_has_size_id`, `image_path`) VALUES('%d', '%d', '%s')".formatted(
+                            colorID, id, imagePath
                     ), Statement.RETURN_GENERATED_KEYS);
             Data.getInstance().refreshItemDetails();
             return true;
@@ -622,19 +612,117 @@ public class Connection {
         return false;
     }
 
-    public boolean insertCustomerItem(int id, int customer_id, int amount, double price, String date) {
-        try {
-            PreparedStatement ps = connection.prepareStatement(
-                    "INSERT INTO customer_has_item_has_size (id, customer_id, amount, price, date) VALUES (?, ?, ?, ?)"
-            );
-            ps.setInt(1, id);
-            ps.setInt(2, customer_id);
-            ps.setInt(3, amount);
-            ps.setDouble(4, price);
-            ps.setString(5, date);
+    public boolean deleteItem(int itemHasSizeHasStockID, int colorHasItemHasSizeID, int itemHasSizeID, int itemID){
+        try{
+            statement = connection.createStatement();
+            statement.execute("DELETE FROM `item_has_size_has_stock` WHERE `id` = %d".formatted(itemHasSizeHasStockID));
+            statement.execute("DELETE FROM `color_has_item_has_size` WHERE `id` = %d".formatted(colorHasItemHasSizeID));
+            statement.execute("DELETE FROM `item_has_size` WHERE `id` = %d".formatted(itemHasSizeID));
+            statement.execute("DELETE FROM `item` WHERE `id` = %d".formatted(itemID));
+            return true;
+        }catch(SQLException exception){
+            exception.printStackTrace();
+        }
+        return false;
+    }
 
-            int rowsInserted = ps.executeUpdate();
-            return rowsInserted > 0;
+    public Sale getSale(String date, int customerID){
+        Sale sale = null;
+        System.out.println("Date: " + date);
+        System.out.println("Customer ID: " + customerID);
+        try{
+            statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM `sale` WHERE `date` = '%s' AND `customer_id` = %d".formatted(date, customerID));
+            while (resultSet.next()){
+                int id = resultSet.getInt("id");
+                String saleDate = resultSet.getString("date");
+                double receivedAmount = resultSet.getDouble("received_amount");
+                double totalCost = resultSet.getDouble("total_cost");
+                int remainsStatusID = resultSet.getInt("remains_statuss_id");
+                System.out.println("Sale Date: " + saleDate);
+                sale = new Sale(id, saleDate, receivedAmount, totalCost, remainsStatusID);
+            }
+        }catch(SQLException e){
+            e.printStackTrace();
+        }
+        return sale;
+    }
+
+    public boolean insertCustomerItem(
+            int customer_id,
+            int itemHasSizeId,
+            int amount,
+            double price,
+            String date,
+            int itemStatusId,
+            double discount,
+            double priceWithDiscount,
+            double receivedAmount,
+            int remainsStatusID) {
+        try {
+            Sale sale = getSale(date, customer_id);
+            int saleID = 0;
+            if (sale == null){
+                statement = connection.createStatement();
+                statement.execute("INSERT INTO `sale` (`date`,`received_amount`, `total_cost`, `remains_statuss_id`, `customer_id`) " +
+                        "VALUES('%s', %f, %f, %d, %d)".formatted(date, receivedAmount, priceWithDiscount, remainsStatusID, customer_id), Statement.RETURN_GENERATED_KEYS);
+                ResultSet resultSet = statement.getGeneratedKeys();
+                resultSet.next();
+                saleID = resultSet.getInt(1);
+                PreparedStatement ps = connection.prepareStatement(
+                        "INSERT INTO customer_has_item_has_size (" +
+                                "customer_id, " +
+                                "item_has_size_id, " +
+                                "amount, " +
+                                "price, " +
+                                "item_status_id, " +
+                                "discount, " +
+                                "price_with_discount, sale_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+                );
+                ps.setInt(1, customer_id);
+                ps.setInt(2, itemHasSizeId);
+                ps.setInt(3, amount);
+                ps.setDouble(4, price);
+                ps.setInt(5, itemStatusId);
+                ps.setDouble(6, discount);
+                ps.setDouble(7, priceWithDiscount);
+                ps.setDouble(8, saleID);
+                int rowsInserted = ps.executeUpdate();
+                return rowsInserted > 0;
+            }else{
+                saleID = sale.getId();
+                System.out.println("Sale ID: " + sale.getId());
+                statement = connection.createStatement();
+
+                double newReceivedAmount = sale.getReceivedMoney() + receivedAmount;
+                double newTotalCost = sale.getTotalCost() + priceWithDiscount;
+
+                int rowsAffected = statement.executeUpdate("UPDATE `sale` SET `received_amount` = %f, `total_cost` = %f WHERE `customer_id` = %d AND `date` = '%s' AND id = %d".formatted(newReceivedAmount, newTotalCost, customer_id, date, saleID));
+                System.out.println("Rows Affected: " + rowsAffected);
+                if (rowsAffected > 0) {
+                    PreparedStatement ps = connection.prepareStatement(
+                            "INSERT INTO customer_has_item_has_size (" +
+                                    "customer_id, " +
+                                    "item_has_size_id, " +
+                                    "amount, " +
+                                    "price, " +
+                                    "item_status_id, " +
+                                    "discount, " +
+                                    "price_with_discount, sale_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+                    );
+                    ps.setInt(1, customer_id);
+                    ps.setInt(2, itemHasSizeId);
+                    ps.setInt(3, amount);
+                    ps.setDouble(4, price);
+                    ps.setInt(5, itemStatusId);
+                    ps.setDouble(6, discount);
+                    ps.setDouble(7, priceWithDiscount);
+                    ps.setDouble(8, saleID);
+                    int rowsInserted = ps.executeUpdate();
+                    return rowsInserted > 0;
+                }
+                return false;
+            }
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
@@ -712,7 +800,7 @@ public class Connection {
 
     // For setting the dates as filters for showing the sales
     public ResultSet getFilteredSalesData (String filter) throws SQLException {
-        String query =  "SELECT chs.date, chs.item_has_size_id, chs.price, chs.amount FROM customer_has_item_has_size chs WHERE ";
+        String query =  "SELECT sale.date, chs.item_has_size_id, chs.price, chs.amount FROM customer_has_item_has_size chs INNER JOIN sale ON chs.sale_id = sale.id WHERE ";
 
         if (filter == null) {
             filter = "";
@@ -720,38 +808,38 @@ public class Connection {
 
         switch (filter) {
             case "Today":
-                query += "DATE(chs.date) = CURDATE()";
+                query += "DATE(sale.date) = CURDATE()";
                 break;
             case "Yesterday":
-                query += "DATE(chs.date) = CURDATE() - INTERVAL 1 DAY";
+                query += "DATE(sale.date) = CURDATE() - INTERVAL 1 DAY";
                 break;
             case "Last 7 Days":
-                query += "chs.date >= CURDATE() - INTERVAL 7 DAY";
+                query += "sale.date >= CURDATE() - INTERVAL 7 DAY";
                 break;
             case "This Month":
-                query += "MONTH(chs.date) = MONTH(CURDATE()) AND YEAR(chs.date) = YEAR(CURDATE())";
+                query += "MONTH(sale.date) = MONTH(CURDATE()) AND YEAR(sale.date) = YEAR(CURDATE())";
                 break;
             case "Last Month":
-                query += "MONTH(chs.date) = MONTH(CURDATE() - INTERVAL 1 MONTH) AND YEAR(chs.date) = YEAR(CURDATE() - INTERVAL 1 MONTH)";
+                query += "MONTH(sale.date) = MONTH(CURDATE() - INTERVAL 1 MONTH) AND YEAR(sale.date) = YEAR(CURDATE() - INTERVAL 1 MONTH)";
                 break;
             case "This Year":
-                query += "YEAR(chs.date) = YEAR(CURDATE())";
+                query += "YEAR(sale.date) = YEAR(CURDATE())";
                 break;
             case "Last Year":
-                query += "YEAR(chs.date) = YEAR(CURDATE() - INTERVAL 1 YEAR)";
+                query += "YEAR(sale.date) = YEAR(CURDATE() - INTERVAL 1 YEAR)";
                 break;
             default:
-                query = "SELECT chs.date, chs.item_has_size_id, chs.price, chs.amount FROM customer_has_item_has_size chs";
+                query = "SELECT sale.date, chs.item_has_size_id, chs.price, chs.amount FROM customer_has_item_has_size chs INNER JOIN sale ON chs.sale_id = sale.id";
                 break;
             case "All Time":
-                query = "SELECT chs.date, chs.item_has_size_id, chs.price, chs.amount FROM customer_has_item_has_size chs";
+                query = "SELECT sale.date, chs.item_has_size_id, chs.price, chs.amount FROM customer_has_item_has_size chs INNER JOIN sale ON chs.sale_id = sale.id";
                 break;
         }
         PreparedStatement stmt = connection.prepareStatement(query);
         return stmt.executeQuery();
     }
 
-    public void filterItems(String color, String size, Stock stock, double price, String name, double sellingPrice){
+    public void filterItems(String color, String size, Stock stock, double price, String name, double sellingPrice) throws SQLException {
         List<ItemDetail> itemDetails = new ArrayList<>();
         try{
             statement = connection.createStatement();
@@ -1013,7 +1101,7 @@ public class Connection {
      * @param roleID - roleID - call getRoleIDs() method to get the roles available
      * @return boolean - true if the user is successfully added. false otherwise
      */
-    public int addNewUser(String firstName, String lastName, String userName, String email, String password, String registeredDate, int roleID, String pathToImage){
+    public int addNewUser(String firstName, String lastName, String userName, String email, String password, String registeredDate, int roleID, String pathToImage, String phoneNumber){
         String imagePath = pathToImage;
         if (pathToImage == null){
             imagePath = " ";
@@ -1021,8 +1109,8 @@ public class Connection {
         try{
             statement = connection.createStatement();
             boolean isUserAdded = statement.execute("INSERT INTO `user` " +
-                    "(`firstName`, `lastName`, `username`, `email`, `password`, `registered_date`, `role_id`, `image_path`) " +
-                    "VALUES('%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s')".formatted(firstName, lastName, userName, email, password, registeredDate, roleID, imagePath));
+                    "(`firstName`, `lastName`, `username`, `email`, `password`, `registered_date`, `role_id`, `image_path`, `phone`) " +
+                    "VALUES('%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s')".formatted(firstName, lastName, userName, email, password, registeredDate, roleID, imagePath, phoneNumber));
             Data.getInstance().refreshUsers();
             return 1;
         }catch(SQLException exception){
@@ -1066,16 +1154,52 @@ public class Connection {
                 String registeredDate = resultSet.getString("registered_date");
                 String role = resultSet.getString("role.role");
                 String imagePath = resultSet.getString("image_path");
+                String phone = resultSet.getString("phone");
 
                 System.out.println(firstName + " " + lastName);
 
-                User user = new User(id, firstName, lastName, userName, email, password, registeredDate, role, imagePath);
+                User user = new User(id, firstName, lastName, userName, email, password, registeredDate, role, imagePath, phone);
                 users.add(user);
             }
         }catch(SQLException exception){
             exception.printStackTrace();
         }
         return users;
+    }
+
+    public void filterUsers(String filterValue) throws SQLException {
+        List<User> users = new ArrayList<>();
+        try{
+            statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM `user` INNER JOIN `role` ON `user`.`role_id` = `role`.`id` WHERE " +
+                    "firstname LIKE '%" + filterValue + "%' OR " +
+                    "lastname LIKE '%" + filterValue + "%' OR " +
+                    "username LIKE '%" + filterValue + "%' OR " +
+                    "email LIKE '%" + filterValue + "%' OR " +
+                    "registered_date LIKE '" + filterValue + "' OR " +
+                    "role.role LIKE '%" + filterValue + "%'"
+                    );
+            while (resultSet.next()){
+                int id = resultSet.getInt("id");
+                String firstName = resultSet.getString("firstname");
+                String lastName = resultSet.getString("lastname");
+                String userName = resultSet.getString("username");
+                String email = resultSet.getString("email");
+                String password = resultSet.getString("password");
+                String registeredDate = resultSet.getString("registered_date");
+                String role = resultSet.getString("role.role");
+                String imagePath = resultSet.getString("image_path");
+                String phone = resultSet.getString("phone");
+
+                System.out.println(firstName + " " + lastName);
+
+                User user = new User(id, firstName, lastName, userName, email, password, registeredDate, role, imagePath, phone);
+                users.add(user);
+            }
+        }catch(SQLException exception){
+            exception.printStackTrace();
+        }
+        Data.getInstance().setUsers(users);
     }
 
     public int updateUser(int userID, String firstName, String lastName, String userName, String email, String password, String registeredDate, int roleID){
@@ -1180,10 +1304,9 @@ public class Connection {
                 String phone = resultSet.getString("phone");
                 String registeredDate = resultSet.getString("registered_date");
                 String pathToImage = resultSet.getString("image_path");
+                double points = resultSet.getDouble("points");
 
-//                System.out.println(firstName + " " + lastName);
-
-                Customer customer = new Customer(id, firstName, lastName, phone, email, registeredDate, pathToImage);
+                Customer customer = new Customer(id, firstName, lastName, phone, email, registeredDate, pathToImage, points);
                 customers.add(customer);
             }
         }catch(SQLException exception){
@@ -1196,7 +1319,7 @@ public class Connection {
         List<Customer> customers = new ArrayList<>();
         try{
             statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery("SELECT * FROM `customer`");
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM `customer` ");
             while (resultSet.next()){
                 int id = resultSet.getInt("id");
                 String firstName = resultSet.getString("first_name");
@@ -1205,10 +1328,11 @@ public class Connection {
                 String phone = resultSet.getString("phone");
                 String registeredDate = resultSet.getString("registered_date");
                 String pathToImage = resultSet.getString("image_path");
+                double points = resultSet.getDouble("points");
 
                 System.out.println(firstName + " " + lastName);
 
-                Customer customer = new Customer(id, firstName, lastName, phone, email, registeredDate,pathToImage);
+                Customer customer = new Customer(id, firstName, lastName, phone, email, registeredDate,pathToImage, points);
                 customers.add(customer);
             }
         }catch(SQLException exception){
@@ -1272,7 +1396,39 @@ public class Connection {
         return -1;
     }
 
-    public String addCustomers(String first_name, String last_name, String phone, String email, String registeredDate) {
+    public void filterCustomers(String filterValue) throws SQLException {
+        List<Customer> customers = new ArrayList<>();
+        try{
+            statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM `customer` WHERE " +
+                    "`first_name` LIKE '%" + filterValue + "%' OR " +
+                    "`last_name` LIKE '%" + filterValue + "%' OR " +
+                    "`email` LIKE '%" + filterValue + "%' OR " +
+                    "`phone` LIKE '%" + filterValue + "%' OR " +
+                    "`registered_date` LIKE '" + filterValue + "'"
+            );
+            while (resultSet.next()){
+                int id = resultSet.getInt("id");
+                String firstName = resultSet.getString("first_name");
+                String lastName = resultSet.getString("last_name");
+                String email = resultSet.getString("email");
+                String phone = resultSet.getString("phone");
+                String registeredDate = resultSet.getString("registered_date");
+                String pathToImage = resultSet.getString("image_path");
+                double points = resultSet.getDouble("points");
+
+                System.out.println(firstName + " " + lastName);
+
+                Customer customer = new Customer(id, firstName, lastName, phone, email, registeredDate,pathToImage, points);
+                customers.add(customer);
+            }
+        }catch(SQLException exception){
+            exception.printStackTrace();
+        }
+        Data.getInstance().setCustomers(customers);
+    }
+
+    public String addCustomers(String first_name, String last_name, String phone, String email, String registeredDate, String imagePath) {
         try {
             if (email == null || email.trim().isEmpty()) {
                 email = "Not included";
@@ -1292,12 +1448,13 @@ public class Connection {
             }
 
             PreparedStatement ps = connection.prepareStatement(
-                    "INSERT INTO customer (first_name, last_name, phone, email, registered_date) VALUES (?, ?, ?, ?, ?)"
+                    "INSERT INTO customer (first_name, last_name, phone, email, registered_date, image_path) VALUES (?, ?, ?, ?, ?, ?)"
             );
             ps.setString(1, first_name);
             ps.setString(2, last_name);
             ps.setString(3, phone);
             ps.setString(4, email);
+            ps.setString(6, imagePath);
             ps.setDate(5, java.sql.Date.valueOf(registeredDate));
             ps.executeUpdate();
 
@@ -1309,9 +1466,9 @@ public class Connection {
         }
     }
 
-    /*
-    * Gets the customers who has bought stuffs
-    * */
+    /**
+    * Gets the customers who have bought stuffs
+    */
     public int getTotalCustomers() {
         int totalCustomers = 0;
         try {
@@ -1372,12 +1529,11 @@ public class Connection {
 
     public ObservableList<CheckoutItem> getCheckoutItems() {
         ObservableList<CheckoutItem> itemList = FXCollections.observableArrayList();
-
         try {
             PreparedStatement stmt = connection.prepareStatement(
                     "SELECT i.name AS item_name, s.size AS item_size, c.color AS item_color, " +
-                            "chs.amount, chs.price AS checkout_price, chs.date, ihs.price AS selling_price " +  // <-- FIXED
-                            "FROM customer_has_item_has_size chs " +
+                            "chs.amount, chs.price AS checkout_price, sale.date, ihs.price AS selling_price, chs.discount AS discount " +  // <-- FIXED
+                            "FROM customer_has_item_has_size chs INNER JOIN sale ON chs.sale_id = sale.id " +
                             "JOIN item_has_size ihs ON chs.item_has_size_id = ihs.id " +
                             "JOIN item i ON ihs.item_id = i.id " +
                             "JOIN size s ON ihs.size_id = s.id " +
@@ -1393,9 +1549,23 @@ public class Connection {
                 int amount = rs.getInt("amount");
                 int price = rs.getInt("price");
                 double sellingPrice = rs.getDouble("selling_price");
+                double discount = rs.getDouble("discount");
+                double totalCost = amount * sellingPrice;
+
                 String date = rs.getString("date");
 
-                CheckoutItem item = new CheckoutItem(name, size, color, amount, price, sellingPrice, date);
+                double costWithDiscount = (sellingPrice * discount / 100) * amount;
+
+                CheckoutItem item = new CheckoutItem(
+                        name,
+                        size,
+                        color,
+                        amount,
+                        price,
+                        sellingPrice,
+                        discount,
+                        String.valueOf(totalCost),
+                        costWithDiscount);
                 itemList.add(item);
             }
 
@@ -1412,8 +1582,8 @@ public class Connection {
         try {
             PreparedStatement stmt = connection.prepareStatement(
                     "SELECT i.name AS item_name, s.size AS item_size, " +
-                            "chs.amount, chs.price AS checkout_price, chs.date, ihs.price AS selling_price " +
-                            "FROM customer_has_item_has_size chs " +
+                            "chs.amount, chs.discount as discount, chs.price AS checkout_price, sale.date, ihs.price AS selling_price " +
+                            "FROM customer_has_item_has_size chs INNER JOIN sale ON chs.sale_id = sale.id " +
                             "JOIN item_has_size ihs ON chs.item_has_size_id = ihs.id " +
                             "JOIN item i ON ihs.item_id = i.id " +
                             "JOIN size s ON ihs.size_id = s.id"
@@ -1427,9 +1597,14 @@ public class Connection {
                 int amount = rs.getInt("amount");
                 int price = rs.getInt("checkout_price");
                 double sellingPrice = rs.getDouble("selling_price");
-                String date = rs.getString("date");
+                double discount = rs.getDouble("discount");
+                double totalCost = amount * sellingPrice;
 
-                CheckoutItem item = new CheckoutItem(name, size, color, amount, price, sellingPrice, date);
+//                String date = rs.getString("sale.date");
+
+                double costWithDiscount = (sellingPrice * discount / 100) * amount;
+
+                CheckoutItem item = new CheckoutItem(name, size, color, amount, price, sellingPrice, String.valueOf(totalCost), costWithDiscount);
                 itemList.add(item);
             }
         } catch (SQLException e) {
@@ -1643,14 +1818,37 @@ public class Connection {
                 String email = resultSet.getString("email");
                 String registeredDate = resultSet.getString("registered_date");
                 String pathToImage = resultSet.getString("image_path");
+                double points = resultSet.getDouble("points");
 
-                Customer customer = new Customer(id, firstName, lastName, phone, email, registeredDate, pathToImage);
+                Customer customer = new Customer(id, firstName, lastName, phone, email, registeredDate, pathToImage, points);
                 customerList.add(customer);
             }
         }catch(SQLException e){
             e.printStackTrace();
         }
         return customerList;
+    }
+
+    public Customer getCustomer(int customerID){
+        Customer customer = null;
+        try{
+            statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM `customer`WHERE id = %d".formatted(customerID));
+            while (resultSet.next()){
+                int id = resultSet.getInt("id");
+                String firstName = resultSet.getString("first_name");
+                String lastName = resultSet.getString("last_name");
+                String phone = resultSet.getString("phone");
+                String email = resultSet.getString("email");
+                String registeredDate = resultSet.getString("registered_date");
+                String pathToImage = resultSet.getString("image_path");
+                double points = resultSet.getDouble("points");
+                customer = new Customer(id, firstName, lastName, phone, email, registeredDate, pathToImage, points);
+            }
+        }catch(SQLException e){
+            e.printStackTrace();
+        }
+        return customer;
     }
 
     public int[] getUserCounts(){
@@ -1678,6 +1876,40 @@ public class Connection {
             exception.printStackTrace();
         }
         return new int[]{numberOfAdmins, numberOfUsers, numberOfCustomers};
+    }
+
+    public HashMap<Customer, Map<Integer, Sale>> getLiabilities(){
+        HashMap<Customer, Map<Integer, Sale>> customerSalesMap = new HashMap<>();
+
+        List<LiableCustomers> liableCustomersList = new ArrayList<>();
+        try{
+            statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM `sale` INNER JOIN `customer` ON `customer`.`id` = `sale`.`customer_id` INNER JOIN `remains_status` ON `sale`.`remains_statuss_id` = `remains_status`.`id`");
+            while (resultSet.next()){
+                int customerId = resultSet.getInt("customer_id");
+                Customer customer = getCustomer(customerId);
+
+                int saleID = resultSet.getInt("sale.id");
+                String saleDate = resultSet.getString("sale.date");
+                double receivedMoney = resultSet.getDouble("sale.received_amount");
+                double totalCost = resultSet.getDouble("sale.total_cost");
+                int remainsStatus = resultSet.getInt("sale.remains_statuss_id");
+                Sale sale = new Sale(saleID, saleDate, receivedMoney, totalCost, remainsStatus);
+                if (!customerSalesMap.containsKey(customer)){
+                    Map<Integer, Sale> salesMap = new HashMap<>();
+                    salesMap.put(saleID, sale);
+                    customerSalesMap.put(customer, salesMap);
+                }else{
+                    if (!customerSalesMap.get(customer).containsKey(saleID)){
+                        customerSalesMap.get(customer).put(saleID, sale);
+                    }
+                }
+            }
+
+        }catch(SQLException e){
+            e.printStackTrace();
+        }
+        return customerSalesMap;
     }
 
 }

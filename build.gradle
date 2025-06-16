@@ -28,7 +28,7 @@ tasks.withType(JavaCompile) {
 
 application {
     mainModule = 'com.example.inventorymanagementsystem'
-    mainClass = 'com.example.inventorymanagementsystem.InventoryManagementApplicationController'
+    mainClass = 'com.example.inventorymanagementsystem.InventoryManagementApplication'
 }
 
 javafx {
@@ -41,15 +41,14 @@ dependencies {
     implementation('com.dlsc.formsfx:formsfx-core:11.5.0') {
         exclude(group: 'org.openjfx')
     }
+
     implementation('org.kordamp.bootstrapfx:bootstrapfx-core:0.4.0')
     implementation('org.kordamp.ikonli:ikonli-javafx:12.3.1')
     implementation('org.kordamp.ikonli:ikonli-fontawesome5-pack:12.3.1')
     implementation 'com.mysql:mysql-connector-j:8.3.0'
-//    implementation 'org.apache.commons:commons-configuration2:2.9.0'
-//    implementation 'org.apache.commons:commons-beanutils:1.9.4'
 
-
-//    implementation ('io.github.cdimascio:java-dotenv:5.2.2')
+    implementation 'org.slf4j:slf4j-api:2.0.13'
+    implementation 'ch.qos.logback:logback-classic:1.4.14'
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:${junitVersion}")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
@@ -71,13 +70,14 @@ jlink {
         installerType = 'exe' // Use 'dmg' or 'deb' as needed
         appVersion = '1.0.0'
         vendor = 'NXTDEV Co.'
-//        icon = 'src/main/resources/icon.ico' // optional
+        icon = 'src/main/resources/com/example/inventorymanagementsystem/images/sfc-logo.ico' // optional
         installerName = 'SFC Inventory Management Application Installer'
 
         installerOptions = [
                 '--win-dir-chooser',
                 '--win-menu',
-                '--win-shortcut' // Optional for Windows only
+                '--win-shortcut', // Optional for Windows only
+                '--license-file', 'src/main/resources/LICENSE.rtf' // path to your license file
         ]
     }
 }

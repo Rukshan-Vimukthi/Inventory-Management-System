@@ -12,14 +12,14 @@ public class User {
     private StringProperty username;
     private StringProperty email;
     private StringProperty password;
-
+    private StringProperty phoneNumber;
     private StringProperty registeredDate;
 
     private StringProperty role;
 
     private StringProperty imagePath;
 
-    public User( Integer id, String firstName, String lastName, String username, String email, String password, String registeredDate, String role, String imagePath) {
+    public User( Integer id, String firstName, String lastName, String username, String email, String password, String registeredDate, String role, String imagePath, String phoneNumber) {
 
         idProperty().setValue(id);
         firstNameProperty().setValue(firstName);
@@ -30,6 +30,7 @@ public class User {
         registeredDateProperty().setValue(registeredDate);
         roleProperty().setValue(role);
         imagePathProperty().setValue(imagePath);
+        phoneNumberProperty().setValue(phoneNumber);
 
     }
 
@@ -89,6 +90,13 @@ public class User {
         }
         return imagePath;
     }
+
+    public StringProperty phoneNumberProperty(){
+        if (phoneNumber == null){
+            phoneNumber = new SimpleStringProperty(this, "phoneNumber");
+        }
+        return phoneNumber;
+    }
     public Integer getId() { return id.get(); }
 
     public String getFirstName() { return firstName.get(); }
@@ -110,5 +118,13 @@ public class User {
 
     public String getImagePath(){
         return imagePath.get();
+    }
+
+    public String getUsername() {
+        return username.get();
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber.get();
     }
 }
