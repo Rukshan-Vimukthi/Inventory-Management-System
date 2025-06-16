@@ -109,6 +109,12 @@
     -fx-text-fill: white;
 }
 
+.card{
+    -fx-background-color: #333344;
+    -fx-background-radius: 8px;
+    -fx-padding: 10px;
+}
+
 .card-heading{
     -fx-font-size: 18px;
     -fx-font-weight: bold;
@@ -162,3 +168,54 @@
     -fx-background-color: #0055AA;
     -fx-text-fill: #EEE;
 }
+
+
+.menu-bar{
+    -fx-background-color: transparent;
+}
+
+.menu-bar .label{
+    -fx-background-color: transparent;
+    -fx-text-fill: white;
+}
+
+.menu-bar .label:hover{
+    -fx-background-color: #303030;
+}
+
+.menu-bar .menu-button{
+     -fx-background-color: transparent;
+     -fx-text-fill: white;
+ }
+
+.menu-bar .menu-button:hover{
+     -fx-background-color: #303030;
+}
+
+.menu-item{
+    -fx-background-color: #222;
+    -fx-text-fill: white;
+}
+
+.menu-item:hover{
+    -fx-background-color: #444;
+    -fx-text-fill: white;
+}
+
+.menu-item .label{
+    -fx-background-color: transparent;
+    -fx-text-fill: white;
+}
+
+.menu-item .label:hover{
+    -fx-background-color: #303030;
+}
+
+.account-receivable-and-points .chart-horizontal-grid-lines{
+    -fx-stroke: #55555555;
+}
+
+.account-receivable-and-points .chart-vertical-grid-lines{
+    -fx-stroke: #55555555;
+}
+

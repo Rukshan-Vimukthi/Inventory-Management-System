@@ -1,15 +1,21 @@
 package com.example.inventorymanagementsystem.view;
 
+import com.example.inventorymanagementsystem.InventoryManagementApplication;
 import com.example.inventorymanagementsystem.services.interfaces.AuthenticateStateListener;
 import com.example.inventorymanagementsystem.state.Constants;
 import com.example.inventorymanagementsystem.state.Session;
 import com.example.inventorymanagementsystem.state.ThemeObserver;
+import com.example.inventorymanagementsystem.view.dialogs.About;
 import com.example.inventorymanagementsystem.view.dialogs.SignIn;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.paint.Paint;
@@ -32,11 +38,26 @@ public class TitleBar extends HBox implements com.example.inventorymanagementsys
         this.setSpacing(10.0D);
         label = new Label("Inventory Management System + Integrated POS features");
         label.setAlignment(Pos.CENTER_LEFT);
+        Image image = new Image(String.valueOf(InventoryManagementApplication.class.getResource("images/sfc-logo.png")));
+        ImageView imageView = new ImageView(image);
+        imageView.setFitWidth(50.0D);
+        imageView.setFitHeight(20.0D);
         MenuBar menuBar = new MenuBar();
         Menu file = new Menu("File");
-        Menu about = new Menu("About");
+        Menu help = new Menu("Help");
 
-        menuBar.getMenus().addAll(file, about);
+        MenuItem about = new MenuItem("About Us");
+        help.getItems().add(about);
+
+        about.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                About aboutDialog = new About();
+                aboutDialog.show();
+            }
+        });
+
+        menuBar.getMenus().addAll(file, help);
 
         HBox commandButtons = new HBox();
 
@@ -54,8 +75,6 @@ public class TitleBar extends HBox implements com.example.inventorymanagementsys
             if(Session.isLoggedIn()){
                 Session.getInstance().destroy();
             }
-            SignIn signIn = new SignIn(stage);
-            signIn.show();
         });
 
         ToggleButton toggleTheme = new ToggleButton();
@@ -100,7 +119,7 @@ public class TitleBar extends HBox implements com.example.inventorymanagementsys
         commandButtons.setMaxWidth(120);
         commandButtons.setAlignment(Pos.CENTER_RIGHT);
 
-        this.getChildren().addAll(label, menuBar, commandButtons);
+        this.getChildren().addAll(imageView, label, menuBar, commandButtons);
         HBox.setHgrow(menuBar, Priority.ALWAYS);
         ThemeObserver.init().addObserver(this);
         Session.addListener(this);

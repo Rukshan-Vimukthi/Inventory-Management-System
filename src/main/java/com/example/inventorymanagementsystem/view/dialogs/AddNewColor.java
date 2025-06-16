@@ -8,24 +8,25 @@ import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
+import java.sql.SQLException;
 import java.time.LocalDate;
 
 public class AddNewColor extends Dialog<Boolean> {
-    TextField codeField;
+    ColorPicker codeField;
 
     public AddNewColor(Color color){
         DialogPane dialogPane = new DialogPane();
         VBox vBox = new VBox();
 
         Label colorCodeLabel = new Label("Color Code");
-        codeField = new TextField();
+        codeField = new ColorPicker();
 
         HBox footer = new HBox();
         footer.setPadding(new Insets(10.0D, 0.0D, 0.0D, 0.0D));
         Button addButton = new Button("ADD");
 
         if(color != null){
-            codeField.setText(color.getColor());
+            codeField.setValue(javafx.scene.paint.Color.valueOf(color.getColor()));
             addButton.setText("UPDATE");
             this.setTitle("Update the color");
         }else{
@@ -33,13 +34,17 @@ public class AddNewColor extends Dialog<Boolean> {
         }
 
         addButton.setOnAction(event -> {
-            String colorCode = codeField.getText();
-            if (color != null){
-                Connection.getInstance().updateNewColor(color.getId(), colorCode);
-            }else {
-                Connection.getInstance().addNewColor(colorCode);
+            String colorCode = "#" + codeField.getValue().toString().split("0x")[1];
+            try {
+                if (color != null) {
+                    Connection.getInstance().updateNewColor(color.getId(), colorCode);
+                } else {
+                    Connection.getInstance().addNewColor(colorCode);
+                }
+                AddNewColor.this.setResult(true);
+            }catch(SQLException e){
+                e.printStackTrace();
             }
-            AddNewColor.this.setResult(true);
         });
 
         Button cancelButton = new Button("CANCEL");

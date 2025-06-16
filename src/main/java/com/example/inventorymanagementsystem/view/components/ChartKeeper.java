@@ -22,7 +22,7 @@ public class ChartKeeper {
     private VBox mainLayout;
 
     // Stocks level chart (left side)
-    public static BarChart<String, Number> getStockLevelChart() {
+    public static BarChart<String, Number> getStockLevelChart() throws SQLException {
         CategoryAxis xAxis = new CategoryAxis();
         NumberAxis yAxis = new NumberAxis();
         xAxis.setLabel("Products");

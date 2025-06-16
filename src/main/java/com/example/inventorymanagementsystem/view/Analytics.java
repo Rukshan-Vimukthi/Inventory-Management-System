@@ -21,6 +21,7 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.util.Duration;
 
+import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.util.*;
 
@@ -76,7 +77,7 @@ public class Analytics extends VBox implements ThemeObserver {
     ChartTableToggleComponent revenueToggleComponent2;
     ComboBox<String> dateRange;
 
-    public Analytics(InventoryManagementApplicationController.NavigationHandler navigationHandler) {
+    public Analytics(InventoryManagementApplicationController.NavigationHandler navigationHandler) throws SQLException {
         super();
         this.navigationHandler = navigationHandler;
 
@@ -85,7 +86,6 @@ public class Analytics extends VBox implements ThemeObserver {
         mainLayout.getStylesheets().add(
                 String.valueOf(InventoryManagementApplication.class.getResource("css/style.css"))
         );
-        Connection dbConnection = Connection.getInstance();
         connection = Connection.getInstance();
 
         navbar = new VBox();
@@ -142,7 +142,7 @@ public class Analytics extends VBox implements ThemeObserver {
         summaryCardContainer.setAlignment(Pos.CENTER);
         summaryCardContainer.setMaxWidth(Double.MAX_VALUE);
 
-        int totalProductSum = dbConnection.getTotalProducts();
+        int totalProductSum = connection.getTotalProducts();
         // Total product Card
         Text totalProductsTxt = new Text("📦 Total Products in inventory");
         totalProductsTxt.setTextAlignment(TextAlignment.CENTER);
@@ -154,8 +154,8 @@ public class Analytics extends VBox implements ThemeObserver {
         Card productCard = new Card(totalProductsTxt, totalProducts, percentage);
         productCard.getStyleClass().add("summary-cards");
 
-        int totalProductValue = dbConnection.getTotalProductValue();
-        int remainingItemAmount = dbConnection.getRemainingProductsSum();
+        int totalProductValue = connection.getTotalProductValue();
+        int remainingItemAmount = connection.getRemainingProductsSum();
         int totalInventoryValue = totalProductValue * remainingItemAmount;
         DecimalFormat formatter = new DecimalFormat("#,###");
         String formattedTotalInventoryValue = formatter.format(totalInventoryValue);
@@ -169,7 +169,7 @@ public class Analytics extends VBox implements ThemeObserver {
         Card inventoryValueCard = new Card(inventoryValueTxt, inventoryValue, expectedValue);
         inventoryValueCard.getStyleClass().add("summary-cards");
 
-        int lowStokeProducts = Connection.getLowStockItemCount(dbConnection);
+        int lowStokeProducts = Connection.getLowStockItemCount(connection);
         // Total sales Card
         Text lowStokeTxt = new Text("🔸 Low Stokes");
         lowStokeTxt.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
@@ -180,7 +180,7 @@ public class Analytics extends VBox implements ThemeObserver {
         Card lowStockCard = new Card(lowStokeTxt, lowStoke, currentAmount);
         lowStockCard.getStyleClass().add("summary-cards");
         // Tooltip
-        List<String> mainLowStockItems = Connection.getLowStockitemNames(dbConnection);
+        List<String> mainLowStockItems = Connection.getLowStockitemNames(connection);
         HoverTooltip mainLowStokesTooltip = new HoverTooltip("Low Stocks: \n" + String.join("\n⚫ ", mainLowStockItems));
         mainLowStokesTooltip.attachTo(lowStockCard);
 
@@ -189,7 +189,7 @@ public class Analytics extends VBox implements ThemeObserver {
         fastTxt.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
         fastMoving = new Text();
         fastMoving.setFill(Color.WHITE);
-        refreshFastMovingItems(connection);
+        refreshFastMovingItems(this.connection);
         Region emptySpace = new Region();
         Card fastCard = new Card(fastTxt, fastMoving, emptySpace);
         fastCard.getStyleClass().add("summary-cards");
@@ -199,7 +199,7 @@ public class Analytics extends VBox implements ThemeObserver {
         slowText.getStyleClass().add("sub-cards-heading");
         slowMovingItems = new Text();
         slowMovingItems.setFill(Color.WHITE);
-        refreshSlowMovingItems(connection);
+        refreshSlowMovingItems(this.connection);
         Region slowMovingItemSpace = new Region();
         Card slowCard = new Card(slowText, slowMovingItems, slowMovingItemSpace);
         slowCard.getStyleClass().add("summary-cards");
@@ -251,13 +251,13 @@ public class Analytics extends VBox implements ThemeObserver {
 
         Text topSoldProduct = new Text();
 
-        Map<String, List<SoldProducts>> topSalesData = connection.getTopAndBottomSellingProducts();
+        Map<String, List<SoldProducts>> topSalesData = this.connection.getTopAndBottomSellingProducts();
         if (topSalesData != null && topSalesData.containsKey("top")) {
             List<SoldProducts> topList = topSalesData.get("top");
             if (topList != null && !topList.isEmpty()) {
                 StringBuilder textBuilder = new StringBuilder();
                 for (SoldProducts ps : topList) {
-                    String itemName = connection.getItemNameById(ps.getItemId());
+                    String itemName = this.connection.getItemNameById(ps.getItemId());
                     textBuilder.append(itemName)
                             .append(" :- Sold: ").append(ps.getTotalSold()).append(", ");
                 }
@@ -276,7 +276,7 @@ public class Analytics extends VBox implements ThemeObserver {
         topSoldItemCard.getChildren().addAll(topSellingTxt, topSoldProduct);
 
         // Top Selling items card
-        int totalSoldQty = dbConnection.getTotalSoldQuantity();
+        int totalSoldQty = connection.getTotalSoldQuantity();
         VBox soldUnitCard = new VBox();
         Text unitSoldTxt= new Text("\uD83D\uDD01 Units Sold");
         unitSoldTxt.getStyleClass().add("sub-cards-heading");
@@ -286,7 +286,7 @@ public class Analytics extends VBox implements ThemeObserver {
         soldUnitCard.setAlignment(Pos.CENTER);
         soldUnitCard.getChildren().addAll(unitSoldTxt, soldUnits);
 
-        int totalCustomers = dbConnection.getTotalCustomers();
+        int totalCustomers = connection.getTotalCustomers();
         // Total customers card
         VBox totalCustomersCard = new VBox();
         Text totalCustomersTxt= new Text("\uD83D\uDC65 Total Customers");
@@ -298,7 +298,7 @@ public class Analytics extends VBox implements ThemeObserver {
         totalCustomersCard.getChildren().addAll(totalCustomersTxt, customersAmount);
 
         // Total customers card
-        int orderedItemsValue = dbConnection.getOrderedQuantityValue();
+        int orderedItemsValue = connection.getOrderedQuantityValue();
         int revenueValue = totalSoldQty * orderedItemsValue;
         DecimalFormat revenueFormatter = new DecimalFormat("#,###");
         String formattedRevenue = revenueFormatter.format(revenueValue);
@@ -331,12 +331,16 @@ public class Analytics extends VBox implements ThemeObserver {
         revenueUnitSec = new HBox();
 
         dateRange.setOnAction(e -> {
-            if (currentSalesChart != null && currentSalesTable != null) {
-                updateSalesSectionUI(currentSalesChart, currentSalesTable);
-            } else {
+            try {
+                if (currentSalesChart != null && currentSalesTable != null) {
+                    updateSalesSectionUI(currentSalesChart, currentSalesTable);
+                } else {
+                    loadDataAndRefreshUI(dateRange.getValue());
+                }
                 loadDataAndRefreshUI(dateRange.getValue());
+            }catch(SQLException exception){
+                exception.printStackTrace();
             }
-            loadDataAndRefreshUI(dateRange.getValue());
         });
         loadDataAndRefreshUI(dateRange.getValue());
 
@@ -386,12 +390,12 @@ public class Analytics extends VBox implements ThemeObserver {
         lowStockAlertCard.setSpacing(10);
         lowStockAlertCard.getStyleClass().add("alert-cards");
         // The tooltip
-        List<String> lowStockItems = Connection.getLowStockitemNames(dbConnection);
+        List<String> lowStockItems = Connection.getLowStockitemNames(connection);
         HoverTooltip lowStokesTooltip = new HoverTooltip("Low Stocks: \n" + String.join("\n⚫ ", lowStockItems));
         lowStokesTooltip.attachTo(lowStockAlertCard);
 
         // Alerts Low Stoke Card
-        int outofStokesItems = Connection.getOutofStokeItems(dbConnection);
+        int outofStokesItems = Connection.getOutofStokeItems(connection);
         VBox outofStokeCard = new VBox();
         Text outOfStockTxt = new Text("\uD83D\uDD34 OUT-OF-STOCK ALERT");
         outOfStockTxt.getStyleClass().add("alert-heading");
@@ -401,12 +405,12 @@ public class Analytics extends VBox implements ThemeObserver {
         outofStokeCard.setSpacing(10);
         outofStokeCard.getStyleClass().add("alert-cards");
         // The tooltip
-        List<String> outOfStockItems = Connection.getOutOfStockItemNames(dbConnection);
+        List<String> outOfStockItems = Connection.getOutOfStockItemNames(connection);
         HoverTooltip outOfStokesTooltip = new HoverTooltip("Out-of-Stocks: \n" + String.join("\n⚫ ", outOfStockItems));
         outOfStokesTooltip.attachTo(outofStokeCard);
 
         // Alerts Over Stoke Card
-        int overStokesItems = Connection.getOverStockItems(dbConnection);
+        int overStokesItems = Connection.getOverStockItems(connection);
         VBox overStockAlertCard = new VBox();
         Text overStockTxt = new Text("\uD83D\uDD34 OVER-STOCKS ALERT");
         overStockTxt.getStyleClass().add("alert-heading");
@@ -418,7 +422,7 @@ public class Analytics extends VBox implements ThemeObserver {
         overStockAlertCard.getChildren().addAll(overStockTxt, overStocks);
         overStockAlertCard.getStyleClass().add("alert-cards");
         // The tooltip
-        List<String> overStockItems = Connection.getOverStockitemNames(dbConnection);
+        List<String> overStockItems = Connection.getOverStockitemNames(connection);
         HoverTooltip overStokesTooltip = new HoverTooltip("Over Stocks: \n" + String.join("\n⚫ ", overStockItems));
         overStokesTooltip.attachTo(overStockAlertCard);
 
@@ -436,25 +440,25 @@ public class Analytics extends VBox implements ThemeObserver {
         List<Runnable> refreshTasks = new ArrayList<>();
         refreshTasks.add(() -> {
             // Updating low stokes
-            int updatedLowStock = Connection.getLowStockItemCount(dbConnection);
+            int updatedLowStock = Connection.getLowStockItemCount(connection);
             lowStoke.setText(updatedLowStock + " Items");
             lowStocks.setText("You currently have " + updatedLowStock + " low stokes");
             // Updating out of stocks
-            int updatedOutOfStocks = Connection.getOutofStokeItems(dbConnection);
+            int updatedOutOfStocks = Connection.getOutofStokeItems(connection);
             outOfStocks.setText("You have " + updatedOutOfStocks + " out of stocks");
             // Updating over stocks
-            int updatedOverStocks = Connection.getOverStockItems(dbConnection);
+            int updatedOverStocks = Connection.getOverStockItems(connection);
             overStocks.setText("You got " + updatedOverStocks + " over stocks");
 
             // Updating low stock item names
-            List<String> updatedItems = Connection.getLowStockitemNames(dbConnection);
+            List<String> updatedItems = Connection.getLowStockitemNames(connection);
             mainLowStokesTooltip.setText("Low Stocks: \n" + String.join("\n⚫ ", updatedItems));
             lowStokesTooltip.setText("Low Stokes: \n" + String.join("\n⚫ ", updatedItems));
             // Updating out of stocks names
-            List<String> updatedOutOfStokes = Connection.getOutOfStockItemNames(dbConnection);
+            List<String> updatedOutOfStokes = Connection.getOutOfStockItemNames(connection);
             outOfStokesTooltip.setText("Out of Stocks: \n" + String.join("\n⚫ ", updatedOutOfStokes));
             // Updating over stock item names
-            List<String> updatedOverStockNames = Connection.getOverStockitemNames(dbConnection);
+            List<String> updatedOverStockNames = Connection.getOverStockitemNames(connection);
             overStokesTooltip.setText("Over Stocks: \n" + String.join("\n⚫ ", updatedOverStockNames));
         });
 
@@ -475,7 +479,7 @@ public class Analytics extends VBox implements ThemeObserver {
 
         // Sales chart and Table
         salesToggleComponent2 = new ChartTableToggleComponent(
-                ChartKeeper.getSalesChart(connection, ""),
+                ChartKeeper.getSalesChart(this.connection, ""),
                 TableKeeper.getSalesTable("")
         );
         salesToggleComponent2.setMaxWidth(Double.MAX_VALUE);
@@ -513,29 +517,41 @@ public class Analytics extends VBox implements ThemeObserver {
         dateRange.setValue("This Year");
         dateRange.setOnAction(e -> {
             String selected = dateRange.getValue();
-            LineChart<String, String> chart = ChartKeeper.getSalesChart(connection, selected);
-            TableView<TableKeeper.SalesRow> table = TableKeeper.getSalesTable(selected);
+            LineChart<String, String> chart = ChartKeeper.getSalesChart(this.connection, selected);
+            TableView<TableKeeper.SalesRow> table = null;
+            try {
+                table = TableKeeper.getSalesTable(selected);
+                boolean chartEmpty = chart.getData().isEmpty();
+                boolean tableEmpty = table.getItems().isEmpty();
 
-            boolean chartEmpty = chart.getData().isEmpty();
-            boolean tableEmpty = table.getItems().isEmpty();
+                if (chartEmpty && tableEmpty) {
+                    Label noDataMessage = new Label("No data found related to the selected date");
+                    noDataMessage.setStyle("-fx-font-size: 20px; -fx-text-fill: black; -fx-font-weight: 600; -fx-background-color: white; -fx-background-radius: 10; -fx-padding: 20 10 10 10; -fx-spacing: 20; -fx-border-color: red; -fx-border-width: 2;-fx-border-radius: 5; -fx-border-style: solid;");
+                    noDataMessage.setAlignment(Pos.CENTER);
+                    StackPane noDataPane = new StackPane(noDataMessage);
+                    noDataPane.setPrefSize(600, 400);
 
-            if (chartEmpty && tableEmpty) {
-                Label noDataMessage = new Label("No data found related to the selected date");
-                noDataMessage.setStyle("-fx-font-size: 20px; -fx-text-fill: black; -fx-font-weight: 600; -fx-background-color: white; -fx-background-radius: 10; -fx-padding: 20 10 10 10; -fx-spacing: 20; -fx-border-color: red; -fx-border-width: 2;-fx-border-radius: 5; -fx-border-style: solid;");
-                noDataMessage.setAlignment(Pos.CENTER);
-                StackPane noDataPane = new StackPane(noDataMessage);
-                noDataPane.setPrefSize(600, 400);
-                salesRevenueRow.getChildren().set(0, noDataPane);
+                    // added this if condition to check are there any children available
+                    // in the salesRevenueRow container before replacing the children in the
+                    // 0th index
+                    if (salesRevenueRow.getChildren().size() > 0) {
+                        salesRevenueRow.getChildren().set(0, noDataPane);
+                    }
 
-            } else {
-                ChartTableToggleComponent newSalesComponent2 = new ChartTableToggleComponent(chart, table);
-                newSalesComponent2.setMaxWidth(Double.MAX_VALUE);
-                HBox.setHgrow(newSalesComponent2, Priority.ALWAYS);
-                newSalesComponent2.prefWidthProperty().bind(salesRevenueRow.widthProperty().divide(2));
-                HBox.setHgrow(newSalesComponent2, Priority.ALWAYS);
+                } else {
+                    ChartTableToggleComponent newSalesComponent2 = new ChartTableToggleComponent(chart, table);
+                    newSalesComponent2.setMaxWidth(Double.MAX_VALUE);
+                    HBox.setHgrow(newSalesComponent2, Priority.ALWAYS);
+                    newSalesComponent2.prefWidthProperty().bind(salesRevenueRow.widthProperty().divide(2));
+                    HBox.setHgrow(newSalesComponent2, Priority.ALWAYS);
 
-                salesRevenueRow.getChildren().addAll(newSalesComponent2, revenueToggleComponent2);
+                    salesRevenueRow.getChildren().addAll(newSalesComponent2, revenueToggleComponent2);
+                }
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
             }
+
+
         });
         dateRange.getOnAction().handle(new ActionEvent());
 
@@ -567,41 +583,45 @@ public class Analytics extends VBox implements ThemeObserver {
 
         refresh.setOnAction(event -> {
             refreshTasks.forEach(Runnable::run);
-            loadDataAndRefreshUI(dateRange.getValue());
-            refreshAllComponents();
+            try {
+                refreshAllComponents();
+                loadDataAndRefreshUI(dateRange.getValue());
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
 
             // Refreshing the cards
-            int updatedTotalItemsSum = dbConnection.getTotalProducts();
+            int updatedTotalItemsSum = connection.getTotalProducts();
             totalProducts.setText(updatedTotalItemsSum + " Products are Available");
 
-            int updatedTotalItemsValue = dbConnection.getTotalProductValue();
-            int updatedRemainingAmount = dbConnection.getRemainingProductsSum();
+            int updatedTotalItemsValue = connection.getTotalProductValue();
+            int updatedRemainingAmount = connection.getRemainingProductsSum();
             int updatedInventoryValue = updatedTotalItemsValue * updatedRemainingAmount;
             DecimalFormat inventoryFormatter = new DecimalFormat("#,###");
             String updateValue = inventoryFormatter.format(updatedInventoryValue);
             inventoryValue.setText("Rs." + updateValue + " of Value");
 
-            int updatedTotalSoldQty = dbConnection.getTotalSoldQuantity();
+            int updatedTotalSoldQty = connection.getTotalSoldQuantity();
             soldUnits.setText("Total Ordered Quantity " + updatedTotalSoldQty);
 
-            int updatedTotalCustomers = dbConnection.getTotalCustomers();
+            int updatedTotalCustomers = connection.getTotalCustomers();
             customersAmount.setText(updatedTotalCustomers + " Customers");
 
-            int updatedOrderedItemsValue = dbConnection.getOrderedQuantityValue();
+            int updatedOrderedItemsValue = connection.getOrderedQuantityValue();
             int updatedRevenueValue = (updatedTotalSoldQty * updatedOrderedItemsValue);
             DecimalFormat updatedRevenueFormatter = new DecimalFormat("#,###");
             String updatedCompletedRevenue = updatedRevenueFormatter.format(updatedRevenueValue);
             revenue.setText("Rs." + updatedCompletedRevenue + " of revenue");
 
             // Updating the items with the sold amount
-            Map<String, List<SoldProducts>> updatedTopSalesData = connection.getTopAndBottomSellingProducts();
+            Map<String, List<SoldProducts>> updatedTopSalesData = this.connection.getTopAndBottomSellingProducts();
 
             if (topSalesData != null && topSalesData.containsKey("top")) {
                 List<SoldProducts> topList = topSalesData.get("top");
                 if (topList != null && !topList.isEmpty()) {
                     StringBuilder textBuilder = new StringBuilder();
                     for (SoldProducts ps : topList) {
-                        String itemName = connection.getItemNameById(ps.getItemId());
+                        String itemName = this.connection.getItemNameById(ps.getItemId());
                         textBuilder.append(itemName)
                                 .append(" :- Sold: ").append(ps.getTotalSold()).append(", ");
                     }
@@ -689,7 +709,7 @@ public class Analytics extends VBox implements ThemeObserver {
         return mainLayout;
     }
 
-    private ChartTableToggleComponent createStockComponent() {
+    private ChartTableToggleComponent createStockComponent() throws SQLException{
         ChartTableToggleComponent chartTableToggleComponent = new ChartTableToggleComponent(
                 ChartKeeper.getStockLevelChart(),
                 TableKeeper.getStockLevelTable()
@@ -700,13 +720,13 @@ public class Analytics extends VBox implements ThemeObserver {
         return chartTableToggleComponent;
     }
 
-    private void refreshStockChart(HBox stockContainer) {
+    private void refreshStockChart(HBox stockContainer) throws SQLException {
         stockContainer.getChildren().clear();
         ChartTableToggleComponent refreshedComponent = createStockComponent(); // fetches fresh chart data
         stockContainer.getChildren().add(refreshedComponent);
     }
 
-    private ChartTableToggleComponent createReorderComponent() {
+    private ChartTableToggleComponent createReorderComponent() throws SQLException {
         ChartTableToggleComponent chartTableToggleComponent = new ChartTableToggleComponent(
                 ChartKeeper.getReorderAlertChart(connection),
                 TableKeeper.getReorderAlertTable()
@@ -717,7 +737,7 @@ public class Analytics extends VBox implements ThemeObserver {
         return chartTableToggleComponent;
     }
 
-    private ChartTableToggleComponent createRevenueToggleComponent() {
+    private ChartTableToggleComponent createRevenueToggleComponent() throws SQLException {
         ChartTableToggleComponent chartTableToggleComponent = new ChartTableToggleComponent(
                 ChartKeeper.getRevenueChart(connection),
                 TableKeeper.getRevenueTable()
@@ -728,7 +748,7 @@ public class Analytics extends VBox implements ThemeObserver {
         return chartTableToggleComponent;
     }
 
-    public void refreshAllComponents() {
+    public void refreshAllComponents() throws SQLException {
         stockContainer.getChildren().removeAll(stockToggleComponent, reorderToggleComponent);
         revenueUnitSec.getChildren().removeAll(revenueToggleComponent);
         allChartsContainer.getChildren().removeAll(stockToggleComponent2, reorderToggleComponent2, salesToggleComponent2, revenueToggleComponent2);
@@ -761,7 +781,7 @@ public class Analytics extends VBox implements ThemeObserver {
         revenueUnitSec.getChildren().add(0, revenueToggleComponent);
     }
 
-    private void loadDataAndRefreshUI(String selectedDateRange) {
+    private void loadDataAndRefreshUI(String selectedDateRange) throws SQLException {
         currentSalesChart = ChartKeeper.getSalesChart(connection, selectedDateRange);
         currentSalesTable = TableKeeper.getSalesTable(selectedDateRange);
 

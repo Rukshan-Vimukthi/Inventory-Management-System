@@ -5,6 +5,7 @@ import com.example.inventorymanagementsystem.models.Color;
 import com.example.inventorymanagementsystem.models.ItemDetail;
 import com.example.inventorymanagementsystem.models.Size;
 import com.example.inventorymanagementsystem.models.Stock;
+import com.example.inventorymanagementsystem.state.Constants;
 import com.example.inventorymanagementsystem.state.Data;
 import com.example.inventorymanagementsystem.view.components.FormField;
 import com.example.inventorymanagementsystem.view.components.NewItemVariant;
@@ -16,6 +17,14 @@ import javafx.scene.control.*;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.sql.SQLException;
 
 public class AddNewItem extends Dialog<Boolean> {
     private FormField<TextField, String> itemName;
@@ -109,51 +118,74 @@ public class AddNewItem extends Dialog<Boolean> {
 //                System.out.println(itemStock.getValue());
 //                System.out.println(itemSize.getValue());
 //                System.out.println("#" + ((String)itemColor.getValue()).split("0x")[1]);
+                try {
+                    int id = Connection.getInstance().addSingleItem((String) itemName.getValue());
+                    if (id > 0) {
+                        for (NewItemVariant itemVariant : variantContainer.getItems()) {
+                            int stockID = itemVariant.getStockID();
+                            int sizeID = itemVariant.getSizeID();
+                            int colorID = itemVariant.getColorID();
+                            double price = itemVariant.getPrice();
+                            double sellingPrice = itemVariant.getSellingPrice();
+                            int orderedQty = itemVariant.getOrderedQty();
+                            File selectedFile = itemVariant.getSelectedImage();
 
-                int id = Connection.getInstance().addSingleItem((String)itemName.getValue());
-                if (id > 0) {
-                    for (NewItemVariant itemVariant : variantContainer.getItems()) {
-                        int stockID = itemVariant.getStockID();
-                        int sizeID = itemVariant.getSizeID();
-                        int colorID = itemVariant.getColorID();
-                        double price = itemVariant.getPrice();
-                        double sellingPrice = itemVariant.getSellingPrice();
-                        int orderedQty = itemVariant.getOrderedQty();
+                            if (itemVariant.isUpdate()) {
+                                System.out.println("Item Should Be Updated!");
+                                Connection.getInstance().updateItem(
+                                        itemVariant.getItemId(),
+                                        itemVariant.getItemHasSizeID(),
+                                        itemVariant.getItemHasSizeHasStockID(),
+                                        itemVariant.getColorHasItemHasSizeID(),
+                                        (String) itemName.getValue(),
+                                        orderedQty,
+                                        orderedQty,
+                                        price,
+                                        sellingPrice, stockID,
+                                        sizeID,
+                                        colorID
+                                );
+                            } else {
+                                Path destinationPath = Paths.get(Constants.itemsMediaDirectory);
+                                try {
+                                    Files.createDirectories(destinationPath);
+                                } catch (IOException exception) {
+                                    exception.printStackTrace();
+                                }
 
-                        if (itemVariant.isUpdate()) {
-                            System.out.println("Item Should Be Updated!");
-                            Connection.getInstance().updateItem(
-                                    itemVariant.getItemId(),
-                                    itemVariant.getItemHasSizeID(),
-                                    itemVariant.getItemHasSizeHasStockID(),
-                                    itemVariant.getColorHasItemHasSizeID(),
-                                    (String)itemName.getValue(),
-                                    orderedQty,
-                                    orderedQty,
-                                    price,
-                                    sellingPrice, stockID,
-                                    sizeID,
-                                    colorID
-                            );
-                        }else{
-                            Connection.getInstance().addNewVariant(
-                                    id,
-                                    stockID,
-                                    sizeID,
-                                    colorID,
-                                    orderedQty,
-                                    price,
-                                    sellingPrice
-                            );
+                                Path destinationFilePath = destinationPath.resolve(selectedFile.getName());
+                                Path sourcePath = selectedFile.toPath();
+
+                                String selectedFilePath = null;
+
+                                try {
+                                    Files.copy(sourcePath, destinationFilePath, StandardCopyOption.REPLACE_EXISTING);
+                                    selectedFilePath = destinationFilePath.toAbsolutePath().toString().replace('\\', '/');
+                                    System.out.println(selectedFilePath);
+                                } catch (IOException exception) {
+                                    Alert alert = new Alert(Alert.AlertType.ERROR);
+                                    alert.setContentText("Could not copy the image to the destination location");
+                                    alert.show();
+                                }
+                                Connection.getInstance().addNewVariant(
+                                        id,
+                                        stockID,
+                                        sizeID,
+                                        colorID,
+                                        orderedQty,
+                                        price,
+                                        sellingPrice,
+                                        selectedFilePath
+                                );
+                            }
                         }
                     }
-                }
 
 //                String name = (String) itemName.getValue();
 //                Integer qty = Integer.parseInt((String)itemQty.getValue());
 //                Integer remainingQtyValue = Integer.parseInt((String)remainingQty.getValue());
 //                Double price = Double.parseDouble((String)itemOrderedPrice.getValue());
-//                Double sellingPrice = Double.parseDouble((String)itemSellingPrice.getValue());
+//                Double sellImaingPrice = Double.parseDouble((String)itemSellingPrice.getValue());
 //                Stock stock = (Stock) itemStock.getValue();
 //                Size size = (Size) itemSize.getValue();
 //                String colorCode = "#" + ((String)itemColor.getValue()).split("0x")[1];
@@ -200,8 +232,10 @@ public class AddNewItem extends Dialog<Boolean> {
 //                    );
 //                    System.out.println("New item is added!");
 //                }
-                Data.getInstance().refreshItemDetails();
-
+                    Data.getInstance().refreshItemDetails();
+                }catch(SQLException e){
+                    e.printStackTrace();
+                }
 //                AddNewItem.this.setResult(isInserted);
             }
         });
@@ -219,8 +253,13 @@ public class AddNewItem extends Dialog<Boolean> {
         HBox variantCommandButtonsContainer = new HBox();
         Button addVariant = new Button("Add a new variant");
         addVariant.setOnAction(event -> {
-            NewItemVariant newItemVariant = new NewItemVariant(null);
-            variantContainer.getItems().add(newItemVariant);
+            NewItemVariant newItemVariant = null;
+            try {
+                newItemVariant = new NewItemVariant(null);
+                variantContainer.getItems().add(newItemVariant);
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
         });
         variantCommandButtonsContainer.getChildren().add(addVariant);
         variantCommandButtonsContainer.setAlignment(Pos.CENTER_RIGHT);
@@ -235,9 +274,13 @@ public class AddNewItem extends Dialog<Boolean> {
         dialogPane.setContent(mainContainer);
 
         if(itemDetail != null) {
-            NewItemVariant newItemVariant = new NewItemVariant(itemDetail);
-            variantContainer.getItems().add(newItemVariant);
-            System.out.println("Added item variant");
+            try {
+                NewItemVariant newItemVariant = new NewItemVariant(itemDetail);
+                variantContainer.getItems().add(newItemVariant);
+                System.out.println("Added item variant");
+            }catch(SQLException e){
+                e.printStackTrace();
+            }
         }
 
         this.setDialogPane(dialogPane);

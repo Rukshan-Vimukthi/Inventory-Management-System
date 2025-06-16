@@ -17,19 +17,19 @@ public class CheckoutItem implements DataModel {
     private final StringProperty itemTotalCost;
     private int itemHasSizeId;
     private DoubleProperty discount;
+
+    private DoubleProperty costWithDiscount;
     private boolean isCheckedout = false;
 
-
-
     public CheckoutItem(String name, String itemSize, String itemColor,
-                        int amount, double price, double sellingPrice, String itemTotalCost) {
+                        int amount, double price, double sellingPrice, String itemTotalCost, double costWithDiscount) {
 
-        this(name, itemSize, itemColor, amount, price, sellingPrice, 0.0, itemTotalCost); // Default discount = 0.0%
+        this(name, itemSize, itemColor, amount, price, sellingPrice, 0.0, itemTotalCost, costWithDiscount); // Default discount = 0.0%
     }
 
     public CheckoutItem(String name, String itemSize, String itemColor,
-
-                        int amount, double price, double sellingPrice, double discountValue, String itemTotalCost) {
+                        int amount, double price, double sellingPrice, double discountValue, String itemTotalCost,
+                        double costWithDiscount) {
         this.itemDetail = itemDetail;
 
         this.name = new SimpleStringProperty(name);
@@ -40,6 +40,7 @@ public class CheckoutItem implements DataModel {
         this.sellingPrice = new SimpleDoubleProperty(sellingPrice);
         this.itemTotalCost = new SimpleStringProperty(itemTotalCost);
         this.discount = new SimpleDoubleProperty(discountValue);
+        costWithDiscountProperty().setValue(costWithDiscount);
         this.itemHasSizeId = itemHasSizeId;
     }
 
@@ -130,9 +131,22 @@ public class CheckoutItem implements DataModel {
 
     public void setDiscount(double discountValue) {
         discount.set(discountValue);
+        costWithDiscountProperty().set(
+                Double.parseDouble(itemTotalCostProperty().get()) - Double.parseDouble(itemTotalCostProperty().get()) * (discountValue / 100));
     }
 
     public DoubleProperty discountProperty() {
         return discount;
+    }
+
+    public DoubleProperty costWithDiscountProperty(){
+        if (costWithDiscount == null){
+            costWithDiscount = new SimpleDoubleProperty();
+        }
+        return costWithDiscount;
+    }
+
+    public double getCostWithDiscount() {
+        return costWithDiscount.get();
     }
 }

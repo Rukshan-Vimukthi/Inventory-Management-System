@@ -21,11 +21,12 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
+import java.sql.SQLException;
 import java.util.List;
 
 public class Inventory extends HBox implements ThemeObserver {
     ItemPreview itemPreview;
-    public Inventory(){
+    public Inventory() throws SQLException {
         super();
 
         // this contains the form to search item (filter) and the table of items and item preview component
@@ -91,7 +92,11 @@ public class Inventory extends HBox implements ThemeObserver {
 
             @Override
             public void refresh() {
-                Data.getInstance().refreshItemDetails();
+                try {
+                    Data.getInstance().refreshItemDetails();
+                }catch(SQLException e){
+                    e.printStackTrace();
+                }
             }
 
             @Override
@@ -102,11 +107,10 @@ public class Inventory extends HBox implements ThemeObserver {
 
             @Override
             public void delete(ItemDetail itemDetail) {
-
             }
 
             @Override
-            public void onSelectItem(ItemDetail item) {
+            public void onSelectItem(ItemDetail item) throws SQLException {
 //                System.out.println(item.getName());
                 if (itemPreview != null){
                     itemPreview.update(item);
@@ -130,14 +134,18 @@ public class Inventory extends HBox implements ThemeObserver {
                     e.printStackTrace();
                 }
 
-                Connection.getInstance().filterItems(
-                        (String)colorFilter.getValue(),
-                        ((Size)sizeFilter.getValue()).getSize(),
-                        (Stock)stockFilter.getValue(),
-                        cost,
-                        searchBoxText,
-                        sellingPrice
-                );
+                try{
+                    Connection.getInstance().filterItems(
+                            (String)colorFilter.getValue(),
+                            ((Size)sizeFilter.getValue()).getSize(),
+                            (Stock)stockFilter.getValue(),
+                            cost,
+                            searchBoxText,
+                            sellingPrice
+                    );
+                }catch(SQLException e){
+                    e.printStackTrace();
+                }
             }
 
         });
@@ -172,7 +180,11 @@ public class Inventory extends HBox implements ThemeObserver {
 
             @Override
             public void refresh() {
-                Data.getInstance().refreshStock();
+                try{
+                    Data.getInstance().refreshStock();
+                }catch(SQLException e){
+                    e.printStackTrace();
+                }
             }
 
             @Override
@@ -183,7 +195,11 @@ public class Inventory extends HBox implements ThemeObserver {
 
             @Override
             public void delete(Stock item) {
-                Connection.getInstance().deleteStock(item.getId());
+                try{
+                    Connection.getInstance().deleteStock(item.getId());
+                }catch(SQLException e){
+                    e.printStackTrace();
+                }
             }
 
             @Override
@@ -199,7 +215,11 @@ public class Inventory extends HBox implements ThemeObserver {
                     }
                 }
                 System.out.println(searchBoxText);
-                Data.getInstance().setStocks(Connection.getInstance().filterStocks(searchBoxText));
+                try {
+                    Data.getInstance().setStocks(Connection.getInstance().filterStocks(searchBoxText));
+                }catch(SQLException e){
+                    e.printStackTrace();
+                }
             }
 
         });
@@ -219,7 +239,11 @@ public class Inventory extends HBox implements ThemeObserver {
 
             @Override
             public void refresh() {
-                Data.getInstance().refreshColors();
+                try {
+                    Data.getInstance().refreshColors();
+                }catch(SQLException e){
+                    e.printStackTrace();
+                }
             }
 
             @Override
@@ -230,7 +254,11 @@ public class Inventory extends HBox implements ThemeObserver {
 
             @Override
             public void delete(Color item) {
-                Connection.getInstance().deleteColor(item.getId());
+                try {
+                    Connection.getInstance().deleteColor(item.getId());
+                }catch(SQLException e){
+                    e.printStackTrace();
+                }
             }
 
             @Override
@@ -240,7 +268,11 @@ public class Inventory extends HBox implements ThemeObserver {
 
             @Override
             public void onSearch(List<FormField<?, ?>> formFields, String searchBoxText) {
-                Data.getInstance().setColors(Connection.getInstance().filterColors(searchBoxText));
+                try {
+                    Data.getInstance().setColors(Connection.getInstance().filterColors(searchBoxText));
+                }catch(SQLException e){
+                    e.printStackTrace();
+                }
             }
         });
 
@@ -259,7 +291,11 @@ public class Inventory extends HBox implements ThemeObserver {
 
             @Override
             public void refresh() {
-                Data.getInstance().refreshSize();
+                try {
+                    Data.getInstance().refreshSize();
+                }catch(SQLException e){
+                    e.printStackTrace();
+                }
             }
 
             @Override
@@ -270,7 +306,11 @@ public class Inventory extends HBox implements ThemeObserver {
 
             @Override
             public void delete(Size item) {
-                Connection.getInstance().deleteSize(item.getId());
+                try {
+                    Connection.getInstance().deleteSize(item.getId());
+                }catch(SQLException e){
+                    e.printStackTrace();
+                }
             }
 
             @Override
@@ -280,7 +320,11 @@ public class Inventory extends HBox implements ThemeObserver {
 
             @Override
             public void onSearch(List<FormField<?, ?>> formFields, String searchBoxText) {
-                Data.getInstance().setSize(Connection.getInstance().filterSizes(searchBoxText));
+                try {
+                    Data.getInstance().setSize(Connection.getInstance().filterSizes(searchBoxText));
+                }catch(SQLException e){
+                    e.printStackTrace();
+                }
             }
 
         });

@@ -173,6 +173,7 @@ public class UserPreview extends HBox implements ThemeObserver {
                 System.out.println("Name: " + imageFile.getName());
                 System.out.println("URI" + imageFile.toURI());
                 imageURI = imageFile.toURI().toURL().toString();
+                System.out.println("Absolute path: " + imageFile.getAbsolutePath());
             } catch (IOException exception) {
                 exception.printStackTrace();
             }
@@ -192,6 +193,7 @@ public class UserPreview extends HBox implements ThemeObserver {
         registeredDate.setText(customer.getRegisteredDate());
 
         String imageURI = null;
+        System.out.println("Image path: " + customer.getImagePath());
         if (customer.getImagePath() == null){
             imageView.setImage(defaultImage);
         }else if(customer.getImagePath().isBlank() && customer.getImagePath().isEmpty()){

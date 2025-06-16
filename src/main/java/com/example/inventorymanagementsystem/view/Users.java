@@ -29,6 +29,7 @@ import org.controlsfx.glyphfont.FontAwesome;
 import org.kordamp.ikonli.fontawesome5.FontAwesomeSolid;
 import org.kordamp.ikonli.javafx.FontIcon;
 
+import java.sql.SQLException;
 import java.util.List;
 
 public class Users extends HBox implements ThemeObserver {
@@ -52,7 +53,7 @@ public class Users extends HBox implements ThemeObserver {
     FontIcon userTimeIcon;
     FontIcon topTenCustomersFontIcon;
 
-    public Users(){
+    public Users() throws SQLException{
         totalNumberOfUsers = 0;
         totalAdmins = 0;
         totalCashiers = 0;
@@ -80,7 +81,11 @@ public class Users extends HBox implements ThemeObserver {
 
             @Override
             public void refresh() {
-                Data.getInstance().refreshUsers();
+                try {
+                    Data.getInstance().refreshUsers();
+                }catch(SQLException e){
+                    e.printStackTrace();
+                }
             }
 
             @Override
@@ -91,7 +96,11 @@ public class Users extends HBox implements ThemeObserver {
 
             @Override
             public void delete(User user) {
-                Connection.getInstance().deleteUser(user.getId());
+                try {
+                    Connection.getInstance().deleteUser(user.getId());
+                }catch(SQLException e){
+                    e.printStackTrace();
+                }
             }
 
             @Override
@@ -101,7 +110,11 @@ public class Users extends HBox implements ThemeObserver {
 
             @Override
             public void onSearch(List<FormField<? extends Control, ?>> formFields, String searchBoxText) {
-
+                try {
+                    Connection.getInstance().filterUsers(searchBoxText);
+                }catch(SQLException e){
+                    e.printStackTrace();
+                }
             }
         });
 
@@ -112,6 +125,7 @@ public class Users extends HBox implements ThemeObserver {
         customerTableContainer.addColumn("phone", Integer.class);
         customerTableContainer.addColumn("email", Integer.class);
         customerTableContainer.addColumn("registeredDate", Integer.class);
+
         customerTableContainer.addItems(Data.getInstance().getCustomers());
         customerTableContainer.setOnActionPerformed(new TableContainerInterface<Customer>() {
             @Override
@@ -122,7 +136,11 @@ public class Users extends HBox implements ThemeObserver {
 
             @Override
             public void refresh() {
-                Data.getInstance().refreshCustomers();
+                try {
+                    Data.getInstance().refreshCustomers();
+                }catch(SQLException e){
+                    e.printStackTrace();
+                }
             }
 
             @Override
@@ -133,7 +151,7 @@ public class Users extends HBox implements ThemeObserver {
 
             @Override
             public void delete(Customer customer) {
-                Connection.getInstance().deleteCustomer(customer.getId());
+//                Connection.getInstance().deleteCustomer(customer.getId());
             }
 
             @Override
@@ -143,7 +161,11 @@ public class Users extends HBox implements ThemeObserver {
 
             @Override
             public void onSearch(List<FormField<? extends Control, ?>> formFields, String searchBoxText) {
-
+                try {
+                    Connection.getInstance().filterCustomers(searchBoxText);
+                }catch(SQLException e){
+                    e.printStackTrace();
+                }
             }
         });
         tableContainer.getChildren().addAll(userTableContainer, customerTableContainer);
@@ -229,9 +251,13 @@ public class Users extends HBox implements ThemeObserver {
         timeFrame.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>() {
             @Override
             public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-                int resultCount = Connection.getInstance().getCustomersRegisteredOn(newValue).size();
-                customersRegisteredOnATimeFrameValue.setText(String.valueOf(resultCount));
+                try {
+                    int resultCount = Connection.getInstance().getCustomersRegisteredOn(newValue).size();
+                    customersRegisteredOnATimeFrameValue.setText(String.valueOf(resultCount));
 //                customersRegisteredOnATimeFrameValue.setText(Connection.getInstance().getCustomersRegisteredOn(newValue));
+                }catch(SQLException e){
+                    e.printStackTrace();
+                }
             }
         });
 

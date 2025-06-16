@@ -1,10 +1,7 @@
 package com.example.inventorymanagementsystem.models;
 
 import com.example.inventorymanagementsystem.services.interfaces.DataModel;
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.*;
 
 public class Customer implements DataModel {
     private IntegerProperty id;
@@ -16,7 +13,9 @@ public class Customer implements DataModel {
 
     private StringProperty imagePath;
 
-    public Customer(int id, String firstName, String lastName, String phone, String email, String registeredDate, String pathToImage){
+    private DoubleProperty points;
+
+    public Customer(int id, String firstName, String lastName, String phone, String email, String registeredDate, String pathToImage, double points){
         setId(id);
         setFirstName(firstName);
         setLastName(lastName);
@@ -24,6 +23,7 @@ public class Customer implements DataModel {
         setPhone(phone);
         setRegisteredDate(registeredDate);
         imagePathProperty().setValue(pathToImage);
+        pointsProperty().setValue(points);
 
     }
 
@@ -74,6 +74,13 @@ public class Customer implements DataModel {
             imagePath = new SimpleStringProperty(this, "image_path");
         }
         return imagePath;
+    }
+
+    public DoubleProperty pointsProperty(){
+        if (points == null){
+            points = new SimpleDoubleProperty(this, "points");
+        }
+        return points;
     }
 
     public String getImagePath(){
@@ -127,6 +134,10 @@ public class Customer implements DataModel {
 
     public String getRegisteredDate(){
         return registeredDateProperty().get();
+    }
+
+    public Double getPoints(){
+        return pointsProperty().get();
     }
 
     @Override

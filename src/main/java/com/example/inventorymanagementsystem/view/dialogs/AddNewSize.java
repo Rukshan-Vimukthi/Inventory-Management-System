@@ -8,6 +8,8 @@ import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
+import java.sql.SQLException;
+
 public class AddNewSize extends Dialog<Boolean> {
     TextField sizeField;
     public AddNewSize(Size size){
@@ -29,12 +31,16 @@ public class AddNewSize extends Dialog<Boolean> {
         }
         addButton.setOnAction(event -> {
             String sizeFieldText = sizeField.getText();
-            if (size != null){
-                Connection.getInstance().updateSize(size.getId(), sizeFieldText);
-            }else {
-                Connection.getInstance().addNewSize(sizeFieldText);
+            try {
+                if (size != null) {
+                    Connection.getInstance().updateSize(size.getId(), sizeFieldText);
+                } else {
+                    Connection.getInstance().addNewSize(sizeFieldText);
+                }
+                AddNewSize.this.setResult(true);
+            }catch(SQLException e){
+                e.printStackTrace();
             }
-            AddNewSize.this.setResult(true);
         });
 
         Button cancelButton = new Button("CANCEL");

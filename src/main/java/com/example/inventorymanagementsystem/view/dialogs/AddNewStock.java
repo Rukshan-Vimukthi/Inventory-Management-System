@@ -15,6 +15,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.TemporalAccessor;
@@ -48,12 +49,16 @@ public class AddNewStock extends Dialog<Boolean> {
         addButton.setOnAction(event -> {
             String name = nameField.getText();
             String date = picker.getValue().toString();
-            if (stock != null){
-                Connection.getInstance().updateStock(stock.getId(), date, name);
-            }else {
-                Connection.getInstance().addNewStock(date, name);
+            try {
+                if (stock != null) {
+                    Connection.getInstance().updateStock(stock.getId(), date, name);
+                } else {
+                    Connection.getInstance().addNewStock(date, name);
+                }
+                AddNewStock.this.setResult(true);
+            }catch(SQLException e){
+                e.printStackTrace();
             }
-            AddNewStock.this.setResult(true);
         });
 
         Button cancelButton = new Button("CANCEL");
