@@ -35,6 +35,7 @@ import javafx.util.StringConverter;
 
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
@@ -196,6 +197,7 @@ public class Checkout implements ThemeObserver {
             if (newValue != null) {
                 selectedItmPrice = newValue.getPrice();
                 System.out.println("Selected item price: " + selectedItmPrice);
+                checkOutButton.setDisable(false);
             }
         });
         itemComboBox.setMaxWidth(Double.MAX_VALUE);
@@ -229,6 +231,36 @@ public class Checkout implements ThemeObserver {
         }catch(SQLException exception){
             exception.printStackTrace();
         }
+
+        HBox customerPointsContainer = new HBox();
+        ComboBox<Customer> customerComboBox = registeredCustomers.getComboBox();
+        Label pointsLabel = new Label();
+        pointsLabel.setStyle("-fx-text-fill: lightGray; font-weight: bold; -fx-font-size: 14px;");
+
+        customerComboBox.setOnAction(e -> {
+            Customer selectedCustomer = customerComboBox.getValue();
+            if (selectedCustomer != null) {
+                try {
+                    String fetchPointsSQL = "SELECT points FROM customer WHERE id = ?";
+                    try (PreparedStatement stmt = dbConnection.getJdbcConnection().prepareStatement(fetchPointsSQL)) {
+                        stmt.setInt(1, selectedCustomer.getId());
+                        ResultSet rs = stmt.executeQuery();
+                        if (rs.next()) {
+                            double points = rs.getDouble("points");
+                            pointsLabel.setText(" 🔷: " + String.format("%.2f", points));
+                        }
+                    }
+                } catch (SQLException ex) {
+                    System.out.println("Error fetching points: " + ex.getMessage());
+                    pointsLabel.setText(" 🔷: N/A");
+                }
+            } else {
+                pointsLabel.setText(" 🔷: -");
+            }
+
+        });
+
+        customerPointsContainer.getChildren().addAll(customerComboBox, pointsLabel);
 
         customerTxt.getStyleClass().add("paragraph-texts");
         TextField firstName = new TextField();
@@ -452,6 +484,9 @@ public class Checkout implements ThemeObserver {
         });
 
         // Bottom Section
+        CheckBox payFromPoints = new CheckBox("Pay from Points");
+        payFromPoints.setStyle("-fx-text-fill: lightGray; -fx-font-size: 16px;");
+
         discountForAll = new TextField();
         discountForAll.setPromptText("Apply discount for all");
         discountForAll.getStyleClass().add("default-text-areas");
@@ -528,6 +563,10 @@ public class Checkout implements ThemeObserver {
         balance.setStyle("-fx-font-weight: bold; -fx-font-size: 19px;");
         balanceTxt.getStyleClass().add("information-texts");
         balance.getStyleClass().add("information-label");
+
+        CheckBox savePoints = new CheckBox("Save as Points");
+        savePoints.setStyle("-fx-text-fill: lightGray; -fx-font-size: 16px;");
+
         checkOutButton = new Button("Check Out");
         checkOutButton.getStyleClass().add("default-buttons");
 
@@ -716,12 +755,13 @@ public class Checkout implements ThemeObserver {
                 } else {
                     inputSection.getChildren().remove(stockMessageContainer);
                 }
-            }catch(NumberFormatException numberFormatException){
+            } catch(NumberFormatException numberFormatException){
                 System.out.println("Amount text field is empty");
             }
         });
 
         FormField<ComboBox, Customer> finalRegisteredCustomers = registeredCustomers;
+
         checkOutButton.setOnAction(e -> {
             try {
                 if (itemList.isEmpty()) {
@@ -729,7 +769,6 @@ public class Checkout implements ThemeObserver {
                     return;
                 }
 
-                // Clear processed items to ensure all updates occur every checkout
                 processedItemIds.clear();
 
                 String receivedInput = receivedFund.getText();
@@ -750,11 +789,9 @@ public class Checkout implements ThemeObserver {
                         discountValue = Double.parseDouble(numberPart);
                     }
                 } else if (!discountText.isEmpty()) {
-                    // Assuming this is an absolute discount amount
                     discountValue = Double.parseDouble(discountText);
                 }
 
-                // contains the amount reduced from items when the discount get added for all the items
                 double totalReductionForDiscount = 0.0D;
 
                 for (CheckoutItem item : itemList) {
@@ -773,7 +810,6 @@ public class Checkout implements ThemeObserver {
                         }
 
                         Customer selectedCustomer = (Customer) finalRegisteredCustomers.getValue();
-
                         /*
                          * When adding discount for all the items, add the discount for only the items which does not
                          * have specific discounts. When adding discounts for all items, discount get applied only for
@@ -826,7 +862,82 @@ public class Checkout implements ThemeObserver {
                 */
                 cumulativeTotalDiscount += totalReductionForDiscount;
 
-                // Format output values to 2 decimals
+
+
+                Customer selectedCustomer = customerComboBox.getValue();
+
+                if (selectedCustomer != null) {
+                    itemsDeletingMsgTimer = new PauseTransition(Duration.seconds(2));
+                    itemsDeletingMsgTimer.setOnFinished(ev -> {
+                        itemMessageContainer.setText("");
+                        itemMessageContainer.setStyle("");
+                    });
+                    itemsDeletingMsgTimer.play();
+
+                    double extraAmount = cumulativeReceivedFund - cumulativeGrandTotal;
+
+                    if (payFromPoints.isSelected()) {
+                        try {
+                            String fetchPointsQuery = "SELECT points FROM customer WHERE id = ?";
+                            try (PreparedStatement fetchStmt = dbConnection.getJdbcConnection().prepareStatement(fetchPointsQuery)) {
+                                fetchStmt.setInt(1, selectedCustomer.getId());
+                                ResultSet rs = fetchStmt.executeQuery();
+
+                                if (rs.next()) {
+                                    double availablePoints = rs.getDouble("points");
+                                    double requiredAmount = cumulativeGrandTotal;
+
+                                    if (availablePoints >= requiredAmount) {
+                                        String updatePointsQuery = "UPDATE customer SET points = points - ? WHERE id = ?";
+                                        try (PreparedStatement updateStmt = dbConnection.getJdbcConnection().prepareStatement(updatePointsQuery)) {
+                                            updateStmt.setDouble(1, requiredAmount);
+                                            updateStmt.setInt(2, selectedCustomer.getId());
+                                            int rows = updateStmt.executeUpdate();
+                                            if (rows > 0) {
+                                                itemMessageContainer.setText("✅ Paid using coins. Points deducted: Rs." + requiredAmount);
+                                                itemMessageContainer.setStyle("-fx-font-size: 14px; -fx-text-fill: white; -fx-background-color: #264653; -fx-padding: 5 10; -fx-border-color: #2a9d8f; -fx-border-radius: 9; -fx-background-radius: 6; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian,  rgba(0,0,0,0.4), 4, 0, 1, 1);");
+                                                cumulativeReceivedFund = requiredAmount;
+                                            }
+                                        }
+                                    } else {
+                                        itemMessageContainer.setText("❌ Not enough points to complete payment.");
+                                        itemMessageContainer.setStyle("-fx-font-size: 14px; -fx-text-fill: white; -fx-background-color: #264653; -fx-padding: 5 10; -fx-border-color: #2a9d8f; -fx-border-radius: 9; -fx-background-radius: 6; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian,  rgba(0,0,0,0.4), 4, 0, 1, 1);");
+                                        return;
+                                    }
+                                }
+                            }
+                        } catch (SQLException coinEx) {
+                            itemMessageContainer.setText("❌ Error processing coin payment: " + coinEx.getMessage());
+                            itemMessageContainer.setStyle("-fx-font-size: 14px; -fx-text-fill: white; -fx-background-color: #264653; -fx-padding: 5 10; -fx-border-color: #2a9d8f; -fx-border-radius: 9; -fx-background-radius: 6; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian,  rgba(0,0,0,0.4), 4, 0, 1, 1);");
+                            return;
+                        }
+
+                    } else if (savePoints.isSelected() && extraAmount > 0.0) {
+                        itemMessageContainer.setStyle("-fx-font-size: 14px; -fx-text-fill: white; -fx-background-color: #264653; -fx-padding: 5 10; -fx-border-color: #2a9d8f; -fx-border-radius: 9; -fx-background-radius: 6; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian,  rgba(0,0,0,0.4), 4, 0, 1, 1);");
+                        try {
+                            String updatePointsQuery = "UPDATE customer SET points = points + ? WHERE id = ?";
+                            try (PreparedStatement pointsStmt = dbConnection.getJdbcConnection().prepareStatement(updatePointsQuery)) {
+                                pointsStmt.setDouble(1, extraAmount);
+                                pointsStmt.setInt(2, selectedCustomer.getId());
+
+                                int rows = pointsStmt.executeUpdate();
+                                if (rows > 0) {
+                                    itemMessageContainer.setText("✅ Extra money saved as points for customer ID: " + selectedCustomer.getId());
+                                } else {
+                                    itemMessageContainer.setText("⚠️ Failed to update points — customer not found?");
+                                }
+                            }
+                        } catch (SQLException ez) {
+                            itemMessageContainer.setStyle("-fx-font-size: 14px; -fx-text-fill: white; -fx-background-color: #264653; -fx-padding: 5 10; -fx-border-color: #2a9d8f; -fx-border-radius: 9; -fx-background-radius: 6; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian,  rgba(0,0,0,0.4), 4, 0, 1, 1);");
+                            itemMessageContainer.setText("❌ SQL Error while updating points: " + ez.getMessage());
+                            itemMessageContainer.setStyle("-fx-background-color: red;");
+                        }
+                    } else {
+                        itemMessageContainer.setText("ℹ️ No extra money to save as points.");
+                        itemMessageContainer.setStyle("-fx-font-size: 14px; -fx-text-fill: white; -fx-background-color: #264653; -fx-padding: 5 10; -fx-border-color: #2a9d8f; -fx-border-radius: 9; -fx-background-radius: 6; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian,  rgba(0,0,0,0.4), 4, 0, 1, 1);");
+                    }
+                }
+
                 totalDiscount.setText("Rs." + String.format("%.2f", cumulativeTotalDiscount));
                 grandTotal.setText("Rs." + String.format("%.2f", cumulativeGrandTotal));
 
@@ -1003,13 +1114,13 @@ public class Checkout implements ThemeObserver {
         balanceSec.setAlignment(Pos.CENTER);
         balanceSec.setPadding(new Insets(19, 0, 10, 0));
         balanceSec.setSpacing(10);
-        balanceSec.getChildren().addAll(balanceTxt, balance, checkOutButton);
+        balanceSec.getChildren().addAll(savePoints, balanceTxt, balance, checkOutButton);
 
-        bottomSection.getChildren().addAll(discountForAll, receivedFund, totalCostTxt, totalCost, totalDiscountTxt, totalDiscount, grandTotalTxt, grandTotal);
+        bottomSection.getChildren().addAll(payFromPoints, discountForAll, receivedFund, totalCostTxt, totalCost, totalDiscountTxt, totalDiscount, grandTotalTxt, grandTotal);
         mainFooterSec.getChildren().addAll(bottomSection, balanceSec);
         wholeBottomSec.getChildren().addAll(floatingContainer, mainFooterSec);
         headerSection.getChildren().addAll(navbar, inputVerticalSec);
-        inputSection.getChildren().addAll(itemTxt, itemComboBox, amount, discount, addButton, theSpace, customerTxt, registeredCustomers.getComboBox(), firstName, lastName, phone, eMail, addCustomerSec);
+        inputSection.getChildren().addAll(itemTxt, itemComboBox, amount, discount, addButton, theSpace, customerTxt, customerPointsContainer, firstName, lastName, phone, eMail, addCustomerSec);
         inputVerticalSec.getChildren().addAll(inputSection);
         centerContainer.getChildren().addAll(inputVerticalSec, mainTable);
 

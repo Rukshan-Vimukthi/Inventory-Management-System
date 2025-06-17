@@ -174,7 +174,7 @@ public class InventoryManagementApplication extends Application implements com.e
     }
 
     public static void main(String[] args) {
-        launch();
+        launch(args);
     }
 
     @Override

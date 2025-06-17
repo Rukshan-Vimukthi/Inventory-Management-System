@@ -1,7 +1,7 @@
 plugins {
     id 'java'
     id 'application'
-    id 'org.openjfx.javafxplugin' version '0.0.13'
+    id 'org.openjfx.javafxplugin' version '0.0.14'
     id 'org.beryx.jlink' version '2.25.0'
 }
 
@@ -10,9 +10,7 @@ version '1.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
-    maven {
-        url="https://jitpack.io"
-    }
+    maven { url = "https://jitpack.io" }
 }
 
 ext {
@@ -27,31 +25,32 @@ tasks.withType(JavaCompile) {
 }
 
 application {
-    mainModule = 'com.example.inventorymanagementsystem'
+    mainModule = 'com.example.inventorymanagementsystem'  // must match module name in module-info.java
     mainClass = 'com.example.inventorymanagementsystem.InventoryManagementApplication'
 }
 
 javafx {
-    version = '17.0.2'
+    version = '17.0.9'
     modules = ['javafx.controls', 'javafx.fxml']
 }
 
 dependencies {
-    implementation('org.controlsfx:controlsfx:11.1.1')
+    implementation 'org.openjfx:javafx-controls:17.0.9'
+    implementation 'org.openjfx:javafx-fxml:17.0.9'
+    implementation 'org.controlsfx:controlsfx:11.1.1'
     implementation('com.dlsc.formsfx:formsfx-core:11.5.0') {
         exclude(group: 'org.openjfx')
     }
-
-    implementation('org.kordamp.bootstrapfx:bootstrapfx-core:0.4.0')
-    implementation('org.kordamp.ikonli:ikonli-javafx:12.3.1')
-    implementation('org.kordamp.ikonli:ikonli-fontawesome5-pack:12.3.1')
+    implementation 'org.kordamp.bootstrapfx:bootstrapfx-core:0.4.0'
+    implementation 'org.kordamp.ikonli:ikonli-javafx:12.3.1'
+    implementation 'org.kordamp.ikonli:ikonli-fontawesome5-pack:12.3.1'
     implementation 'com.mysql:mysql-connector-j:8.3.0'
 
     implementation 'org.slf4j:slf4j-api:2.0.13'
     implementation 'ch.qos.logback:logback-classic:1.4.14'
 
-    testImplementation("org.junit.jupiter:junit-jupiter-api:${junitVersion}")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
+    testImplementation "org.junit.jupiter:junit-jupiter-api:${junitVersion}"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"
 }
 
 test {
@@ -62,26 +61,33 @@ jlink {
     imageZip = project.file("${buildDir}/distributions/app-${javafx.platform.classifier}.zip")
     options = ['--strip-debug', '--compress', '2', '--no-header-files', '--no-man-pages']
     imageName = 'SFC Inventory Management Application'
+
     launcher {
         name = 'SFC Inventory Management Application'
     }
 
     jpackage {
-        installerType = 'exe' // Use 'dmg' or 'deb' as needed
+        installerType = 'exe'
         appVersion = '1.0.0'
         vendor = 'NXTDEV Co.'
-        icon = 'src/main/resources/com/example/inventorymanagementsystem/images/sfc-logo.ico' // optional
+        icon = 'src/main/resources/com/example/inventorymanagementsystem/images/sfc-logo.ico'
         installerName = 'SFC Inventory Management Application Installer'
 
         installerOptions = [
                 '--win-dir-chooser',
                 '--win-menu',
-                '--win-shortcut', // Optional for Windows only
-                '--license-file', 'src/main/resources/LICENSE.rtf' // path to your license file
+                '--win-shortcut',
+                '--license-file', 'src/main/resources/LICENSE.rtf'
         ]
     }
 }
 
 jlinkZip {
     group = 'distribution'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
 }
