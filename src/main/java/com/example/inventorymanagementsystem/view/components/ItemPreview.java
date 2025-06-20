@@ -20,6 +20,9 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.TextAlignment;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.sql.SQLException;
 
 /**
@@ -62,6 +65,8 @@ public class ItemPreview extends HBox implements ItemPreviewObserver, ThemeObser
 
     private final HBox colorPreview = new HBox();
 
+    Image defaultImage;
+
     /**
      *
      */
@@ -70,10 +75,16 @@ public class ItemPreview extends HBox implements ItemPreviewObserver, ThemeObser
         this.getStyleClass().add("nav-bar");
         this.setPadding(new Insets(10.0D));
         imageView = new ImageView();
-        imageView.setImage(new Image(Constants.IMAGE_UNAVAILABLE));
         imageView.setFitWidth(280.0D);
         imageView.setFitHeight(280.0D);
         imageView.setStyle("-fx-background-color: #888888;");
+
+        try {
+            defaultImage = new Image(String.valueOf(InventoryManagementApplication.class.getResource("images/ChatGPT Image Jun 2, 2025, 07_50_06 AM.png").toURI()));
+            imageView.setImage(defaultImage);
+        }catch(URISyntaxException e){
+            e.printStackTrace();
+        }
 
         colorPreview.setMinWidth(20.0D);
         colorPreview.setMaxWidth(20.0D);
@@ -227,7 +238,39 @@ public class ItemPreview extends HBox implements ItemPreviewObserver, ThemeObser
                 this.getChildren().add(informationContainer);
                 this.setAlignment(Pos.TOP_LEFT);
             }
-            imageView.setImage(new Image(itemDetail.getImagePath()));
+
+            String imageURI = null;
+            System.out.println("Image path: " + itemDetail.getImagePath());
+            if (itemDetail.getImagePath() == null){
+                imageView.setImage(defaultImage);
+            }else if(itemDetail.getImagePath().isBlank() && itemDetail.getImagePath().isEmpty()){
+                imageView.setImage(defaultImage);
+            }else {
+                try {
+                    File imageFile = new File(itemDetail.getImagePath());
+                    imageURI = imageFile.toURI().toURL().toString();
+                } catch (IOException exception) {
+                    exception.printStackTrace();
+                }
+                System.out.println(imageURI);
+                imageView.setImage(new Image(imageURI));
+            }
+
+//            try {
+//                if (itemDetail.getImagePath() != null) {
+//                    File file = new File(itemDetail.getImagePath());
+//                    if (itemDetail.getImagePath() != null || !itemDetail.getImagePath().isBlank() || !itemDetail.getImagePath().isEmpty()) {
+//                        imageView.setImage(new Image(itemDetail.getImagePath()));
+//                    } else {
+//                        imageView.setImage(new Image(Constants.IMAGE_UNAVAILABLE));
+//                    }
+//                } else {
+//                    imageView.setImage(new Image(Constants.IMAGE_UNAVAILABLE));
+//                }
+//            }catch(Exception e){
+//                e.printStackTrace();
+//                imageView.setImage(new Image(Constants.IMAGE_UNAVAILABLE));
+//            }
 
             System.out.println(itemDetail.getName());
             System.out.println(itemDetail.getPrice());

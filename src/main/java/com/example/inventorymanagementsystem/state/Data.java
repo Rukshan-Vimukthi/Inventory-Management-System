@@ -2,6 +2,9 @@ package com.example.inventorymanagementsystem.state;
 
 import com.example.inventorymanagementsystem.db.Connection;
 import com.example.inventorymanagementsystem.models.*;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.value.ObservableDoubleValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
@@ -31,7 +34,10 @@ public class Data {
 
     private ObservableList<LiableCustomers> liableCustomers;
 
+    private SimpleIntegerProperty totalLiableCustomers;
+
     private Double totalAccountsReceivable = 0.0D;
+    private Double totalPoints = 0.0D;
 
     /**
      * initializes the Data object instance when the class get loaded
@@ -52,25 +58,11 @@ public class Data {
         userAnalytics = connection.getUserAnalyticsResult();
         users = FXCollections.observableArrayList(connection.getUsers());
         customers = FXCollections.observableArrayList(connection.getCustomers());
+        totalLiableCustomers = new SimpleIntegerProperty();
 
         // Turn the liabilities map into an observable list which contains LiableCustomers objects
         liableCustomers = FXCollections.observableArrayList();
-        for (Map.Entry<Customer, Map<Integer, Sale>> entry : connection.getLiabilities().entrySet()){
-            Customer customer = entry.getKey();
-
-            double totalLiabilities = 0;
-
-            for (Map.Entry<Integer, Sale> saleEntry : entry.getValue().entrySet()){
-                totalLiabilities += (saleEntry.getValue().getReceivedMoney() - saleEntry.getValue().getTotalCost());
-            }
-
-            totalAccountsReceivable += totalLiabilities;
-
-            System.out.println("Customer First Name: " + customer.getFirstName());
-            System.out.println("Total Liabilities: " + totalLiabilities);
-            LiableCustomers liableCustomer = new LiableCustomers(customer, totalLiabilities);
-            liableCustomers.add(liableCustomer);
-        }
+        refreshLiableCustomers();
     }
 
     public void refreshStock(){
@@ -117,7 +109,43 @@ public class Data {
         if (instance == null){
             instance = new Data();
         }
+        instance.refreshLiableCustomers();
         return instance;
+    }
+
+    public void refreshLiableCustomers(){
+        refreshCustomers();
+        liableCustomers.clear();
+        totalAccountsReceivable = 0.0D;
+        totalPoints = 0.0D;
+        int liableCustomerCount = 0;
+
+        for (Map.Entry<Customer, Map<Integer, Sale>> entry : connection.getLiabilities().entrySet()){
+            Customer customer = entry.getKey();
+
+            double totalLiabilities = 0;
+
+            for (Map.Entry<Integer, Sale> saleEntry : entry.getValue().entrySet()){
+                double receivedMoney = saleEntry.getValue().getReceivedMoney();
+                double cost = saleEntry.getValue().getTotalCost();
+
+                if (receivedMoney < cost) {
+                    totalLiabilities += (cost - receivedMoney);
+                }else{
+                    totalPoints += (receivedMoney - cost);
+                }
+            }
+
+            if (totalLiabilities > 0.0D){
+                liableCustomerCount += 1;
+            }
+
+            totalAccountsReceivable += totalLiabilities;
+            LiableCustomers liableCustomer = new LiableCustomers(customer, totalLiabilities);
+            liableCustomers.add(liableCustomer);
+        }
+
+        totalLiableCustomers.setValue(liableCustomerCount);
     }
 
     public ObservableList<Stock> getStocks(){
@@ -197,5 +225,13 @@ public class Data {
 
     public double getTotalAccountsReceivable(){
         return totalAccountsReceivable * -1;
+    }
+
+    public int getTotalLiableCustomers(){
+        return totalLiableCustomers.get();
+    }
+
+    public double getTotalPoints(){
+        return totalPoints;
     }
 }

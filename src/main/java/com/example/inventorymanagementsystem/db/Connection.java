@@ -5,15 +5,7 @@ import com.example.inventorymanagementsystem.state.Data;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.chart.XYChart;
-import org.controlsfx.dialog.ExceptionDialog;
-//import org.apache.commons.configuration2.Configuration;
-//import org.apache.commons.configuration2.FileBasedConfiguration;
-//import org.apache.commons.configuration2.PropertiesConfiguration;
-//import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
-//import org.apache.commons.configuration2.builder.fluent.Parameters;
-//import org.apache.commons.configuration2.ex.ConfigurationException;
 
-import javax.xml.transform.Result;
 import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -34,6 +26,7 @@ public class Connection {
     private Connection() throws SQLException{
         String dbLink = "jdbc:mysql://localhost:3306/sandyafashioncorner?useSSL=false&allowPublicKeyRetrieval=true";
         String username = "root";
+//        String password = "root@techlix2002";
         String password = "Sandun@2008.sd";
 //            String password = "root@2025sfc";
         connection = DriverManager.getConnection(dbLink, username, password);
@@ -61,6 +54,7 @@ public class Connection {
             ResultSet resultSet = statement.executeQuery(
                     "SELECT *  FROM `item_has_size` INNER JOIN `item_has_size_has_stock` ON `item_has_size`.`id` = `item_has_size_has_stock`.`item_has_size_id` " +
                             "WHERE `item_id` = %d AND `size_id` = %d".formatted(itemDetail.getId(), itemDetail.getSizeID()));
+
             while (resultSet.next()){
                 int id = resultSet.getInt("id");
                 int itemID = resultSet.getInt("item_id");
@@ -72,6 +66,7 @@ public class Connection {
                 double sellingPrice = resultSet.getDouble("price");
                 itemHasSize = new ItemHasSize(id, itemID, stockID, sizeID, orderedQty, cost, sellingPrice,  remainingQty);
             }
+
         }catch(SQLException exception){
             exception.printStackTrace();
         }
@@ -339,7 +334,6 @@ public class Connection {
 
     /**
      * Get the items in the item_has_size table
-     * @param
      * @return ItemHasSize object that contains all the information for the specified item
      */
     public ArrayList<ItemHasSize> getAllItemHasSizes() {
@@ -648,6 +642,27 @@ public class Connection {
         return sale;
     }
 
+    public List<Sale> filterSales(String date, int customerId){
+        List<Sale> sales = new ArrayList<>();
+        try{
+            statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM `sale` WHERE `date` = '%s' AND `customer_id` = %d".formatted(date, customerId));
+            while (resultSet.next()){
+                int id = resultSet.getInt("id");
+                String saleDate = resultSet.getString("date");
+                double receivedAmount = resultSet.getDouble("received_amount");
+                double totalCost = resultSet.getDouble("total_cost");
+                int remainsStatusID = resultSet.getInt("remains_statuss_id");
+                System.out.println("Sale Date: " + saleDate);
+                Sale sale = new Sale(id, saleDate, receivedAmount, totalCost, remainsStatusID);
+                sales.add(sale);
+            }
+        }catch(SQLException e){
+            e.printStackTrace();
+        }
+        return sales;
+    }
+
     public boolean insertCustomerItem(
             int customer_id,
             int itemHasSizeId,
@@ -660,15 +675,26 @@ public class Connection {
             double receivedAmount,
             int remainsStatusID) {
         try {
-            Sale sale = getSale(date, customer_id);
+            boolean doesSaleExist = false;
+            Sale sale = null;
+            for (Sale sale_ : filterSales(date, customer_id)){
+                if (sale_.getRemainsStatusID() == remainsStatusID && sale_.getDate().equals(date)){
+                    doesSaleExist = true;
+                    sale = sale_;
+                    break;
+                }
+            }
+
             int saleID = 0;
-            if (sale == null){
+            if (!doesSaleExist){
+                System.out.println("Sale record does not exist. creating new record...");
                 statement = connection.createStatement();
                 statement.execute("INSERT INTO `sale` (`date`,`received_amount`, `total_cost`, `remains_statuss_id`, `customer_id`) " +
                         "VALUES('%s', %f, %f, %d, %d)".formatted(date, receivedAmount, priceWithDiscount, remainsStatusID, customer_id), Statement.RETURN_GENERATED_KEYS);
                 ResultSet resultSet = statement.getGeneratedKeys();
                 resultSet.next();
                 saleID = resultSet.getInt(1);
+                System.out.println("New Sale ID: " + saleID);
                 PreparedStatement ps = connection.prepareStatement(
                         "INSERT INTO customer_has_item_has_size (" +
                                 "customer_id, " +
@@ -690,6 +716,7 @@ public class Connection {
                 int rowsInserted = ps.executeUpdate();
                 return rowsInserted > 0;
             }else{
+                System.out.printf("Sale record already exists. updating record %d ...%n", sale.getId());
                 saleID = sale.getId();
                 System.out.println("Sale ID: " + sale.getId());
                 statement = connection.createStatement();
@@ -697,7 +724,8 @@ public class Connection {
                 double newReceivedAmount = sale.getReceivedMoney() + receivedAmount;
                 double newTotalCost = sale.getTotalCost() + priceWithDiscount;
 
-                int rowsAffected = statement.executeUpdate("UPDATE `sale` SET `received_amount` = %f, `total_cost` = %f WHERE `customer_id` = %d AND `date` = '%s' AND id = %d".formatted(newReceivedAmount, newTotalCost, customer_id, date, saleID));
+                int rowsAffected = 0;
+                rowsAffected = statement.executeUpdate("UPDATE `sale` SET `received_amount` = %f, `total_cost` = %f WHERE `customer_id` = %d AND `date` = '%s' AND id = %d".formatted(newReceivedAmount, newTotalCost, customer_id, date, saleID));
                 System.out.println("Rows Affected: " + rowsAffected);
                 if (rowsAffected > 0) {
                     PreparedStatement ps = connection.prepareStatement(
@@ -829,9 +857,6 @@ public class Connection {
                 query += "YEAR(sale.date) = YEAR(CURDATE() - INTERVAL 1 YEAR)";
                 break;
             default:
-                query = "SELECT sale.date, chs.item_has_size_id, chs.price, chs.amount FROM customer_has_item_has_size chs INNER JOIN sale ON chs.sale_id = sale.id";
-                break;
-            case "All Time":
                 query = "SELECT sale.date, chs.item_has_size_id, chs.price, chs.amount FROM customer_has_item_has_size chs INNER JOIN sale ON chs.sale_id = sale.id";
                 break;
         }
@@ -1880,13 +1905,15 @@ public class Connection {
 
     public HashMap<Customer, Map<Integer, Sale>> getLiabilities(){
         HashMap<Customer, Map<Integer, Sale>> customerSalesMap = new HashMap<>();
+        List<Integer> customerIDs = new ArrayList<>();
+        Map<Integer, Customer> customers = new HashMap<>();
 
-        List<LiableCustomers> liableCustomersList = new ArrayList<>();
         try{
             statement = connection.createStatement();
             ResultSet resultSet = statement.executeQuery("SELECT * FROM `sale` INNER JOIN `customer` ON `customer`.`id` = `sale`.`customer_id` INNER JOIN `remains_status` ON `sale`.`remains_statuss_id` = `remains_status`.`id`");
             while (resultSet.next()){
                 int customerId = resultSet.getInt("customer_id");
+
                 Customer customer = getCustomer(customerId);
 
                 int saleID = resultSet.getInt("sale.id");
@@ -1895,13 +1922,15 @@ public class Connection {
                 double totalCost = resultSet.getDouble("sale.total_cost");
                 int remainsStatus = resultSet.getInt("sale.remains_statuss_id");
                 Sale sale = new Sale(saleID, saleDate, receivedMoney, totalCost, remainsStatus);
-                if (!customerSalesMap.containsKey(customer)){
+
+                if (!customers.containsKey(customerId)){
+                    customers.put(customerId, customer);
                     Map<Integer, Sale> salesMap = new HashMap<>();
                     salesMap.put(saleID, sale);
-                    customerSalesMap.put(customer, salesMap);
+                    customerSalesMap.put(customers.get(customerId), salesMap);
                 }else{
-                    if (!customerSalesMap.get(customer).containsKey(saleID)){
-                        customerSalesMap.get(customer).put(saleID, sale);
+                    if (!customerSalesMap.get(customers.get(customerId)).containsKey(saleID)){
+                        customerSalesMap.get(customers.get(customerId)).put(saleID, sale);
                     }
                 }
             }
@@ -1910,6 +1939,115 @@ public class Connection {
             e.printStackTrace();
         }
         return customerSalesMap;
+    }
+
+
+    public double filterLiabilities(String dateRange){
+        double accountsReceivable = 0.0D;
+        LocalDateTime now = LocalDateTime.now();
+        String today = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+
+        int currentDayOfYear = now.getDayOfYear();
+        int currentDayOfMonth = now.getDayOfMonth();
+        int currentDayOfWeek = now.getDayOfWeek().getValue();
+        int currentHour = now.getHour();
+        int currentMinute = now.getMinute();
+        int currentSecond = now.getSecond();
+
+        LocalDate from = LocalDate.parse(today);
+        if (dateRange.equals("This week")){
+            from = from.minusDays(currentDayOfWeek);
+        }else if(dateRange.equals("This month")){
+            from = from.minusDays(currentDayOfMonth);
+        }else if(dateRange.equals("This year")){
+            from = from.minusDays(currentDayOfYear);
+        }else if(dateRange.equals("Yesterday")){
+            from = LocalDate.parse(today).minusDays(1);
+        }else if(dateRange.equals("Last week")){
+            from  = LocalDate.parse(today).minusDays(currentDayOfWeek).minusWeeks(1);
+        }else if(dateRange.equals("Last month")){
+            from  = LocalDate.parse(today).minusDays(currentDayOfMonth).minusMonths(1);
+        }else if(dateRange.equals("Last year")){
+            from  = LocalDate.parse(today).minusDays(currentDayOfYear).minusYears(1);
+        }
+
+        String fromDate = from.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        System.out.println("Trying to get total liabilities");
+        System.out.println(fromDate);
+        System.out.println(today);
+        try{
+            statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM `sale` WHERE `date` >= '%s' AND `date` <= '%s'".formatted(fromDate, today));
+            while (resultSet.next()){
+                String date = resultSet.getString("date");
+                Double receivedAmount = resultSet.getDouble("received_amount");
+                Double totalCost = resultSet.getDouble("total_cost");
+                if (receivedAmount < totalCost){
+                    accountsReceivable += ((receivedAmount - totalCost) * -1);
+                }
+                System.out.println("Inside the while loop!");
+            }
+        }catch(SQLException sqlException){
+            sqlException.printStackTrace();
+        }
+        return accountsReceivable;
+    }
+
+    public double filterPoints(String dateRange){
+        double points = 0.0D;
+        LocalDateTime now = LocalDateTime.now();
+        String today = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+
+        int currentDayOfYear = now.getDayOfYear();
+        int currentDayOfMonth = now.getDayOfMonth();
+        int currentDayOfWeek = now.getDayOfWeek().getValue();
+        int currentHour = now.getHour();
+        int currentMinute = now.getMinute();
+        int currentSecond = now.getSecond();
+
+        LocalDate from = LocalDate.parse(today);
+        if (dateRange.equals("This week")){
+            from = from.minusDays(currentDayOfWeek);
+        }else if(dateRange.equals("This month")){
+            from = from.minusDays(currentDayOfMonth);
+        }else if(dateRange.equals("This year")){
+            from = from.minusDays(currentDayOfYear);
+        }else if(dateRange.equals("Yesterday")){
+            from = LocalDate.parse(today).minusDays(1);
+        }else if(dateRange.equals("Last week")){
+            from  = LocalDate.parse(today).minusDays(currentDayOfWeek).minusWeeks(1);
+        }else if(dateRange.equals("Last month")){
+            from  = LocalDate.parse(today).minusDays(currentDayOfMonth).minusMonths(1);
+        }else if(dateRange.equals("Last year")){
+            from  = LocalDate.parse(today).minusDays(currentDayOfYear).minusYears(1);
+        }
+
+        String fromDate = from.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        System.out.println("From: " + fromDate);
+        System.out.println("To: " + today);
+        try{
+            statement = connection.createStatement();
+            String query = "SELECT * FROM `sale` WHERE `date` = '%s'".formatted(today);
+            if (!dateRange.equals("Today")){
+                query = "SELECT * FROM `sale` WHERE `date` >= '%s' AND `date` <= '%s'".formatted(fromDate, today);
+            }
+            query = "SELECT * FROM `sale` WHERE `date` >= '%s' AND `date` <= '%s'".formatted(fromDate, today);
+            ResultSet resultSet = statement.executeQuery(query);
+            while (resultSet.next()){
+                String date = resultSet.getString("date");
+                Double receivedAmount = resultSet.getDouble("received_amount");
+                Double totalCost = resultSet.getDouble("total_cost");
+                int remainsStatusId = resultSet.getInt("remains_statuss_id");
+
+                if (receivedAmount > totalCost && remainsStatusId == 2){
+                    points += (receivedAmount - totalCost);
+                }
+            }
+        }catch(SQLException sqlException){
+            sqlException.printStackTrace();
+        }
+        System.out.println("Available points: " + points);
+        return points;
     }
 
 }

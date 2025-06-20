@@ -1,5 +1,6 @@
 package com.example.inventorymanagementsystem.view;
 
+import com.example.inventorymanagementsystem.db.Connection;
 import com.example.inventorymanagementsystem.models.Customer;
 import com.example.inventorymanagementsystem.models.LiableCustomers;
 import com.example.inventorymanagementsystem.services.interfaces.ThemeObserver;
@@ -9,8 +10,11 @@ import com.example.inventorymanagementsystem.view.components.Card;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
@@ -30,6 +34,13 @@ import java.sql.SQLException;
 public class Liabilities extends HBox implements ThemeObserver {
 
     private double totalAmountOwedToShop = 0.0D;
+    Label totalLiabilitiesAmount;
+    Label totalLiableCustomersValue;
+    Label totalPointsValue;
+    Label accountsReceivableOnDate;
+    Label pointsOnDate;
+    ComboBox<String> pointsTimePicker;
+    ComboBox<String> accountReceivableTimePicker;
     public Liabilities() throws SQLException {
         super();
         this.setPadding(new Insets(10.0D));
@@ -41,7 +52,7 @@ public class Liabilities extends HBox implements ThemeObserver {
         Label totalLiabilitiesHeader = new Label("Total Liabilities");
         totalLiabilitiesHeader.getStyleClass().add("card-heading");
         totalLiabilitiesHeader.setStyle("-fx-text-fill: #FF0000;");
-        Label totalLiabilitiesAmount = new Label("0");
+        totalLiabilitiesAmount = new Label("0");
         totalLiabilitiesAmount.getStyleClass().add("card-content");
         totalLiabilitiesAmount.setStyle("-fx-text-fill: #FF0000;");
 
@@ -51,7 +62,7 @@ public class Liabilities extends HBox implements ThemeObserver {
 
         Label totalLiableCustomersHeader = new Label("Customers Liable");
         totalLiableCustomersHeader.getStyleClass().add("card-heading");
-        Label totalLiableCustomersValue = new Label("0");
+        totalLiableCustomersValue = new Label("0");
         totalLiableCustomersValue.getStyleClass().add("card-content");
         Card totalLiableCustomers = new Card(totalLiableCustomersHeader, totalLiableCustomersValue, null);
         totalLiableCustomers.getStyleClass().add("card");
@@ -64,15 +75,78 @@ public class Liabilities extends HBox implements ThemeObserver {
         totalPointsHeader.setGraphic(pointsIcon);
         totalPointsHeader.setGraphicTextGap(10.0D);
         totalPointsHeader.getStyleClass().add("card-heading");
-        Label totalPointsValue = new Label("0");
+        totalPointsValue = new Label("0");
         totalPointsValue.getStyleClass().add("card-content");
 //        totalPointsValue.setGraphic(pointsIcon);
 //        totalPointsValue.setContentDisplay(ContentDisplay.TOP);
         Card totalPoints = new Card(totalPointsHeader, totalPointsValue, null);
         totalPoints.getStyleClass().add("card");
 
-        cardContainer.getChildren().addAll(totalLiabilities, totalLiableCustomers, totalPoints);
+        HBox header = new HBox();
+        Label accountReceivableOnSpecificDateLabel = new Label("Account Receivable");
+        accountReceivableOnSpecificDateLabel.getStyleClass().add("card-heading");
+        accountReceivableTimePicker = new ComboBox<>();
+
+        accountReceivableTimePicker.getItems().addAll("Today", "Yesterday", "This week", "This month", "This year","Last week", "Last month", "Last year");
+        accountReceivableTimePicker.getSelectionModel().select("Today");
+        header.getChildren().addAll(accountReceivableOnSpecificDateLabel, accountReceivableTimePicker);
+        header.setSpacing(10.0D);
+
+        accountsReceivableOnDate = new Label(String.valueOf(Connection.getInstance().filterLiabilities("Today")));
+        accountsReceivableOnDate.getStyleClass().add("card-content");
+
+        accountReceivableTimePicker.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                System.out.println("Value changed!");
+                try {
+                    double totalAccountsReceivable = Connection.getInstance().filterLiabilities(accountReceivableTimePicker.getSelectionModel().getSelectedItem());
+                    accountsReceivableOnDate.setText(String.valueOf(totalAccountsReceivable));
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        Card accountsReceivableOnSpecificDateCard = new Card(header, accountsReceivableOnDate, null);
+        accountsReceivableOnSpecificDateCard.getStyleClass().add("card");
+
+        HBox pointsReceivedOnHeader = new HBox();
+        Label pointsOnSpecificDateLabel = new Label("Points Received");
+        pointsOnSpecificDateLabel.getStyleClass().add("card-heading");
+        pointsTimePicker = new ComboBox<>();
+        pointsTimePicker.getItems().addAll("Today", "Yesterday", "This week", "This month", "This year","Last week", "Last month", "Last year");
+        pointsTimePicker.getSelectionModel().select("Today");
+        pointsReceivedOnHeader.getChildren().addAll(pointsOnSpecificDateLabel, pointsTimePicker);
+        pointsReceivedOnHeader.setSpacing(10.0D);
+        pointsOnDate = new Label(String.valueOf(Connection.getInstance().filterPoints("Today")));
+        pointsOnDate.getStyleClass().add("card-content");
+
+        pointsTimePicker.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                try {
+                    double totalAccountsReceivable = Connection.getInstance().filterPoints(pointsTimePicker.getSelectionModel().getSelectedItem());
+                    pointsOnDate.setText("%.2f".formatted(totalAccountsReceivable));
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        Card pointsOnSpecificDateCard = new Card(pointsReceivedOnHeader, pointsOnDate, null);
+        pointsOnSpecificDateCard.getStyleClass().add("card");
+
+        cardContainer.getChildren().addAll(
+                totalLiabilities,
+                totalLiableCustomers,
+                totalPoints,
+                accountsReceivableOnSpecificDateCard,
+                pointsOnSpecificDateCard
+        );
         cardContainer.setSpacing(10.0D);
+
+        HBox refreshAllDataContainer = new HBox();
 
         TableView<LiableCustomers> liableCustomersTableView = new TableView<>();
 
@@ -84,21 +158,37 @@ public class Liabilities extends HBox implements ThemeObserver {
             }
         });
 
+        TableColumn<LiableCustomers, String> lastNameColumn = new TableColumn<>("First Name");
+        lastNameColumn.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<LiableCustomers, String>, ObservableValue<String>>() {
+            @Override
+            public ObservableValue<String> call(TableColumn.CellDataFeatures<LiableCustomers, String> param) {
+                return new SimpleStringProperty(param.getValue().customerObject.get().getLastName());
+            }
+        });
+
+        TableColumn<LiableCustomers, String> phoneNumberColumn = new TableColumn<>("Phone Number");
+        phoneNumberColumn.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<LiableCustomers, String>, ObservableValue<String>>() {
+            @Override
+            public ObservableValue<String> call(TableColumn.CellDataFeatures<LiableCustomers, String> param) {
+                return new SimpleStringProperty(String.valueOf(param.getValue().getCustomerObject().getPhone()));
+            }
+        });
+
         TableColumn<LiableCustomers, String> liableAmountColumn = new TableColumn<>("Liable Amount");
         liableAmountColumn.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<LiableCustomers, String>, ObservableValue<String>>() {
             @Override
             public ObservableValue<String> call(TableColumn.CellDataFeatures<LiableCustomers, String> param) {
-                return new SimpleStringProperty(String.valueOf(param.getValue().getLiableAmount()));
+                return new SimpleStringProperty("%.2f".formatted(param.getValue().getLiableAmount()));
             }
         });
 
         TableColumn<LiableCustomers, Customer> pointsAvailableColumn = new TableColumn<>("Points Available");
-//        pointsAvailableColumn.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<LiableCustomers, Customer>, ObservableValue<Customer>>() {
-//            @Override
-//            public ObservableValue<Customer> call(TableColumn.CellDataFeatures<LiableCustomers, Customer> param) {
-//                return new SimpleObjectProperty<>();
-//            }
-//        });
+        pointsAvailableColumn.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<LiableCustomers, Customer>, ObservableValue<Customer>>() {
+            @Override
+            public ObservableValue<Customer> call(TableColumn.CellDataFeatures<LiableCustomers, Customer> param) {
+                return new SimpleObjectProperty<>(param.getValue().getCustomerObject());
+            }
+        });
 
         pointsAvailableColumn.setCellFactory(new Callback<TableColumn<LiableCustomers, Customer>, TableCell<LiableCustomers, Customer>>() {
             @Override
@@ -121,7 +211,7 @@ public class Liabilities extends HBox implements ThemeObserver {
 
         totalLiabilitiesAmount.setText(Constants.CURRENCY_UNIT + Data.getInstance().getTotalAccountsReceivable());
         totalLiableCustomersValue.setText(String.valueOf(Data.getInstance().getLiableCustomers().size()));
-        liableCustomersTableView.getColumns().addAll(firstNameColumn, liableAmountColumn, pointsAvailableColumn);
+        liableCustomersTableView.getColumns().addAll(firstNameColumn, lastNameColumn, phoneNumberColumn, liableAmountColumn, pointsAvailableColumn);
 
         liableCustomersTableView.setItems(Data.getInstance().getLiableCustomers());
         com.example.inventorymanagementsystem.state.ThemeObserver.init().addObserver(this);
@@ -147,14 +237,27 @@ public class Liabilities extends HBox implements ThemeObserver {
 
         accountsReceivableProgress.getData().add(series);
 
-        cardsAndTableContainer.getChildren().addAll(cardContainer, liableCustomersTableView, accountsReceivableProgress);
+        Button refresh = new Button("Refresh");
+        refresh.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                refreshAllData();
+            }
+        });
+        refresh.getStyleClass().add("primary-button");
+        refreshAllDataContainer.getChildren().add(refresh);
+
+        cardsAndTableContainer.getChildren().addAll(cardContainer, refreshAllDataContainer, liableCustomersTableView);
         cardsAndTableContainer.setSpacing(10.0D);
+        VBox.setVgrow(liableCustomersTableView, Priority.ALWAYS);
 
         VBox leftSideBar = new VBox();
         leftSideBar.setMinWidth(300.0D);
         leftSideBar.setMaxWidth(300.0D);
-        this.getChildren().addAll(cardsAndTableContainer, leftSideBar);
+        this.getChildren().addAll(cardsAndTableContainer);
         HBox.setHgrow(cardsAndTableContainer, Priority.ALWAYS);
+
+        refreshAllData();
     }
 
     @Override
@@ -169,5 +272,37 @@ public class Liabilities extends HBox implements ThemeObserver {
         this.setStyle("-fx-background-color: #222; ");
         this.getStylesheets().remove(Constants.LIGHT_THEME_CSS);
         this.getStylesheets().add(Constants.DARK_THEME_CSS);
+    }
+
+    private void refreshAllData(){
+        try {
+            Data.getInstance().refreshLiableCustomers();
+
+            totalLiableCustomersValue.setText(String.valueOf(Data.getInstance().getTotalLiableCustomers()));
+            accountsReceivableOnDate.setText(
+                    String.valueOf(
+                            Connection.getInstance()
+                                    .filterLiabilities(
+                                            accountReceivableTimePicker
+                                                    .getSelectionModel()
+                                                    .getSelectedItem())));
+
+            double totalAccountsReceivable = Connection.getInstance()
+                    .filterPoints(
+                            pointsTimePicker
+                                    .getSelectionModel()
+                                    .getSelectedItem());
+            pointsOnDate.setText("%.2f".formatted(totalAccountsReceivable));
+
+            double totalPoints = 0.0D;
+            for (Customer customer: Data.getInstance().getCustomers()){
+                totalPoints += customer.getPoints();
+            }
+            System.out.println("Total points of all customer: " + totalPoints);
+            totalPointsValue.setText(String.valueOf(totalPoints));
+            totalLiabilitiesAmount.setText(String.valueOf(Data.getInstance().getTotalAccountsReceivable()));
+        }catch(SQLException e){
+            e.printStackTrace();
+        }
     }
 }
