@@ -49,3 +49,5 @@ bin/
 db.env
 
 media/
+
+gradle.properties

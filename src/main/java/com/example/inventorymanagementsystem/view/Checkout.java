@@ -3,6 +3,7 @@ import com.example.inventorymanagementsystem.InventoryManagementApplication;
 import com.example.inventorymanagementsystem.db.Connection;
 import com.example.inventorymanagementsystem.models.*;
 import com.example.inventorymanagementsystem.services.interfaces.ThemeObserver;
+import com.example.inventorymanagementsystem.state.Constants;
 import com.example.inventorymanagementsystem.state.Data;
 import com.example.inventorymanagementsystem.view.components.CurrencyCellFactory;
 import com.example.inventorymanagementsystem.view.components.FormField;
@@ -16,6 +17,8 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -486,6 +489,16 @@ public class Checkout implements ThemeObserver {
         // Bottom Section
         CheckBox payFromPoints = new CheckBox("Pay from Points");
         payFromPoints.setStyle("-fx-text-fill: lightGray; -fx-font-size: 16px;");
+        payFromPoints.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                if(payFromPoints.isSelected()){
+                    receivedFund.setText(String.valueOf(cumulativeGrandTotal));
+                }else{
+                    receivedFund.setText("");
+                }
+            }
+        });
 
         discountForAll = new TextField();
         discountForAll.setPromptText("Apply discount for all");
@@ -518,29 +531,31 @@ public class Checkout implements ThemeObserver {
         receivedFund.setPromptText("Received Fund");
         receivedFund.getStyleClass().add("default-text-areas");
 
-        receivedFund.textProperty().addListener((obs, oldValue, newValue) -> {
-            if (newValue == null || newValue.isEmpty()) {
-                return;
-            }
-            String digitsOnly = newValue.replaceAll("[^\\d]", "");
+//        receivedFund.textProperty().addListener((obs, oldValue, newValue) -> {
+//            if (newValue == null || newValue.isEmpty()) {
+//                return;
+//            }
 
-            if (digitsOnly.isEmpty()) {
-                receivedFund.setText("");
-                return;
-            }
-            try {
-                long number = Long.parseLong(digitsOnly);
-                String formatted = String.format("$%,d", number);
+//            System.out.println("New value: " + newValue);
+//            String digitsOnly = newValue.replaceAll("[^\\d]", "");
 
-                if (!formatted.equals(newValue)) {
-                    receivedFund.setText(formatted);
-                    receivedFund.positionCaret(formatted.length());
-                }
-            } catch (NumberFormatException e) {
-                receivedFund.setText(oldValue);
-                receivedFund.positionCaret(oldValue.length());
-            }
-        });
+//            if (digitsOnly.isEmpty()) {
+//                receivedFund.setText("");
+//                return;
+//            }
+//            try {
+//                double number = Double.parseDouble(newValue);
+//                String formatted = "%.2f".formatted(number);
+//
+//                if (!formatted.equals(newValue)) {
+//                    receivedFund.setText(formatted);
+//                    receivedFund.positionCaret(formatted.length());
+//                }
+//            } catch (NumberFormatException e) {
+//                receivedFund.setText(oldValue);
+//                receivedFund.positionCaret(oldValue.length());
+//            }
+//        });
 
         Text totalCostTxt = new Text("Total Cost:");
         Label totalCost = new Label("_");
@@ -774,7 +789,7 @@ public class Checkout implements ThemeObserver {
                 String receivedInput = receivedFund.getText();
                 double receivedFundValue = 0.0;
                 if (receivedInput != null && !receivedInput.isEmpty()) {
-                    String cleaned = receivedInput.replaceAll("[$,\\s]", "");
+                    String cleaned = receivedInput.replaceAll("[Rs,\\s]", "");
                     if (!cleaned.isEmpty()) {
                         receivedFundValue = Double.parseDouble(cleaned);
                     }
@@ -823,6 +838,14 @@ public class Checkout implements ThemeObserver {
                         }
 
                         if (selectedCustomer != null) {
+                            int remainsStatusID = 3;
+                            if (savePoints.isSelected() && (cumulativeReceivedFund - cumulativeGrandTotal) > 0.0){
+                                remainsStatusID = 2;
+                            }else if(!savePoints.isSelected() && (cumulativeReceivedFund - cumulativeGrandTotal) > 0.0){
+                                remainsStatusID = 1;
+                            }else if(!savePoints.isSelected() && (cumulativeReceivedFund - cumulativeGrandTotal) < 0.0){
+                                remainsStatusID = 4;
+                            }
                             dbConnection.insertCustomerItem(
                                     selectedCustomer.getId(),
                                     item.getitemHasSizeId(),
@@ -833,7 +856,7 @@ public class Checkout implements ThemeObserver {
                                     item.getDiscount(),
                                     item.getCostWithDiscount(),
                                     cumulativeReceivedFund,
-                                    1
+                                    remainsStatusID
                                     );
                         }
                     }
@@ -862,8 +885,6 @@ public class Checkout implements ThemeObserver {
                 */
                 cumulativeTotalDiscount += totalReductionForDiscount;
 
-
-
                 Customer selectedCustomer = customerComboBox.getValue();
 
                 if (selectedCustomer != null) {
@@ -875,7 +896,7 @@ public class Checkout implements ThemeObserver {
                     itemsDeletingMsgTimer.play();
 
                     double extraAmount = cumulativeReceivedFund - cumulativeGrandTotal;
-
+                    System.out.println("Extra amount: " + extraAmount);
                     if (payFromPoints.isSelected()) {
                         try {
                             String fetchPointsQuery = "SELECT points FROM customer WHERE id = ?";
@@ -913,13 +934,15 @@ public class Checkout implements ThemeObserver {
                         }
 
                     } else if (savePoints.isSelected() && extraAmount > 0.0) {
+                        double currentPoints = selectedCustomer.getPoints();
+                        double newPoints = currentPoints + extraAmount;
                         itemMessageContainer.setStyle("-fx-font-size: 14px; -fx-text-fill: white; -fx-background-color: #264653; -fx-padding: 5 10; -fx-border-color: #2a9d8f; -fx-border-radius: 9; -fx-background-radius: 6; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian,  rgba(0,0,0,0.4), 4, 0, 1, 1);");
                         try {
-                            String updatePointsQuery = "UPDATE customer SET points = points + ? WHERE id = ?";
+                            String updatePointsQuery = "UPDATE customer SET points = ? WHERE id = ?";
                             try (PreparedStatement pointsStmt = dbConnection.getJdbcConnection().prepareStatement(updatePointsQuery)) {
-                                pointsStmt.setDouble(1, extraAmount);
+                                pointsStmt.setDouble(1, newPoints);
                                 pointsStmt.setInt(2, selectedCustomer.getId());
-
+                                System.out.println("Added new points");
                                 int rows = pointsStmt.executeUpdate();
                                 if (rows > 0) {
                                     itemMessageContainer.setText("✅ Extra money saved as points for customer ID: " + selectedCustomer.getId());
@@ -931,6 +954,7 @@ public class Checkout implements ThemeObserver {
                             itemMessageContainer.setStyle("-fx-font-size: 14px; -fx-text-fill: white; -fx-background-color: #264653; -fx-padding: 5 10; -fx-border-color: #2a9d8f; -fx-border-radius: 9; -fx-background-radius: 6; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian,  rgba(0,0,0,0.4), 4, 0, 1, 1);");
                             itemMessageContainer.setText("❌ SQL Error while updating points: " + ez.getMessage());
                             itemMessageContainer.setStyle("-fx-background-color: red;");
+                            ez.printStackTrace();
                         }
                     } else {
                         itemMessageContainer.setText("ℹ️ No extra money to save as points.");
@@ -951,8 +975,21 @@ public class Checkout implements ThemeObserver {
                     checkoutJustCompleted = true;
                 }
 
+                mainTable.getItems().clear();
+                totalCost.setText("-");
+                totalDiscount.setText("-");
+                grandTotal.setText("-");
+                balance.setText("-");
+                checkOutButton.setDisable(false);
+
             } catch (NumberFormatException ex) {
                 System.out.println("Invalid input in received fund or discount field.");
+            }
+
+            try {
+                Data.getInstance().refreshLiableCustomers();
+            }catch(SQLException sqlException){
+                sqlException.printStackTrace();
             }
         });
 
