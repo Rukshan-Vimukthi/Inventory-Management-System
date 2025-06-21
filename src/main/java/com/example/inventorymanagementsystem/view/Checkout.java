@@ -88,6 +88,7 @@ public class Checkout implements ThemeObserver {
     private TextField receivedFund;
     private TextField discountForAll;
     private CheckoutItem selectedCheckoutItem = null;
+    private FormField<ComboBox, Customer> registeredCustomers;
     Label totalDiscount;
     TableView<CheckoutItem> mainTable;
     Label grandTotal;
@@ -234,11 +235,9 @@ public class Checkout implements ThemeObserver {
 
         Text customerTxt = new Text("Customer Information");
 
-        // let the user select already registered customers for faster checkout
-        FormField<ComboBox, Customer> registeredCustomers = registeredCustomers = new FormField<>("Select Customer", ComboBox.class);
         try {
             registeredCustomers = new FormField<>("Select Customer", ComboBox.class, Data.getInstance().getCustomers());
-        }catch(SQLException exception){
+        } catch (SQLException exception) {
             exception.printStackTrace();
         }
 
@@ -262,7 +261,8 @@ public class Checkout implements ThemeObserver {
         returnButton.setMaxWidth(Region.USE_PREF_SIZE);
 
         returnButton.setOnAction(event -> {
-            itemMessageContainer.setStyle("-fx-font-size: 14px; -fx-text-fill: white; -fx-background-color: #264653; -fx-padding: 5 10; -fx-border-color: #2a9d8f; -fx-border-radius: 9; -fx-background-radius: 6; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian,  rgba(0,0,0,0.4), 4, 0, 1, 1);");
+            itemMessageContainer.setStyle("-fx-font-size: 14px; -fx-text-fill: white; -fx-background-color: #264653; -fx-padding: 5 10; -fx-border-color: #2a9d8f; -fx-border-radius: 9; -fx-background-radius: 6; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.4), 4, 0, 1, 1);");
+
             itemsDeletingMsgTimer = new PauseTransition(Duration.seconds(2));
             itemsDeletingMsgTimer.setOnFinished(ev -> {
                 itemMessageContainer.setText("");
@@ -273,72 +273,79 @@ public class Checkout implements ThemeObserver {
             String idText = returningItemId.getText();
 
             if (idText.isEmpty()) {
-                itemMessageContainer.setText("Please enter an ID");
+                itemMessageContainer.setText("❌ Please enter item_has_size_id.");
+                return;
+            }
+
+            if (registeredCustomers == null) {
+                itemMessageContainer.setText("⚠️ Cannot access customer list.");
+                return;
+            }
+
+            Customer selectedCustomer = (Customer) registeredCustomers.getField().getSelectionModel().getSelectedItem();
+
+            if (selectedCustomer == null) {
+                itemMessageContainer.setText("❌ Please select a customer.");
                 return;
             }
 
             try {
-                int customerItemId = Integer.parseInt(idText);
+                int itemHasSizeId = Integer.parseInt(returningItemId.getText());
+                selectedCustomer = (Customer) registeredCustomers.getField().getSelectionModel().getSelectedItem();
 
-                String fetchItemSizeQuery = "SELECT item_has_size_id FROM customer_has_item_has_size WHERE id = ?";
-                PreparedStatement checkStmt = dbConnection.getJdbcConnection().prepareStatement(fetchItemSizeQuery);
-                checkStmt.setInt(1, customerItemId);
-                ResultSet rs = checkStmt.executeQuery();
-
-                if (!rs.next()) {
-                    itemMessageContainer.setText("❌ ID not found in customer sales table.");
+                if (selectedCustomer == null) {
+                    itemMessageContainer.setText("❌ Please select a customer.");
                     return;
                 }
 
-                int itemHasSizeId = rs.getInt("item_has_size_id");
+                int customerId = selectedCustomer.getId();
 
-                String getColorQuery = "SELECT color_id, image_path FROM color_has_item_has_size WHERE item_has_size_id = ?";
-                PreparedStatement fetchColorStmt = dbConnection.getJdbcConnection().prepareStatement(getColorQuery);
-                fetchColorStmt.setInt(1, itemHasSizeId);
-                ResultSet colorRs = fetchColorStmt.executeQuery();
+                String updateQuery = "UPDATE customer_has_item_has_size SET item_status_id = 2 WHERE item_has_size_id = ? AND customer_id = ?";
+                PreparedStatement updateStmt = dbConnection.getJdbcConnection().prepareStatement(updateQuery);
+                updateStmt.setInt(1, itemHasSizeId);
+                updateStmt.setInt(2, customerId);
+                updateStmt.executeUpdate();
+
+                String colorQuery = "SELECT color_id FROM color_has_item_has_size WHERE item_has_size_id = ? LIMIT 1";
+                PreparedStatement colorStmt = dbConnection.getJdbcConnection().prepareStatement(colorQuery);
+                colorStmt.setInt(1, itemHasSizeId);
+                ResultSet colorRs = colorStmt.executeQuery();
 
                 if (!colorRs.next()) {
-                    itemMessageContainer.setText("❌ Stock info not found for item_has_size_id " + itemHasSizeId);
+                    itemMessageContainer.setText("❌ Color ID not found for item_has_size_id " + itemHasSizeId);
                     return;
                 }
 
                 int colorId = colorRs.getInt("color_id");
-                String imagePath = colorRs.getString("image_path");
 
-                String insertQuery = "INSERT INTO color_has_item_has_size (color_id, item_has_size_id, image_path) VALUES (?, ?, ?)";
+                String insertQuery = "INSERT INTO color_has_item_has_size (color_id, item_has_size_id, image_path) VALUES (?, ?, NULL)";
                 PreparedStatement insertStmt = dbConnection.getJdbcConnection().prepareStatement(insertQuery);
                 insertStmt.setInt(1, colorId);
                 insertStmt.setInt(2, itemHasSizeId);
-                insertStmt.setString(3, imagePath);
                 insertStmt.executeUpdate();
 
-                String deleteQuery = "UPDATE customer_has_item_has_size SET item_status_id = 2 WHERE id = ?";
-                PreparedStatement deleteStmt = dbConnection.getJdbcConnection().prepareStatement(deleteQuery);
-                deleteStmt.setInt(1, customerItemId);
-                deleteStmt.executeUpdate();
-
-                itemMessageContainer.setText("✅ Successfully returned item to stock.");
+                itemMessageContainer.setText("✅ Successfully returned item and updated stock.");
 
             } catch (NumberFormatException e) {
                 itemMessageContainer.setText("❌ ID must be a number.");
-
             } catch (SQLException e) {
                 e.printStackTrace();
-                itemMessageContainer.setText("❌ Database Error: " + e.getMessage());
+                itemMessageContainer.setText("❌ Database error: " + e.getMessage());
             }
         });
 
-        returnComponentContainer.setPadding(new Insets(7, 0, 0, 0));
+        returnComponentContainer.setPadding(new Insets(7, 0, 10, 0));
         returnComponentContainer.getChildren().addAll(returningItemId, returnButton);
         returningItemsContainer.getChildren().addAll(returningItemsText, returnComponentContainer);
 
         HBox customerPointsContainer = new HBox();
         ComboBox<Customer> customerComboBox = registeredCustomers.getComboBox();
         customerComboBox.getStyleClass().add("default-dropdowns");
-        customerComboBox.setMaxWidth(Double.MAX_VALUE);
         customerComboBox.setPromptText("Select the customer");
+        customerPointsContainer.setAlignment(Pos.CENTER);
 
         Label pointsLabel = new Label();
+        pointsLabel.setText(" 🔷: ");
         pointsLabel.setStyle("-fx-text-fill: lightGray; font-weight: bold; -fx-font-size: 14px;");
 
         customerComboBox.setOnAction(e -> {
@@ -429,7 +436,7 @@ public class Checkout implements ThemeObserver {
 
             // Show message
             if (result.equals("Customer already exists!")) {
-                customerMessage.setText(result);
+                itemMessageContainer.setText(result);
                 showMessage(result, Color.RED);
             } else if (result.equals("Customer added successfully!")) {
                 showMessage(result, Color.GREEN);
@@ -441,14 +448,14 @@ public class Checkout implements ThemeObserver {
             }
         });
 
-        addCustomerSec.setPadding(new Insets(0, 0, 20, 0));
+        addCustomerSec.setPadding(new Insets(0, 0, 0, 0));
         addCustomerSec.getChildren().addAll(addCustomer, clearForm);
 
         // For the adding items section
         VBox inputSection = new VBox();
         inputSection.setSpacing(10);
         inputSection.setPadding(new Insets(10, 50, 0, 0));
-        inputSection.setAlignment(Pos.TOP_LEFT);
+        inputSection.setAlignment(Pos.TOP_CENTER);
         inputSection.setMaxWidth(Double.MAX_VALUE);
         inputSection.setMaxWidth(250);
         inputSection.setMinWidth(250);
@@ -1115,7 +1122,7 @@ public class Checkout implements ThemeObserver {
 
             if (selectedItems.isEmpty()) {
                 itemMessageContainer.setText("No items to delete");
-                itemMessageContainer.setMaxWidth(250);
+                itemMessageContainer.setMaxWidth(220);
                 itemMessageContainer.setStyle(
                         "-fx-font-size: 14px;" +
                                 "-fx-text-fill: white;" +
@@ -1181,7 +1188,7 @@ public class Checkout implements ThemeObserver {
             itemMessageContainer.setVisible(true);
             itemMessageContainer.setManaged(true);
             itemMessageContainer.setStyle("-fx-font-size: 19px; -fx-font-weight: bold;");
-            itemMessageContainer.setMaxWidth(250);
+            itemMessageContainer.setMaxWidth(220);
             itemMessageContainer.setText("Deleted item: " + deletedNames);
             itemMessageContainer.setStyle(
                     "-fx-font-size: 14px;" +
@@ -1231,7 +1238,7 @@ public class Checkout implements ThemeObserver {
         removeItemsTooltip.attachTo(remove);
 
         HBox actionSection = new HBox();
-        itemMessageContainer.setPrefWidth(600);
+        itemMessageContainer.setPrefWidth(220);
         itemMessageContainer.setWrapText(true);
         itemMessageContainer.setStyle("-fx-font-size: 19px; -fx-fill: white;");
         itemMessageContainer.setAlignment(Pos.CENTER_LEFT);
@@ -1261,8 +1268,8 @@ public class Checkout implements ThemeObserver {
 
         FlowPane sellingItemCardContainer = new FlowPane();
         sellingItemCardContainer.setPadding(new Insets(20, 8, 8, 8 ));
-        Map<String, List<SoldProducts>> soldData = Connection.getInstance().getTopAndBottomSellingProducts();
-        List<SoldProducts> topFive =  soldData.get("topFive");
+        List<SoldProducts> soldData = Connection.getInstance().getTop10SellingProducts();
+        List<SoldProducts> topFive =  soldData;
         System.out.println("Top 5 size: " + topFive.size());
 
         for (SoldProducts sold : topFive) {
@@ -1277,8 +1284,8 @@ public class Checkout implements ThemeObserver {
 
         sellingItemCardContainer.setMaxWidth(Double.MAX_VALUE);
         sellingItemCardContainer.setAlignment(Pos.CENTER);
-        sellingItemCardContainer.setHgap(20);
-        sellingItemCardContainer.setVgap(20);
+        sellingItemCardContainer.setHgap(10);
+        sellingItemCardContainer.setVgap(10);
 
         sellingItemContainer.setPadding(new Insets(-30, 0, 0, 0));
         sellingItemContainer.setAlignment(Pos.CENTER);
@@ -1307,22 +1314,27 @@ public class Checkout implements ThemeObserver {
 
         bottomSection.getChildren().addAll(payFromPoints, discountForAll, receivedFund, totalCostTxt, totalCost, totalDiscountTxt, totalDiscount, grandTotalTxt, grandTotal);
         mainFooterSec.getChildren().addAll(bottomSection, balanceSec);
-        wholeBottomSec.getChildren().addAll(mainFooterSec);
+        wholeBottomSec.getChildren().addAll(sellingItemContainer, mainFooterSec);
         headerSection.getChildren().addAll(navbar);
-        inputSection.getChildren().addAll(itemTxt, itemComboBox,itemId, amount, discount, addButton, returningItemsContainer, theSpace, customerTxt, customerPointsContainer, firstName, lastName, phone, eMail, addCustomerSec, itemMessageContainer);
-        inputVerticalSec.setAlignment(Pos.TOP_CENTER);
-        inputVerticalSec.getChildren().addAll(inputSection);
+        inputSection.getChildren().addAll(itemTxt, itemComboBox,itemId, amount, discount, addButton, theSpace, customerTxt, customerPointsContainer, returningItemsContainer, firstName, lastName, phone, eMail, addCustomerSec, itemMessageContainer);
+        inputSection.setAlignment(Pos.CENTER_LEFT);
+        Region theFormMessageSpace = new Region();
+        theFormMessageSpace.setPrefHeight(10);
+        inputVerticalSec.getChildren().addAll(inputSection, theFormMessageSpace);
 
         // The center complete container
+        HBox mainCenterContainerParent = new HBox( );
+        mainCenterContainerParent.setAlignment(Pos.CENTER);
         VBox mainCenterContainer = new VBox();
-        mainCenterContainer.getChildren().addAll(mainTable, floatingContainer, sellingItemContainer);
+        mainCenterContainer.getChildren().addAll(mainTable, floatingContainer);
         VBox.setVgrow(mainTable,Priority.ALWAYS);
 
-        centerContainer.getChildren().addAll(inputVerticalSec, mainCenterContainer);
+        centerContainer.getChildren().addAll(inputVerticalSec);
+        mainCenterContainerParent.getChildren().addAll(centerContainer, mainCenterContainer);
 
         // Assigning each sections to the main section
         mainLayout.setTop(headerSection);
-        mainLayout.setCenter(centerContainer);
+        mainLayout.setCenter(mainCenterContainerParent);
         mainLayout.setBottom(wholeBottomSec);
     }
 
@@ -1349,21 +1361,39 @@ public class Checkout implements ThemeObserver {
     }
 
     private void showMessage(String message, Color color) {
-        customerMessage.setText(message);
-        customerMessage.setFill(color);
-        customerMessage.setTextAlignment(TextAlignment.CENTER);
-        customerMessage.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
-        Region space = new Region();
-        space.setMinHeight(40);
-        if (!inputVerticalSec.getChildren().contains(customerMessage)) {
-            inputVerticalSec.getChildren().add(customerMessage);
+        itemMessageContainer.setText(message);
+        itemMessageContainer.setVisible(true);
+        itemMessageContainer.setManaged(true);
+        itemMessageContainer.setMaxWidth(220);
+        itemMessageContainer.setStyle(
+                "-fx-font-size: 14px;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-background-color: #264653;" +
+                        "-fx-padding: 5 10;" +
+                        "-fx-border-color: #2a9d8f;"  +
+                        "-fx-border-radius: 9;" +
+                        "-fx-background-radius: 6;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-effect: dropshadow(gaussian,  rgba(0,0,0,0.4), 4, 0, 1, 1);"
+        );
+        itemMessageContainer.setAlignment(Pos.CENTER_LEFT);
+
+        itemsDeletingMsgTimer = new PauseTransition(Duration.seconds(2));
+        itemsDeletingMsgTimer.setOnFinished(ev -> {
+            itemMessageContainer.setText("");
+            itemMessageContainer.setStyle("");
+        });
+        itemsDeletingMsgTimer.play();
+
+        if (!inputVerticalSec.getChildren().contains(itemMessageContainer)) {
+            inputVerticalSec.getChildren().add(itemMessageContainer);
         }
         if (messageTimer != null) {
             messageTimer.stop();
         }
 
         messageTimer = new PauseTransition(Duration.seconds(2));
-        messageTimer.setOnFinished(ev -> customerMessage.setText(""));
+        messageTimer.setOnFinished(ev -> itemMessageContainer.setText(""));
         messageTimer.play();
     }
 

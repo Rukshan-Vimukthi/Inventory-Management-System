@@ -2,6 +2,7 @@ package com.example.inventorymanagementsystem.view.components;
 
 import com.example.inventorymanagementsystem.models.ItemDetail;
 import com.example.inventorymanagementsystem.state.Constants;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -25,7 +26,10 @@ public class EasyCheckoutItem extends VBox {
     public EasyCheckoutItem(ItemDetail itemDetail, Consumer<ItemDetail> onSelect){
 
         this.itemDetail = itemDetail;
-        HBox details = new HBox(10);
+        HBox details = new HBox();
+        details.setAlignment(Pos.TOP_CENTER);
+        details.setSpacing(3);
+        HBox valueContainer = new HBox(5);
 
         if (itemDetail != null) {
             itemName = new Label(itemDetail.getName());
@@ -36,8 +40,10 @@ public class EasyCheckoutItem extends VBox {
             itemSize.getStyleClass().add("easy-checkout-item-size");
             itemPrice.getStyleClass().add("easy-checkout-item-price");
 
-            VBox infoBox = new VBox(2, itemName, itemSize, itemPrice);
-            Circle colorBox = new Circle(10);
+            valueContainer.getChildren().addAll(itemSize, itemPrice);
+
+            VBox infoBox = new VBox(2, itemName, valueContainer);
+            Circle colorBox = new Circle(6);
             colorBox.setFill(Color.web(itemDetail.getItemColor()));
             colorBox.setStroke(Color.WHITE);
             colorBox.setStrokeWidth(1.5);
@@ -45,10 +51,11 @@ public class EasyCheckoutItem extends VBox {
             details.getChildren().addAll(colorBox, infoBox);
         }
         this.getChildren().add(details);
-        this.setAlignment(Pos.CENTER);
+        this.setAlignment(Pos.CENTER_LEFT);
         this.getStyleClass().add("easy-checkout-card");
-        this.setPrefHeight(19);
-        this.setPrefWidth(200);
+        this.setPrefHeight(9);
+        this.setPrefWidth(140);
+        this.setPadding(new Insets(0, 4, 0, 4));
 
         this.setOnMouseClicked(e -> {
             if (itemDetail != null && onSelect != null) {
