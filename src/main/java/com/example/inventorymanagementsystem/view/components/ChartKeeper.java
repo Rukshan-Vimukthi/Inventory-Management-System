@@ -161,14 +161,14 @@ public class ChartKeeper {
                 String popupText = itemName + "\nAmount: " + amount + "\nPrice: $" + price;
                 Tooltip tooltip = new Tooltip(popupText);
                 tooltip.setStyle("""
-                -fx-background-color: #1f2937;
-                -fx-text-fill: white;
-                -fx-padding: 8px;
-                -fx-background-radius: 6px;
-                -fx-font-size: 13px;
-                -fx-border-color: #93c5fd;
-                -fx-border-radius: 6px;
-            """);
+                    -fx-background-color: #1f2937;
+                    -fx-text-fill: white;
+                    -fx-padding: 8px;
+                    -fx-background-radius: 6px;
+                    -fx-font-size: 13px;
+                    -fx-border-color: #93c5fd;
+                    -fx-border-radius: 6px;
+                """);
                 tooltipMap.put(dataPoint, tooltip);
 
                 dataPoint.nodeProperty().addListener((obs, oldNode, newNode) -> {

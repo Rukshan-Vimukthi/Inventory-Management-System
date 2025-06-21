@@ -26,7 +26,7 @@ public class Connection {
     private Connection() throws SQLException{
         String dbLink = "jdbc:mysql://localhost:3306/sandyafashioncorner?useSSL=false&allowPublicKeyRetrieval=true";
         String username = "root";
-        String password = "root@techlix2002";
+        String password = "Sandun@2008.sd";
 //        String password = "Sandun@2008.sd";
 //            String password = "root@2025sfc";
         connection = DriverManager.getConnection(dbLink, username, password);
@@ -815,6 +815,71 @@ public class Connection {
         }
         return itemDetail;
     }
+
+    public ItemDetail getItemDetailByID(int itemId) {
+        ItemDetail itemDetail = null;
+
+        String query = """
+        SELECT i.id AS item_id, i.name, ihs.cost, ihs.price, s.size, s.id AS size_id,
+               chis.id AS chis_id, c.id AS color_id, c.color, c.hex_color
+        FROM item i
+        JOIN item_has_size ihs ON i.id = ihs.item_id
+        JOIN size s ON ihs.size_id = s.id
+        JOIN color_has_item_has_size chis ON ihs.id = chis.item_has_size_id
+        JOIN color c ON chis.color_id = c.id
+        WHERE i.id = ? LIMIT 1
+    """;
+
+        try (PreparedStatement ps = connection.prepareStatement(query)) {
+            ps.setInt(1, itemId);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                int itemID = rs.getInt("item_id");
+                String name = rs.getString("name");
+                double price = rs.getDouble("cost");
+                double sellingPrice = rs.getDouble("price");
+                int stockID = 0;
+                String stockDate = "";
+                String stockName = "";
+                int itemSizeID = rs.getInt("size_id");
+                String itemSize = rs.getString("size");
+                int itemColorID = rs.getInt("color_id");
+                String itemColor = rs.getString("color");
+                int itemHasSizeID = 0;
+                int colorHasItemHasSizeID = rs.getInt("chis_id");
+                int itemHasSizeHasStockID = 0;
+                int orderedQty = 0;
+                int remainingQty = 0;
+                String pathToImage = rs.getString("hex_color"); // using hex color here for convenience
+
+                itemDetail = new ItemDetail(
+                        itemID,
+                        name,
+                        price,
+                        sellingPrice,
+                        stockID,
+                        stockDate,
+                        stockName,
+                        itemSizeID,
+                        itemSize,
+                        itemColorID,
+                        itemColor,
+                        itemHasSizeID,
+                        colorHasItemHasSizeID,
+                        itemHasSizeHasStockID,
+                        orderedQty,
+                        remainingQty,
+                        pathToImage
+                );
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return itemDetail;
+    }
+
 
     public void returnItem(int itemID){
         try{

@@ -15,6 +15,11 @@
     -fx-font-size: 25;
 }
 
+.inverse-texts {
+    -fx-text-fill: black;
+    -fx-font-size: 17px;
+}
+
 .summary-cards {
     -fx-background-color: #FFFFFF;
     -fx-background-radius: 12px;
@@ -330,3 +335,31 @@
     -fx-background-color: #0055AA;
     -fx-text-fill: #EEE;
 }
+
+// Easy checkout styles
+.easy-checkout-card {
+    -fx-background-color: #f9f9f9;
+    -fx-border-color: #cccccc;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 15;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 4, 0, 0, 2);
+}
+
+.easy-checkout-card:hover {
+    -fx-background-color: #e6e6e6;
+    -fx-border-color: #999999;
+    -fx-cursor: hand;
+}
+
+.easy-checkout-item-name {
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+}
+
+.easy-checkout-item-size,
+.easy-checkout-item-price {
+    -fx-font-size: 13px;
+    -fx-opacity: 0.85;
+}
+

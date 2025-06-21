@@ -8,6 +8,7 @@ import com.example.inventorymanagementsystem.state.Data;
 import com.example.inventorymanagementsystem.view.components.CurrencyCellFactory;
 import com.example.inventorymanagementsystem.view.components.FormField;
 import com.example.inventorymanagementsystem.view.components.HoverTooltip;
+import com.example.inventorymanagementsystem.view.components.EasyCheckoutItem;
 import javafx.animation.KeyFrame;
 import javafx.animation.PauseTransition;
 import javafx.animation.Timeline;
@@ -47,10 +48,7 @@ import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
@@ -157,14 +155,6 @@ public class Checkout implements ThemeObserver {
 
         itemComboBox = new ComboBox<>();
         itemComboBox.setItems(Data.getInstance().getItemDetails());
-
-//        List<ItemDetail> itemDetails = dbConnection.getItemDetails();
-//        if (itemDetails.isEmpty()) {
-//            System.out.println("No items found!");
-//        } else {
-//            itemComboBox.getItems().setAll(itemDetails);
-//        }
-
         itemComboBox.setCellFactory(lv -> new ListCell<>() {
             private final Circle colorCircle = new Circle(6);
             private final HBox hbox = new HBox(10);
@@ -175,7 +165,6 @@ public class Checkout implements ThemeObserver {
                 hbox.setAlignment(Pos.CENTER_LEFT);
                 HBox.setHgrow(textLabel, Priority.ALWAYS);
             }
-
             @Override
             protected void updateItem(ItemDetail item, boolean empty) {
                 super.updateItem(item, empty);
@@ -190,7 +179,6 @@ public class Checkout implements ThemeObserver {
                 }
             }
         });
-
         itemComboBox.setButtonCell(new ListCell<>() {
             @Override
             protected void updateItem(ItemDetail item, boolean empty) {
@@ -254,8 +242,102 @@ public class Checkout implements ThemeObserver {
             exception.printStackTrace();
         }
 
+        // Returning items section
+        VBox returningItemsContainer = new VBox();
+
+        Text returningItemsText = new Text("Return Items");
+        returningItemsText.getStyleClass().add("paragraph-texts");
+
+        HBox returnComponentContainer = new HBox();
+        TextField returningItemId = new TextField();
+        returningItemId.setPromptText("Item id");
+        returningItemId.getStyleClass().add("default-text-areas");
+        returningItemId.setStyle("-fx-border-radius: 10 0 0 10; -fx-pref-height: 18px;");
+
+        Button returnButton = new Button("Return \uD83D\uDD01");
+        returnButton.getStyleClass().add("add-button");
+        returnButton.setStyle("-fx-background-radius: 0 10 10 0; -fx-pref-height: 21px; -fx-border-width: 0.79px; -fx-border-color: green; -fx-border-radius: 0 10 10 0;");
+        returnButton.setMinWidth(Region.USE_PREF_SIZE);
+        returnButton.setPrefWidth(Region.USE_COMPUTED_SIZE);
+        returnButton.setMaxWidth(Region.USE_PREF_SIZE);
+
+        returnButton.setOnAction(event -> {
+            itemMessageContainer.setStyle("-fx-font-size: 14px; -fx-text-fill: white; -fx-background-color: #264653; -fx-padding: 5 10; -fx-border-color: #2a9d8f; -fx-border-radius: 9; -fx-background-radius: 6; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian,  rgba(0,0,0,0.4), 4, 0, 1, 1);");
+            itemsDeletingMsgTimer = new PauseTransition(Duration.seconds(2));
+            itemsDeletingMsgTimer.setOnFinished(ev -> {
+                itemMessageContainer.setText("");
+                itemMessageContainer.setStyle("");
+            });
+            itemsDeletingMsgTimer.play();
+
+            String idText = returningItemId.getText();
+
+            if (idText.isEmpty()) {
+                itemMessageContainer.setText("Please enter an ID");
+                return;
+            }
+
+            try {
+                int customerItemId = Integer.parseInt(idText);
+
+                String fetchItemSizeQuery = "SELECT item_has_size_id FROM customer_has_item_has_size WHERE id = ?";
+                PreparedStatement checkStmt = dbConnection.getJdbcConnection().prepareStatement(fetchItemSizeQuery);
+                checkStmt.setInt(1, customerItemId);
+                ResultSet rs = checkStmt.executeQuery();
+
+                if (!rs.next()) {
+                    itemMessageContainer.setText("❌ ID not found in customer sales table.");
+                    return;
+                }
+
+                int itemHasSizeId = rs.getInt("item_has_size_id");
+
+                String getColorQuery = "SELECT color_id, image_path FROM color_has_item_has_size WHERE item_has_size_id = ?";
+                PreparedStatement fetchColorStmt = dbConnection.getJdbcConnection().prepareStatement(getColorQuery);
+                fetchColorStmt.setInt(1, itemHasSizeId);
+                ResultSet colorRs = fetchColorStmt.executeQuery();
+
+                if (!colorRs.next()) {
+                    itemMessageContainer.setText("❌ Stock info not found for item_has_size_id " + itemHasSizeId);
+                    return;
+                }
+
+                int colorId = colorRs.getInt("color_id");
+                String imagePath = colorRs.getString("image_path");
+
+                String insertQuery = "INSERT INTO color_has_item_has_size (color_id, item_has_size_id, image_path) VALUES (?, ?, ?)";
+                PreparedStatement insertStmt = dbConnection.getJdbcConnection().prepareStatement(insertQuery);
+                insertStmt.setInt(1, colorId);
+                insertStmt.setInt(2, itemHasSizeId);
+                insertStmt.setString(3, imagePath);
+                insertStmt.executeUpdate();
+
+                String deleteQuery = "UPDATE customer_has_item_has_size SET item_status_id = 2 WHERE id = ?";
+                PreparedStatement deleteStmt = dbConnection.getJdbcConnection().prepareStatement(deleteQuery);
+                deleteStmt.setInt(1, customerItemId);
+                deleteStmt.executeUpdate();
+
+                itemMessageContainer.setText("✅ Successfully returned item to stock.");
+
+            } catch (NumberFormatException e) {
+                itemMessageContainer.setText("❌ ID must be a number.");
+
+            } catch (SQLException e) {
+                e.printStackTrace();
+                itemMessageContainer.setText("❌ Database Error: " + e.getMessage());
+            }
+        });
+
+        returnComponentContainer.setPadding(new Insets(7, 0, 0, 0));
+        returnComponentContainer.getChildren().addAll(returningItemId, returnButton);
+        returningItemsContainer.getChildren().addAll(returningItemsText, returnComponentContainer);
+
         HBox customerPointsContainer = new HBox();
         ComboBox<Customer> customerComboBox = registeredCustomers.getComboBox();
+        customerComboBox.getStyleClass().add("default-dropdowns");
+        customerComboBox.setMaxWidth(Double.MAX_VALUE);
+        customerComboBox.setPromptText("Select the customer");
+
         Label pointsLabel = new Label();
         pointsLabel.setStyle("-fx-text-fill: lightGray; font-weight: bold; -fx-font-size: 14px;");
 
@@ -283,6 +365,7 @@ public class Checkout implements ThemeObserver {
         });
 
         customerPointsContainer.getChildren().addAll(customerComboBox, pointsLabel);
+        HBox.setHgrow(customerComboBox, Priority.ALWAYS);
 
         customerTxt.getStyleClass().add("paragraph-texts");
         TextField firstName = new TextField();
@@ -507,7 +590,7 @@ public class Checkout implements ThemeObserver {
 
         // Bottom Section
         CheckBox payFromPoints = new CheckBox("Pay from Points");
-        payFromPoints.setStyle("-fx-text-fill: lightGray; -fx-font-size: 16px;");
+        payFromPoints.getStyleClass().add("inverse-texts");
         payFromPoints.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
@@ -599,7 +682,7 @@ public class Checkout implements ThemeObserver {
         balance.getStyleClass().add("information-label");
 
         CheckBox savePoints = new CheckBox("Save as Points");
-        savePoints.setStyle("-fx-text-fill: lightGray; -fx-font-size: 16px;");
+        savePoints.getStyleClass().add("inverse-texts");
 
         checkOutButton = new Button("Check Out");
         checkOutButton.getStyleClass().add("default-buttons");
@@ -725,6 +808,7 @@ public class Checkout implements ThemeObserver {
                     stockMessage.setTextAlignment(TextAlignment.CENTER);
                     stockMessage.getStyleClass().add("stock-error-message");
                     inputSection.setMaxWidth(Double.MAX_VALUE);
+                    inputSection.setAlignment(Pos.TOP_CENTER);
                     stockMessageContainer.getChildren().addAll(stockMessage);
                     inputSection.getChildren().addAll(stockMessageContainer);
                     stockMessage.setVisible(true);
@@ -1031,6 +1115,24 @@ public class Checkout implements ThemeObserver {
 
             if (selectedItems.isEmpty()) {
                 itemMessageContainer.setText("No items to delete");
+                itemMessageContainer.setMaxWidth(250);
+                itemMessageContainer.setStyle(
+                        "-fx-font-size: 14px;" +
+                                "-fx-text-fill: white;" +
+                                "-fx-background-color: #264653;" +
+                                "-fx-padding: 5 10;" +
+                                "-fx-border-color: #2a9d8f;"  +
+                                "-fx-border-radius: 9;" +
+                                "-fx-background-radius: 6;" +
+                                "-fx-font-weight: bold;" +
+                                "-fx-effect: dropshadow(gaussian,  rgba(0,0,0,0.4), 4, 0, 1, 1);"
+                );
+                itemsDeletingMsgTimer = new PauseTransition(Duration.seconds(2));
+                itemsDeletingMsgTimer.setOnFinished(ev -> {
+                    itemMessageContainer.setText("");
+                    itemMessageContainer.setStyle("");
+                });
+                itemsDeletingMsgTimer.play();
                 System.out.println("No items selected to delete.");
                 return;
             }
@@ -1135,29 +1237,52 @@ public class Checkout implements ThemeObserver {
         itemMessageContainer.setAlignment(Pos.CENTER_LEFT);
         itemMessageContainer.setMaxWidth(Double.MAX_VALUE);
         itemMessageContainer.setMaxWidth(Double.MAX_VALUE);
-        AnchorPane.setBottomAnchor(itemMessageContainer, 300.0);
-        AnchorPane.setRightAnchor(itemMessageContainer, 30.0);
 
         actionSection.setSpacing(10);
         actionSection.setPrefWidth(600);
         actionSection.setAlignment(Pos.TOP_RIGHT);
         actionSection.setPadding(new Insets(0, 0, 10, 0));
-        actionSection.getChildren().addAll(itemMessageContainer, deleteRow, remove);
+        actionSection.getChildren().addAll(deleteRow, remove);
         actionSection.setMaxWidth(Double.MAX_VALUE);
         actionSection.setAlignment(Pos.CENTER_RIGHT);
 
         AnchorPane floatingContainer = new AnchorPane();
         AnchorPane.setBottomAnchor(actionSection, 0.0);
         AnchorPane.setRightAnchor(actionSection, 0.0);
-        floatingContainer.setPrefWidth(200);
+        floatingContainer.setPrefWidth(100);
         floatingContainer.getChildren().addAll(actionSection);
         floatingContainer.setPadding(new Insets(10, 0, 0, 0));
 
         // Show the most selling items
         VBox sellingItemContainer = new VBox();
         Text sellingItemText = new Text("The most selling items");
-        sellingItemContainer.setAlignment(Pos.CENTER_RIGHT);
-        sellingItemContainer.getChildren().addAll(sellingItemText);
+        sellingItemText.getStyleClass().add("heading-texts");
+        sellingItemText.setStyle("-fx-font-size: 19px;");
+
+        FlowPane sellingItemCardContainer = new FlowPane();
+        sellingItemCardContainer.setPadding(new Insets(20, 8, 8, 8 ));
+        Map<String, List<SoldProducts>> soldData = Connection.getInstance().getTopAndBottomSellingProducts();
+        List<SoldProducts> topFive =  soldData.get("topFive");
+        System.out.println("Top 5 size: " + topFive.size());
+
+        for (SoldProducts sold : topFive) {
+            ItemDetail detail = Connection.getInstance().getItemDetail(sold.getItemId());
+            if (detail != null) {
+                EasyCheckoutItem card = new EasyCheckoutItem(detail, item -> {
+                    itemComboBox.getSelectionModel().select(item);
+                });
+                sellingItemCardContainer.getChildren().add(card);
+            }
+        }
+
+        sellingItemCardContainer.setMaxWidth(Double.MAX_VALUE);
+        sellingItemCardContainer.setAlignment(Pos.CENTER);
+        sellingItemCardContainer.setHgap(20);
+        sellingItemCardContainer.setVgap(20);
+
+        sellingItemContainer.setPadding(new Insets(-30, 0, 0, 0));
+        sellingItemContainer.setAlignment(Pos.CENTER);
+        sellingItemContainer.getChildren().addAll(sellingItemText, sellingItemCardContainer);
         sellingItemContainer.setMaxHeight(140);
         sellingItemContainer.setMinHeight(140);
 
@@ -1184,7 +1309,8 @@ public class Checkout implements ThemeObserver {
         mainFooterSec.getChildren().addAll(bottomSection, balanceSec);
         wholeBottomSec.getChildren().addAll(mainFooterSec);
         headerSection.getChildren().addAll(navbar);
-        inputSection.getChildren().addAll(itemTxt, itemComboBox,itemId, amount, discount, addButton, theSpace, customerTxt, customerPointsContainer, firstName, lastName, phone, eMail, addCustomerSec);
+        inputSection.getChildren().addAll(itemTxt, itemComboBox,itemId, amount, discount, addButton, returningItemsContainer, theSpace, customerTxt, customerPointsContainer, firstName, lastName, phone, eMail, addCustomerSec, itemMessageContainer);
+        inputVerticalSec.setAlignment(Pos.TOP_CENTER);
         inputVerticalSec.getChildren().addAll(inputSection);
 
         // The center complete container

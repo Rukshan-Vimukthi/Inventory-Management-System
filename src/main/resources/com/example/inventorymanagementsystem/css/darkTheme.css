@@ -32,6 +32,11 @@
     -fx-font-size: 15;
 }
 
+.inverse-texts {
+    -fx-text-fill: rgb(206, 206, 206);
+    -fx-font-size: 17px;
+}
+
 .default-text-areas {
     -fx-background-color: #262626;
     -fx-prompt-text-fill: gray;
@@ -218,4 +223,34 @@
 .account-receivable-and-points .chart-vertical-grid-lines{
     -fx-stroke: #55555555;
 }
+
+// Easy checkouts cards
+.easy-checkout-card {
+    -fx-background-color: #2c2f33;
+    -fx-border-color: #7289da;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 15;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.6), 6, 0, 0, 2);
+}
+
+.easy-checkout-card:hover {
+    -fx-background-color: #40444b;
+    -fx-border-color: #99aab5;
+    -fx-cursor: hand;
+}
+
+.easy-checkout-item-name {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+}
+
+.easy-checkout-item-size,
+.easy-checkout-item-price {
+    -fx-text-fill: lightGray;
+    -fx-font-size: 13px;
+    -fx-opacity: 0.8;
+}
+
 
