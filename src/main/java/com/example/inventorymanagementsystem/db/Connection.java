@@ -300,6 +300,33 @@ public class Connection {
         return soldResult;
     };
 
+    // Get the top 10 selling products
+    public List<SoldProducts> getTop10SellingProducts() {
+        List<SoldProducts> top10 = new ArrayList<>();
+
+        String topTenQuery = "SELECT item_id, SUM(ordered_qty - remaining_qty) AS total_sold " +
+                "FROM item_has_size " +
+                "GROUP BY item_id " +
+                "ORDER BY total_sold DESC " +
+                "LIMIT 10";
+
+        try (Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery(topTenQuery)) {
+
+            while (rs.next()) {
+                int itemId = rs.getInt("item_id");
+                int totalSold = rs.getInt("total_sold");
+                top10.add(new SoldProducts(itemId, totalSold));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return top10;
+    }
+
+
     public String getItemNameById(int itemId) {
         String name = "Unknown";
         try {

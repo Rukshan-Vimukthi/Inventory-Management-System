@@ -19,6 +19,7 @@ public class FormField<C extends Control, M> extends VBox implements ThemeObserv
     private Control node;
     private String columnName = null;
     private Label label;
+
     public FormField(String labelText, Class<C> nodeClass){
         try {
             label = new Label(labelText);
@@ -233,6 +234,11 @@ public class FormField<C extends Control, M> extends VBox implements ThemeObserv
     public ComboBox<M> getComboBox(){
         return (ComboBox<M>) node;
     }
+
+    public C getField() {
+        return (C) node;
+    }
+
 
     @Override
     public void lightTheme() {
