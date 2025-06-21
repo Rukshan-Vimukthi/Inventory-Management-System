@@ -14,6 +14,8 @@ import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -24,6 +26,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.InputMethodEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -95,6 +98,7 @@ public class Checkout implements ThemeObserver {
     Text customerMessage;
     VBox inputVerticalSec;
     Label itemMessageContainer;
+    TextField itemId;
     TextField discount;
     TextField amount;
     Button checkOutButton;
@@ -206,6 +210,21 @@ public class Checkout implements ThemeObserver {
         itemComboBox.setMaxWidth(Double.MAX_VALUE);
         itemComboBox.setPromptText("Select The Item");
         itemComboBox.getStyleClass().add("default-dropdowns");
+        itemId = new TextField();
+        itemId.setPromptText("Type item id");
+        itemId.getStyleClass().add("default-text-areas");
+        itemId.textProperty().addListener(new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+                int integerItemId = Integer.parseInt(newValue);
+                try {
+                    ItemDetail itemDetail = Connection.getInstance().getItemDetail(integerItemId);
+                    itemComboBox.getSelectionModel().select(itemDetail);
+                }catch(SQLException e){
+                    e.printStackTrace();
+                }
+            }
+        });
 
         amount = new TextField();
         amount.setPromptText("Type the quantity");
@@ -1134,6 +1153,14 @@ public class Checkout implements ThemeObserver {
         floatingContainer.getChildren().addAll(actionSection);
         floatingContainer.setPadding(new Insets(10, 0, 0, 0));
 
+        // Show the most selling items
+        VBox sellingItemContainer = new VBox();
+        Text sellingItemText = new Text("The most selling items");
+        sellingItemContainer.setAlignment(Pos.CENTER_RIGHT);
+        sellingItemContainer.getChildren().addAll(sellingItemText);
+        sellingItemContainer.setMaxHeight(140);
+        sellingItemContainer.setMinHeight(140);
+
         // The Footer
         VBox wholeBottomSec = new VBox();
         VBox mainFooterSec = new VBox();
@@ -1155,11 +1182,17 @@ public class Checkout implements ThemeObserver {
 
         bottomSection.getChildren().addAll(payFromPoints, discountForAll, receivedFund, totalCostTxt, totalCost, totalDiscountTxt, totalDiscount, grandTotalTxt, grandTotal);
         mainFooterSec.getChildren().addAll(bottomSection, balanceSec);
-        wholeBottomSec.getChildren().addAll(floatingContainer, mainFooterSec);
-        headerSection.getChildren().addAll(navbar, inputVerticalSec);
-        inputSection.getChildren().addAll(itemTxt, itemComboBox, amount, discount, addButton, theSpace, customerTxt, customerPointsContainer, firstName, lastName, phone, eMail, addCustomerSec);
+        wholeBottomSec.getChildren().addAll(mainFooterSec);
+        headerSection.getChildren().addAll(navbar);
+        inputSection.getChildren().addAll(itemTxt, itemComboBox,itemId, amount, discount, addButton, theSpace, customerTxt, customerPointsContainer, firstName, lastName, phone, eMail, addCustomerSec);
         inputVerticalSec.getChildren().addAll(inputSection);
-        centerContainer.getChildren().addAll(inputVerticalSec, mainTable);
+
+        // The center complete container
+        VBox mainCenterContainer = new VBox();
+        mainCenterContainer.getChildren().addAll(mainTable, floatingContainer, sellingItemContainer);
+        VBox.setVgrow(mainTable,Priority.ALWAYS);
+
+        centerContainer.getChildren().addAll(inputVerticalSec, mainCenterContainer);
 
         // Assigning each sections to the main section
         mainLayout.setTop(headerSection);

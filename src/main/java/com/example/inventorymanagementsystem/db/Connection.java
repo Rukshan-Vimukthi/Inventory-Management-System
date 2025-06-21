@@ -26,8 +26,8 @@ public class Connection {
     private Connection() throws SQLException{
         String dbLink = "jdbc:mysql://localhost:3306/sandyafashioncorner?useSSL=false&allowPublicKeyRetrieval=true";
         String username = "root";
-//        String password = "root@techlix2002";
-        String password = "Sandun@2008.sd";
+        String password = "root@techlix2002";
+//        String password = "Sandun@2008.sd";
 //            String password = "root@2025sfc";
         connection = DriverManager.getConnection(dbLink, username, password);
     }
@@ -757,14 +757,81 @@ public class Connection {
         }
     }
 
+    public ItemDetail getItemDetail(int itemId){
+        ItemDetail itemDetail = null;
+        try{
+            statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM `item` " +
+                    "LEFT JOIN `item_has_size` " +
+                    "ON `item`.`id` = `item_has_size`.`item_id`" +
+                    "INNER JOIN `item_has_size_has_stock` ON `item_has_size`.`id` = `item_has_size_has_stock`.`item_has_size_id` " +
+                    "LEFT JOIN `stock` ON `item_has_size_has_stock`.`stock_id` = `stock`.`id` " +
+                    "LEFT JOIN `size` ON `size`.`id` = `item_has_size`.`size_id` " +
+                    "LEFT JOIN `color_has_item_has_size` " +
+                    "ON `item_has_size`.`id` = `color_has_item_has_size`.`item_has_size_id` " +
+                    "LEFT JOIN `color` ON `color_has_item_has_size`.`color_id` = `color`.`id` WHERE `color_has_item_has_size`.`id` = %d".formatted(itemId));
+
+            while (resultSet.next()){
+                int itemID = resultSet.getInt("item.id");
+                String name = resultSet.getString("item.name");
+                Double price = resultSet.getDouble("item_has_size.cost");
+                Double sellingPrice = resultSet.getDouble("item_has_size.price");
+                int orderedQty = resultSet.getInt("item_has_size.ordered_qty");
+                int remainingQty = resultSet.getInt("item_has_size.remaining_qty");
+                int itemHasSizeHasStockID = resultSet.getInt("item_has_size_has_stock.id");
+                int stockID = resultSet.getInt("stock.id");
+                String stockDate = resultSet.getString("stock.date");
+                String stockName = resultSet.getString("stock.name");
+                int itemHasSizeID = resultSet.getInt("item_has_size.id");
+                int itemSizeID = resultSet.getInt("size.id");
+                String itemSize = resultSet.getString("size.size");
+                int itemColorID = resultSet.getInt("color.id");
+                String itemColor = resultSet.getString("color.color");
+                int colorHasItemHasSizeID = resultSet.getInt("color_has_item_has_size.id");
+                String pathToImage = resultSet.getString("color_has_item_has_size.image_path");
+
+                itemDetail = new ItemDetail(
+                        itemID,
+                        name,
+                        price,
+                        sellingPrice,
+                        stockID,
+                        stockDate,
+                        stockName,
+                        itemSizeID,
+                        itemSize,
+                        itemColorID,
+                        itemColor,
+                        itemHasSizeID,
+                        colorHasItemHasSizeID,
+                        itemHasSizeHasStockID,
+                        orderedQty,
+                        remainingQty,
+                        pathToImage
+                );
+            }
+        }catch(SQLException e){
+            e.printStackTrace();
+        }
+        return itemDetail;
+    }
+
+    public void returnItem(int itemID){
+        try{
+            statement = connection.createStatement();
+            int rowsAffected = statement.executeUpdate("UPDATE `color_has_item_has_size`");
+        }catch(SQLException e){
+            e.printStackTrace();
+        }
+    }
+
     /**
      * Gets all the details related to each item in the database.
      * @return List of type ItemDetail which holds all the information related to each item
      */
-
     public List<ItemDetail> getItemDetails(){
         ArrayList<ItemDetail> itemDetails = new ArrayList<>();
-        try{
+        try {
             statement = connection.createStatement();
             ResultSet resultSet = statement.executeQuery("SELECT * FROM `item` " +
                     "LEFT JOIN `item_has_size` " +
@@ -1261,6 +1328,10 @@ public class Connection {
             sqlException.printStackTrace();
         }
         return null;
+    }
+
+    public void clearDebtUsingPoints(int userID){
+
     }
 
     public List<Customer> getCustomersRegisteredOn(String timeFrame){
@@ -1903,6 +1974,96 @@ public class Connection {
         return new int[]{numberOfAdmins, numberOfUsers, numberOfCustomers};
     }
 
+    public double getAccountsReceivable(int customerID){
+        double totalDueBalance = 0.0D;
+        try{
+            statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM `sale` INNER JOIN `customer` ON `customer`.`id` = `sale`.`customer_id` INNER JOIN `remains_status` ON `sale`.`remains_statuss_id` = `remains_status`.`id` WHERE `customer_id` = %d AND `remains_statuss_id` = %d".formatted(customerID, 4));
+            while (resultSet.next()){
+                double receivedMoney = resultSet.getDouble("sale.received_amount");
+                double totalCost = resultSet.getDouble("sale.total_cost");
+                int remainsStatus = resultSet.getInt("sale.remains_statuss_id");
+
+                double dueBalance = receivedMoney - totalCost;
+                if (dueBalance < 0 && remainsStatus == 4){
+                    totalDueBalance += dueBalance;
+                }
+            }
+        }catch(SQLException e){
+            e.printStackTrace();
+        }
+        return totalDueBalance;
+    }
+
+    public void clearCustomerDebt(Customer customer, double amount, int saleID, boolean fromPoints){
+        try {
+            statement = connection.createStatement();
+            HashMap<Integer, List<Double>> saleIDs = new HashMap<>();
+
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM `sale` INNER JOIN `customer` ON `customer`.`id` = `sale`.`customer_id` INNER JOIN `remains_status` ON `sale`.`remains_statuss_id` = `remains_status`.`id` WHERE `sale`.`customer_id` = %d".formatted(customer.getId()));
+            while (resultSet.next()){
+                int saleId = resultSet.getInt("sale.id");
+                double receivedMoney = resultSet.getDouble("sale.received_amount");
+                double totalCost = resultSet.getDouble("sale.total_cost");
+
+                if (receivedMoney < totalCost) {
+                    double receivableAmount = ((receivedMoney - totalCost) * -1);
+                    ArrayList<Double> dataList = new ArrayList<>();
+                    dataList.add(receivedMoney);
+                    dataList.add(receivableAmount);
+                    dataList.add(totalCost);
+                    saleIDs.put(saleId, dataList);
+                }
+            }
+            if (fromPoints) {
+                double points = customer.getPoints();
+                if (points >= amount){
+                    points -= amount;
+                    statement.execute("UPDATE `customer` SET `points` = %f WHERE `id` = %d".formatted(points, customer.getId()));
+                }
+
+                for (Map.Entry<Integer, List<Double>> dataEntry : saleIDs.entrySet()){
+                    int saleId = dataEntry.getKey();
+                    double receivedMoney = dataEntry.getValue().get(0);
+                    double liableAmount = dataEntry.getValue().get(1);
+                    double totalCost = dataEntry.getValue().get(2);
+
+                    double newReceivedAmount = 0.0;
+
+                    if (liableAmount > amount){
+                        newReceivedAmount = receivedMoney + amount;
+                    }else if(liableAmount <= amount){
+                        newReceivedAmount = totalCost;
+                    }
+
+                    statement.execute(("" +
+                            "UPDATE `sale` SET `received_amount` = %f WHERE `id` = %d").formatted(newReceivedAmount, saleId));
+                }
+
+            }else{
+                for (Map.Entry<Integer, List<Double>> dataEntry : saleIDs.entrySet()){
+                    int saleId = dataEntry.getKey();
+                    double receivedMoney = dataEntry.getValue().get(0);
+                    double liableAmount = dataEntry.getValue().get(1);
+                    double totalCost = dataEntry.getValue().get(2);
+
+                    double newReceivedAmount = 0.0;
+
+                    if (liableAmount > amount){
+                        newReceivedAmount = receivedMoney + amount;
+                    }else if(liableAmount <= amount){
+                        newReceivedAmount = totalCost;
+                    }
+
+                    statement.execute(("" +
+                            "UPDATE `sale` SET `received_amount` = %f WHERE `id` = %d").formatted(newReceivedAmount, saleId));
+                }
+            }
+        }catch(SQLException e){
+            e.printStackTrace();
+        }
+    }
+
     public HashMap<Customer, Map<Integer, Sale>> getLiabilities(){
         HashMap<Customer, Map<Integer, Sale>> customerSalesMap = new HashMap<>();
         List<Integer> customerIDs = new ArrayList<>();
@@ -1939,6 +2100,40 @@ public class Connection {
             e.printStackTrace();
         }
         return customerSalesMap;
+    }
+
+    public List<ItemDetail> getCustomerLiableItems(Customer customer){
+        List<ItemDetail> customerLiableItems = new ArrayList<>();
+        try{
+            statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM `customer_has_item_has_size` " +
+                            "INNER JOIN `sale` ON `sale`.`id` = `customer_has_item_has_size`.`sale_id` " +
+                            "INNER JOIN `item_has_size` ON `customer_has_item_has_size`.`item_has_size_id` = `item_has_size`.`id` " +
+                            "INNER JOIN `customer` ON `customer`.`id` = `sale`.`customer_id` " +
+                            "INNER JOIN `color_has_item_has_size` ON `color_has_item_has_size`.`item_has_size_id` = `item_has_size`.`id` " +
+                            "INNER JOIN `remains_status` ON `sale`.`remains_statuss_id` = `remains_status`.`id` " +
+                            "WHERE `customer_has_item_has_size`.`customer_id` = %d".formatted(customer.getId()));
+            while (resultSet.next()){
+                int customerId = resultSet.getInt("customer_id");
+                int colorHasItemHasSizeID = resultSet.getInt("color_has_item_has_size.id");
+                ItemDetail itemDetail = getItemDetail(colorHasItemHasSizeID);
+
+                int saleID = resultSet.getInt("sale.id");
+                String saleDate = resultSet.getString("sale.date");
+                double receivedMoney = resultSet.getDouble("sale.received_amount");
+                double totalCost = resultSet.getDouble("sale.total_cost");
+                int remainsStatus = resultSet.getInt("sale.remains_statuss_id");
+                Sale sale = new Sale(saleID, saleDate, receivedMoney, totalCost, remainsStatus);
+
+                if (receivedMoney < totalCost && remainsStatus == 4){
+                    System.out.println( "Liable Item ID: " + colorHasItemHasSizeID);
+                    customerLiableItems.add(itemDetail);
+                }
+            }
+        }catch(SQLException e){
+            e.printStackTrace();
+        }
+        return customerLiableItems;
     }
 
 

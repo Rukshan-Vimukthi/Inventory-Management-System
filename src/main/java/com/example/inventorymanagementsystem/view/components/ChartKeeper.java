@@ -126,6 +126,9 @@ public class ChartKeeper {
         salesLineChart.setTitle("Sales Dates by Item");
         salesLineChart.setAnimated(false);
         salesLineChart.getStyleClass().add("charts");
+        salesLineChart.setPrefHeight(500);
+//        salesLineChart.setMinHeight(30);
+//        salesLineChart.setMaxHeight(30);
 
         XYChart.Series<String, String> salesSeries = new XYChart.Series<>();
         salesSeries.setName("Sales");

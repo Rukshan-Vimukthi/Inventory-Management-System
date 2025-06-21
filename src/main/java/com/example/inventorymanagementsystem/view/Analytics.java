@@ -508,6 +508,7 @@ public class Analytics extends VBox implements ThemeObserver {
         HBox salesRevenueRow = new HBox(20);
         salesRevenueRow.setAlignment(Pos.CENTER);
         salesRevenueRow.setPadding(new Insets(10));
+        salesRevenueRow.setPrefHeight(300);
         HBox.setHgrow(revenueToggleComponent2, Priority.ALWAYS);
         stockToggleComponent2.prefWidthProperty().bind(salesRevenueRow.widthProperty().divide(2));
         reorderToggleComponent2.prefWidthProperty().bind(salesRevenueRow.widthProperty().divide(2));

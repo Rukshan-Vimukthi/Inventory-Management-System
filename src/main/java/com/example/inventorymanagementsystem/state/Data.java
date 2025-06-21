@@ -2,6 +2,7 @@ package com.example.inventorymanagementsystem.state;
 
 import com.example.inventorymanagementsystem.db.Connection;
 import com.example.inventorymanagementsystem.models.*;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.value.ObservableDoubleValue;
@@ -10,6 +11,7 @@ import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -36,6 +38,8 @@ public class Data {
 
     private SimpleIntegerProperty totalLiableCustomers;
 
+    private ObservableList<ItemDetail> customerLiableItems;
+
     private Double totalAccountsReceivable = 0.0D;
     private Double totalPoints = 0.0D;
 
@@ -59,10 +63,12 @@ public class Data {
         users = FXCollections.observableArrayList(connection.getUsers());
         customers = FXCollections.observableArrayList(connection.getCustomers());
         totalLiableCustomers = new SimpleIntegerProperty();
+        customerLiableItems = FXCollections.observableArrayList(new ArrayList<>());
 
         // Turn the liabilities map into an observable list which contains LiableCustomers objects
         liableCustomers = FXCollections.observableArrayList();
         refreshLiableCustomers();
+
     }
 
     public void refreshStock(){
@@ -103,6 +109,24 @@ public class Data {
     public void refreshCustomers(){
         customers.clear();
         customers.addAll(connection.getCustomers());
+    }
+
+    public void refreshCustomerLiableItems(Customer customer){
+        List<ItemDetail> freshItems = connection.getCustomerLiableItems(customer);
+
+        Platform.runLater(() -> {
+            customerLiableItems.clear();
+            customerLiableItems.addAll(freshItems);
+        });
+    }
+
+    public void setCustomerLiableItems(List<ItemDetail> items){
+        try {
+            customerLiableItems.clear();
+            customerLiableItems.addAll(items);
+        }catch(Exception e){
+            e.printStackTrace();
+        }
     }
 
     public static Data getInstance() throws SQLException{
@@ -233,5 +257,9 @@ public class Data {
 
     public double getTotalPoints(){
         return totalPoints;
+    }
+
+    public ObservableList<ItemDetail> getCustomerLiableItems(){
+        return customerLiableItems;
     }
 }
