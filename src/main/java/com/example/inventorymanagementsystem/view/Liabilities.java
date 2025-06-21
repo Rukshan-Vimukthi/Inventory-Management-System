@@ -2,17 +2,20 @@ package com.example.inventorymanagementsystem.view;
 
 import com.example.inventorymanagementsystem.db.Connection;
 import com.example.inventorymanagementsystem.models.Customer;
+import com.example.inventorymanagementsystem.models.ItemDetail;
 import com.example.inventorymanagementsystem.models.LiableCustomers;
 import com.example.inventorymanagementsystem.services.interfaces.ThemeObserver;
 import com.example.inventorymanagementsystem.state.Constants;
 import com.example.inventorymanagementsystem.state.Data;
 import com.example.inventorymanagementsystem.view.components.Card;
+import com.example.inventorymanagementsystem.view.components.FormField;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -247,9 +250,77 @@ public class Liabilities extends HBox implements ThemeObserver {
         refresh.getStyleClass().add("primary-button");
         refreshAllDataContainer.getChildren().add(refresh);
 
-        cardsAndTableContainer.getChildren().addAll(cardContainer, refreshAllDataContainer, liableCustomersTableView);
+
+        HBox tableAndFormContainer = new HBox();
+
+        VBox formContainer = new VBox();
+
+        FormField<ComboBox, Customer> customer = new FormField<>("Customer", ComboBox.class, Data.getInstance().getCustomers());
+        FormField<TextField, String> amountToClear = new FormField<>("Amount To Reduce", TextField.class);
+//        FormField<ComboBox, ItemDetail> boughtItem = new FormField<>("Item", ComboBox.class, Data.getInstance().getCustomerLiableItems());
+
+//        ComboBox<ItemDetail> boughtItems = new ComboBox<>();
+//        boughtItems.setItems(Data.getInstance().getCustomerLiableItems());
+
+        Button clearDebt = new Button("Pay Debt");
+        clearDebt.setOnAction(actionEvent -> {
+            try{
+                Connection.getInstance().clearCustomerDebt(customer.getComboBox().getSelectionModel().getSelectedItem(), Double.parseDouble(String.valueOf(amountToClear.getValue())), 0, false);
+            }catch(SQLException e){
+                e.printStackTrace();
+            }
+//            Customer selectedCustomer = (Customer)customer.getValue();
+//            double amount = Double.parseDouble(String.valueOf(amountToClear.getValue()));
+//            System.out.println("Selected customer: " + selectedCustomer.getFirstName());
+//            System.out.println("Amount to be clear: " + amount);
+        });
+
+        Button clearDebtUsingPoints = new Button("Pay Debt From Points");
+        clearDebtUsingPoints.setDisable(true);
+        clearDebtUsingPoints.setOnAction(actionEvent -> {
+            try{
+                Connection.getInstance().clearCustomerDebt(customer.getComboBox().getSelectionModel().getSelectedItem(), Double.parseDouble(String.valueOf(amountToClear.getValue())), 0, true);
+            }catch(SQLException e){
+                e.printStackTrace();
+            }
+//            Customer selectedCustomer = (Customer)customer.getValue();
+//            double amount = Double.parseDouble(String.valueOf(amountToClear.getValue()));
+//            System.out.println("Selected customer: " + selectedCustomer.getFirstName());
+//            System.out.println("Amount to be clear: " + amount);
+        });
+
+        HBox footer = new HBox();
+        footer.getChildren().addAll(clearDebt, clearDebtUsingPoints);
+        footer.setSpacing(10.0D);
+
+        customer.getComboBox().getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Customer>() {
+            @Override
+            public void changed(ObservableValue<? extends Customer> observable, Customer oldValue, Customer newValue) {
+//                boughtItems.getSelectionModel().clearSelection();
+                if (newValue != null) {
+                    System.out.println("Selected Customer name to pay off debt: " + newValue.getFirstName());
+//                    try {
+//                        Data.getInstance().refreshCustomerLiableItems(newValue);
+//                    } catch (SQLException e) {
+//                        e.printStackTrace();
+//                    }
+                    clearDebtUsingPoints.setDisable(!(newValue.getPoints() > 0.0D));
+                }
+            }
+        });
+
+        formContainer.getChildren().addAll(customer, amountToClear, footer);
+        formContainer.setMinWidth(200.0D);
+        formContainer.setMaxWidth(200.0D);
+        formContainer.setSpacing(10.0D);
+        tableAndFormContainer.getChildren().addAll(liableCustomersTableView, formContainer);
+        tableAndFormContainer.setSpacing(10.0D);
+
+        HBox.setHgrow(liableCustomersTableView, Priority.ALWAYS);
+
+        cardsAndTableContainer.getChildren().addAll(cardContainer, refreshAllDataContainer, tableAndFormContainer);
         cardsAndTableContainer.setSpacing(10.0D);
-        VBox.setVgrow(liableCustomersTableView, Priority.ALWAYS);
+        VBox.setVgrow(tableAndFormContainer, Priority.ALWAYS);
 
         VBox leftSideBar = new VBox();
         leftSideBar.setMinWidth(300.0D);

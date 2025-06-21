@@ -4,16 +4,20 @@ import com.example.inventorymanagementsystem.InventoryManagementApplication;
 import com.example.inventorymanagementsystem.db.Connection;
 import com.example.inventorymanagementsystem.models.User;
 import com.example.inventorymanagementsystem.state.Session;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Paint;
 import javafx.stage.Stage;
 
+import java.net.URISyntaxException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -21,12 +25,24 @@ public class SignIn extends VBox {
     TextField userNameField;
     PasswordField passwordField;
 
+    private Image spinnerGIF;
+    private ImageView spinnerImageView;
+
     Label errorLabel;
     public SignIn(Stage stage){
         this.setMinWidth(300.0D);
         this.setMaxWidth(300.0D);
         this.setMinHeight(180.0D);
         this.setPadding(new Insets(10.0D));
+
+        try {
+            spinnerGIF = new Image(String.valueOf(InventoryManagementApplication.class.getResource("images/spinner.gif").toURI()));
+            spinnerImageView = new ImageView(spinnerGIF);
+            spinnerImageView.setFitWidth(20.0D);
+            spinnerImageView.setFitHeight(20.0D);
+        }catch(URISyntaxException exception){
+            exception.printStackTrace();
+        }
 
         errorLabel = new Label();
         errorLabel.setTextFill(Paint.valueOf("#FF0000"));
@@ -51,6 +67,19 @@ public class SignIn extends VBox {
         signInButton.setOnAction(actionEvent -> {
             errorLabel.setText("");
             try {
+                Thread thread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Platform.runLater(new Runnable() {
+                            @Override
+                            public void run() {
+                                signInButton.setGraphic(spinnerImageView);
+                            }
+                        });
+                    }
+                });
+                thread.start();
+
                 ResultSet resultSet = Connection.getInstance().getUser(userNameField.getText(), passwordField.getText());
                 if (resultSet != null) {
                     try {
@@ -73,9 +102,11 @@ public class SignIn extends VBox {
                     }
                 } else {
                     errorLabel.setText("Invalid username or password");
+                    signInButton.setGraphic(null);
                 }
             }catch(SQLException e){
                 e.printStackTrace();
+                signInButton.setGraphic(null);
             }
         });
 
