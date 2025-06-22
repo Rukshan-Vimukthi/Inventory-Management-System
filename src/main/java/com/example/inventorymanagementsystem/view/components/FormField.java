@@ -239,6 +239,10 @@ public class FormField<C extends Control, M> extends VBox implements ThemeObserv
         return (C) node;
     }
 
+    public void setEnabled(boolean isEnabled){
+        node.setDisable(!isEnabled);
+    }
+
 
     @Override
     public void lightTheme() {

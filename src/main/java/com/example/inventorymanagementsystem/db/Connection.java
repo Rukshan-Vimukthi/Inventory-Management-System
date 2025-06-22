@@ -26,7 +26,7 @@ public class Connection {
     private Connection() throws SQLException{
         String dbLink = "jdbc:mysql://localhost:3306/sandyafashioncorner?useSSL=false&allowPublicKeyRetrieval=true";
         String username = "root";
-        String password = "Sandun@2008.sd";
+        String password = "root@techlix2002";
 //        String password = "Sandun@2008.sd";
 //            String password = "root@2025sfc";
         connection = DriverManager.getConnection(dbLink, username, password);
@@ -592,7 +592,7 @@ public class Connection {
      * Update the information of the item selected
      * @return
      */
-    public boolean updateItem(int itemID, int itemHasSizeID, int itemHasSizeHasStockID, int colorHasItemHasSizeId, String name, Integer qty, Integer remainingQty, Double price, Double sellingPrice, int stockID, int sizeID, int colorID){
+    public boolean updateItem(int itemID, int itemHasSizeID, int itemHasSizeHasStockID, int colorHasItemHasSizeId, String name, Integer qty, Integer remainingQty, Double price, Double sellingPrice, int stockID, int sizeID, int colorID, String newImagePath){
         try{
             statement = connection.createStatement();
             statement.execute(
@@ -617,12 +617,12 @@ public class Connection {
             }
 
             if (colorHasItemHasSizeId == 0) {
-                statement.execute("INSERT INTO `color_has_item_has_size` (`color_id`, `item_has_size_id`) " +
-                        "VALUES('%d', '%d')");
+                statement.execute("INSERT INTO `color_has_item_has_size` (`color_id`, `item_has_size_id`, `image_path`) " +
+                        "VALUES('%d', '%d', '%s')");
             }else{
                 statement.execute("UPDATE `color_has_item_has_size` SET " +
-                        "`color_id` = %d WHERE `id` = %d".formatted(
-                                colorID, colorHasItemHasSizeId
+                        "`color_id` = %d, `image_path` = '%s' WHERE `id` = %d".formatted(
+                                colorID, newImagePath, colorHasItemHasSizeId
                         ));
             }
             Data.getInstance().refreshItemDetails();

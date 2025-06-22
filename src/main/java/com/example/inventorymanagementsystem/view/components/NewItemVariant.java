@@ -55,16 +55,35 @@ public class NewItemVariant extends HBox {
         if (itemDetail != null){
             System.out.println("Item Stock ID: " + itemDetail.getStockID());
             stock = new FormField<>("Stock", ComboBox.class, Data.getInstance().getStocks(), Connection.getInstance().getStock(itemDetail.getStockID()));
+            stock.setEnabled(false);
             sizeOfItem = new FormField<>("Size", ComboBox.class, Data.getInstance().getSize(), Connection.getInstance().getSize((itemDetail.getSizeID())));
+            sizeOfItem.setEnabled(false);
             colorOfItem = new FormField<>("Color", ComboBox.class, Data.getInstance().getColors(), Connection.getInstance().getColorByCode(itemDetail.getItemColor()));
+            colorOfItem.setEnabled(false);
 
             priceOfItem = new FormField<>("Cost", TextField.class);
             priceOfItem.setValue(String.valueOf(itemDetail.getPrice()));
+            priceOfItem.setEnabled(false);
+
             sellingPriceOfItem = new FormField<>("Selling Price", TextField.class);
             sellingPriceOfItem.setValue(String.valueOf(itemDetail.getSellingPrice()));
+            sellingPriceOfItem.setEnabled(false);
+
             orderedQty = new FormField<>("Ordered Qty", TextField.class);
             orderedQty.setValue(String.valueOf(itemDetail.getOrderedQty()));
+            orderedQty.setEnabled(false);
+
+            selectImageButton = new Button("Select an Image");
+            selectImageButton.setOnAction(new EventHandler<ActionEvent>() {
+                @Override
+                public void handle(ActionEvent event) {
+                    FileChooser fileChooser = new FileChooser();
+                    selectedImage = fileChooser.showOpenDialog(null);
+                }
+            });
+
             isUpdate = true;
+
             itemHasSizeID = itemDetail.getItemHasSizeID();
             itemHasSizeHasStockID = itemDetail.getItemHasSizeHasStockID();
             colorHasItemHasSizeID = itemDetail.getColorHasItemHasSizeID();

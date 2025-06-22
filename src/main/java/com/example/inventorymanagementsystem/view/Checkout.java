@@ -231,7 +231,8 @@ public class Checkout implements ThemeObserver {
         discount.setOnAction(e -> addButton.fire());
 
         Region theSpace = new Region();
-        theSpace.setMinHeight(15);
+        theSpace.setMinHeight(10);
+        theSpace.setMaxHeight(10);
 
         Text customerTxt = new Text("Customer Information");
 
@@ -453,8 +454,8 @@ public class Checkout implements ThemeObserver {
 
         // For the adding items section
         VBox inputSection = new VBox();
-        inputSection.setSpacing(10);
-        inputSection.setPadding(new Insets(10, 50, 0, 0));
+        inputSection.setSpacing(8.0D);
+        inputSection.setPadding(new Insets(0, 50, 0, 0));
         inputSection.setAlignment(Pos.TOP_CENTER);
         inputSection.setMaxWidth(Double.MAX_VALUE);
         inputSection.setMaxWidth(250);
@@ -1266,8 +1267,11 @@ public class Checkout implements ThemeObserver {
         sellingItemText.getStyleClass().add("heading-texts");
         sellingItemText.setStyle("-fx-font-size: 19px;");
 
-        FlowPane sellingItemCardContainer = new FlowPane();
-        sellingItemCardContainer.setPadding(new Insets(20, 8, 8, 8 ));
+
+        ScrollPane scrollPane = new ScrollPane();
+
+        HBox sellingItemCardContainer = new HBox();
+        sellingItemCardContainer.setPadding(new Insets(8 ));
         List<SoldProducts> soldData = Connection.getInstance().getTop10SellingProducts();
         List<SoldProducts> topFive =  soldData;
         System.out.println("Top 5 size: " + topFive.size());
@@ -1284,8 +1288,13 @@ public class Checkout implements ThemeObserver {
 
         sellingItemCardContainer.setMaxWidth(Double.MAX_VALUE);
         sellingItemCardContainer.setAlignment(Pos.CENTER);
-        sellingItemCardContainer.setHgap(10);
-        sellingItemCardContainer.setVgap(10);
+        sellingItemCardContainer.setSpacing(10);
+        sellingItemCardContainer.setStyle("-fx-background-color: #222;");
+
+        scrollPane.setContent(sellingItemCardContainer);
+        scrollPane.setMinHeight(80.0D);
+        scrollPane.setMaxHeight(80.0D);
+        scrollPane.setBackground(Background.EMPTY);
 
         sellingItemContainer.setPadding(new Insets(-30, 0, 0, 0));
         sellingItemContainer.setAlignment(Pos.CENTER);
@@ -1298,7 +1307,7 @@ public class Checkout implements ThemeObserver {
         VBox mainFooterSec = new VBox();
         mainFooterSec.setAlignment(Pos.CENTER);
         mainFooterSec.getStyleClass().add("footer-section");
-        mainFooterSec.setPadding(new Insets(40, 0, 50, 20));
+        mainFooterSec.setPadding(new Insets(10, 0, 10, 20));
         HBox bottomSection = new HBox();
 
         bottomSection.setPrefHeight(30);
@@ -1308,26 +1317,27 @@ public class Checkout implements ThemeObserver {
 
         HBox balanceSec = new HBox();
         balanceSec.setAlignment(Pos.CENTER);
-        balanceSec.setPadding(new Insets(19, 0, 10, 0));
+        balanceSec.setPadding(new Insets(10, 0, 0, 0));
         balanceSec.setSpacing(10);
         balanceSec.getChildren().addAll(savePoints, balanceTxt, balance, checkOutButton);
 
         bottomSection.getChildren().addAll(payFromPoints, discountForAll, receivedFund, totalCostTxt, totalCost, totalDiscountTxt, totalDiscount, grandTotalTxt, grandTotal);
         mainFooterSec.getChildren().addAll(bottomSection, balanceSec);
-        wholeBottomSec.getChildren().addAll(sellingItemContainer, mainFooterSec);
+        wholeBottomSec.getChildren().addAll(mainFooterSec);
         headerSection.getChildren().addAll(navbar);
         inputSection.getChildren().addAll(itemTxt, itemComboBox,itemId, amount, discount, addButton, theSpace, customerTxt, customerPointsContainer, returningItemsContainer, firstName, lastName, phone, eMail, addCustomerSec, itemMessageContainer);
         inputSection.setAlignment(Pos.CENTER_LEFT);
         Region theFormMessageSpace = new Region();
-        theFormMessageSpace.setPrefHeight(10);
+        theFormMessageSpace.setPrefHeight(5);
         inputVerticalSec.getChildren().addAll(inputSection, theFormMessageSpace);
 
         // The center complete container
         HBox mainCenterContainerParent = new HBox( );
         mainCenterContainerParent.setAlignment(Pos.CENTER);
         VBox mainCenterContainer = new VBox();
-        mainCenterContainer.getChildren().addAll(mainTable, floatingContainer);
-        VBox.setVgrow(mainTable,Priority.ALWAYS);
+        mainCenterContainer.getChildren().addAll(mainTable, floatingContainer, scrollPane);
+        mainCenterContainer.setPadding(new Insets(0.0D, 0.0D, 20.0D, 0.0D));
+        VBox.setVgrow(mainTable, Priority.ALWAYS);
 
         centerContainer.getChildren().addAll(inputVerticalSec);
         mainCenterContainerParent.getChildren().addAll(centerContainer, mainCenterContainer);
