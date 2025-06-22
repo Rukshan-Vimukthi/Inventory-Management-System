@@ -291,47 +291,17 @@ public class Checkout implements ThemeObserver {
             }
 
             try {
-                int itemHasSizeId = Integer.parseInt(returningItemId.getText());
-                selectedCustomer = (Customer) registeredCustomers.getField().getSelectionModel().getSelectedItem();
-
-                if (selectedCustomer == null) {
-                    itemMessageContainer.setText("❌ Please select a customer.");
-                    return;
-                }
-
+                int itemHasSizeId = Integer.parseInt(idText);
                 int customerId = selectedCustomer.getId();
 
-                String updateQuery = "UPDATE customer_has_item_has_size SET item_status_id = 2 WHERE item_has_size_id = ? AND customer_id = ?";
-                PreparedStatement updateStmt = dbConnection.getJdbcConnection().prepareStatement(updateQuery);
-                updateStmt.setInt(1, itemHasSizeId);
-                updateStmt.setInt(2, customerId);
-                updateStmt.executeUpdate();
+                boolean success = dbConnection.handleItemReturn(itemHasSizeId, customerId, itemMessageContainer);
 
-                String colorQuery = "SELECT color_id FROM color_has_item_has_size WHERE item_has_size_id = ? LIMIT 1";
-                PreparedStatement colorStmt = dbConnection.getJdbcConnection().prepareStatement(colorQuery);
-                colorStmt.setInt(1, itemHasSizeId);
-                ResultSet colorRs = colorStmt.executeQuery();
-
-                if (!colorRs.next()) {
-                    itemMessageContainer.setText("❌ Color ID not found for item_has_size_id " + itemHasSizeId);
-                    return;
+                if (success) {
+                    itemMessageContainer.setText("✅ Successfully returned item and updated stock.");
                 }
-
-                int colorId = colorRs.getInt("color_id");
-
-                String insertQuery = "INSERT INTO color_has_item_has_size (color_id, item_has_size_id, image_path) VALUES (?, ?, NULL)";
-                PreparedStatement insertStmt = dbConnection.getJdbcConnection().prepareStatement(insertQuery);
-                insertStmt.setInt(1, colorId);
-                insertStmt.setInt(2, itemHasSizeId);
-                insertStmt.executeUpdate();
-
-                itemMessageContainer.setText("✅ Successfully returned item and updated stock.");
 
             } catch (NumberFormatException e) {
                 itemMessageContainer.setText("❌ ID must be a number.");
-            } catch (SQLException e) {
-                e.printStackTrace();
-                itemMessageContainer.setText("❌ Database error: " + e.getMessage());
             }
         });
 

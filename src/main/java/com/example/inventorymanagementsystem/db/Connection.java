@@ -5,6 +5,7 @@ import com.example.inventorymanagementsystem.state.Data;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.chart.XYChart;
+import javafx.scene.control.Label;
 
 import java.sql.*;
 import java.time.LocalDate;
@@ -26,7 +27,7 @@ public class Connection {
     private Connection() throws SQLException{
         String dbLink = "jdbc:mysql://localhost:3306/sandyafashioncorner?useSSL=false&allowPublicKeyRetrieval=true";
         String username = "root";
-        String password = "root@techlix2002";
+        String password = "Sandun@2008.sd";
 //        String password = "Sandun@2008.sd";
 //            String password = "root@2025sfc";
         connection = DriverManager.getConnection(dbLink, username, password);
@@ -617,12 +618,12 @@ public class Connection {
             }
 
             if (colorHasItemHasSizeId == 0) {
-                statement.execute("INSERT INTO `color_has_item_has_size` (`color_id`, `item_has_size_id`, `image_path`) " +
-                        "VALUES('%d', '%d', '%s')");
+                statement.execute("INSERT INTO `color_has_item_has_size` (`color_id`, `item_has_size_id`) " +
+                        "VALUES('%d', '%d')");
             }else{
                 statement.execute("UPDATE `color_has_item_has_size` SET " +
-                        "`color_id` = %d, `image_path` = '%s' WHERE `id` = %d".formatted(
-                                colorID, newImagePath, colorHasItemHasSizeId
+                        "`color_id` = %d WHERE `id` = %d".formatted(
+                                colorID, colorHasItemHasSizeId
                         ));
             }
             Data.getInstance().refreshItemDetails();
@@ -841,6 +842,45 @@ public class Connection {
             e.printStackTrace();
         }
         return itemDetail;
+    }
+
+    public boolean handleItemReturn (int itemHasSizeId, int customerId, Label messageLabel) {
+        try {
+            String updateQuery = "UPDATE customer_has_item_has_size SET  item_status_id = 2 WHERE item_has_size_id = ? AND customer_id = ?";
+            PreparedStatement updateStmt = connection.prepareStatement(updateQuery);
+            updateStmt.setInt(1, itemHasSizeId);
+            updateStmt.setInt(2, customerId);
+            updateStmt.executeUpdate();
+
+            String colorQuery = "SELECT color_id FROM color_has_item_has_size WHERE item_has_size_id = ? LIMIT 1";
+            PreparedStatement colorStmt = connection.prepareStatement(colorQuery);
+            colorStmt.setInt(1, itemHasSizeId);
+            ResultSet colorRs = colorStmt.executeQuery();
+
+            if (!colorRs.next()) {
+                messageLabel.setText("❌ Color ID not found for item_has_size_id " + itemHasSizeId);
+                return false;
+            }
+
+            int colorId = colorRs.getInt("color_id");
+            String insertQuery = "INSERT INTO color_has_item_has_size (color_id, item_has_size_id, image_path) VALUES (?, ?, NULL)";
+            PreparedStatement insertStmt = connection.prepareStatement(insertQuery);
+            insertStmt.setInt(1, colorId);
+            insertStmt.setInt(2, itemHasSizeId);
+            insertStmt.executeUpdate();
+
+            String updateStockQuery = "UPDATE item_has_size SET remaining_qty = remaining_qty + 1 WHERE id = ?";
+            PreparedStatement stockStmt = connection.prepareStatement(updateStockQuery);
+            stockStmt.setInt(1, itemHasSizeId);
+            stockStmt.executeUpdate();
+
+            return true;
+
+        } catch (SQLException  e) {
+            messageLabel.setText("❌ DB error: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public ItemDetail getItemDetailByID(int itemId) {
