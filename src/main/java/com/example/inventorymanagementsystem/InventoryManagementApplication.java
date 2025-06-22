@@ -11,8 +11,10 @@ import com.example.inventorymanagementsystem.view.*;
 import com.example.inventorymanagementsystem.view.components.TabBuilder;
 import com.example.inventorymanagementsystem.view.dialogs.SignIn;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.concurrent.Task;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
@@ -21,6 +23,8 @@ import javafx.geometry.Pos;
 import javafx.geometry.Side;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -32,6 +36,7 @@ import org.kordamp.ikonli.fontawesome5.FontAwesomeSolid;
 import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.sql.SQLException;
 
 public class InventoryManagementApplication extends Application implements com.example.inventorymanagementsystem.services.interfaces.ThemeObserver, AuthenticateStateListener {
@@ -59,6 +64,9 @@ public class InventoryManagementApplication extends Application implements com.e
     Label icon;
     HBox buttonContainer;
     ProgressIndicator progressIndicator;
+    ImageView spinner;
+
+    Button retry;
 
     SignIn signIn;
     @Override
@@ -86,7 +94,7 @@ public class InventoryManagementApplication extends Application implements com.e
         icon.setStyle("-fx-font-size: 82px;");
 
         buttonContainer = new HBox();
-        Button retry = new Button("Retry");
+        retry = new Button("Retry");
         retry.getStyleClass().add("primary-button");
         retry.setStyle("-fx-font-size: 24px;");
         retry.setPadding(new Insets(15.0D, 10.0D, 15.0D, 10.0D));
@@ -101,10 +109,36 @@ public class InventoryManagementApplication extends Application implements com.e
         buttonContainer.setSpacing(10.0D);
         buttonContainer.setAlignment(Pos.CENTER);
 
-        retry.setOnAction(actionEvent -> reconnectAndInitComponent());
+        retry.setOnAction(actionEvent -> {
+            Thread thread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    Platform.runLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            spinner.setFitWidth(40.0D);
+                            spinner.setFitHeight(40.0D);
+                            retry.setGraphic(spinner);
+                        }
+                    });
+                    reconnectAndInitComponent();
+                }
+            });
+            thread.start();
+        });
 
         progressIndicator = new ProgressIndicator();
         progressIndicator.setProgress(50.0D);
+
+        Image image = null;
+        try {
+            image = new Image(String.valueOf(InventoryManagementApplication.class.getResource("images/spinner.gif").toURI()));
+            spinner = new ImageView(image);
+            spinner.setFitWidth(180.0D);
+            spinner.setFitHeight(180.0D);
+        }catch(URISyntaxException e){
+            e.printStackTrace();
+        }
 
 //        messageContainer.getChildren().addAll(icon, message, buttonContainer);
         messageContainer.setSpacing(20.0D);
@@ -112,6 +146,9 @@ public class InventoryManagementApplication extends Application implements com.e
         messageContainer.setFillWidth(true);
         messageContainer.setAlignment(Pos.CENTER);
         VBox.setVgrow(message, Priority.ALWAYS);
+        if (spinner != null) {
+            messageContainer.getChildren().add(spinner);
+        }
 
         titleBar = new TitleBar(stage);
 
@@ -140,22 +177,36 @@ public class InventoryManagementApplication extends Application implements com.e
         stage.setScene(scene);
         stage.show();
 
-        try{
-            /**
-            /* try to create the instance of the Data object. under the hood, it creates the connection instance to
-            /* load data. if initializing database connection fails, this throws a SQLException
-             */
-            messageContainer.getChildren().removeAll(messageContainer.getChildren());
-            messageContainer.getChildren().add(progressIndicator);
-            Data.getInstance();
-            authenticate();
+        /**
+         /* try to create the instance of the Data object. under the hood, it creates the connection instance to
+         /* load data. if initializing database connection fails, this throws a SQLException
+         */
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Data.getInstance();
+                    Platform.runLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            authenticate();
+                        }
+                    });
+                }catch(SQLException exception){
+                    exception.printStackTrace();
+                    Platform.runLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            messageContainer.getChildren().removeAll(messageContainer.getChildren());
+                            messageContainer.getChildren().addAll(icon, message, buttonContainer);
+                            scene.setRoot(borderPane);
+                        }
+                    });
+                }
+            }
+        });
+        thread.start();
 
-//            initComponents();
-        }catch (SQLException e) {
-            messageContainer.getChildren().remove(progressIndicator);
-            messageContainer.getChildren().addAll(icon, message, buttonContainer);
-            scene.setRoot(borderPane);
-        }
     }
 
     public void switchTabs(){
@@ -200,12 +251,17 @@ public class InventoryManagementApplication extends Application implements com.e
             if (!user.getRole().equals("Admin")) {
                 tabPane.getSelectionModel().select(checkoutTab);
             }
-            messageContainer.getChildren().removeAll(messageContainer.getChildren());
-            try {
-                initComponents();
-            }catch(SQLException exception){
-                exception.printStackTrace();
-            }
+            Platform.runLater(new Runnable() {
+                @Override
+                public void run() {
+                    messageContainer.getChildren().removeAll(messageContainer.getChildren());
+                    try {
+                        initComponents();
+                    }catch(SQLException exception){
+                        exception.printStackTrace();
+                    }
+                }
+            });
         }
     }
 
@@ -217,20 +273,37 @@ public class InventoryManagementApplication extends Application implements com.e
 
 
     public void reconnectAndInitComponent(){
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                retry.setGraphic(spinner);
+            }
+        });
         try{
             /**
              /* try to create the instance of the Data object. under the hood, it creates the connection instance to
              /* load data. if initializing database connection fails, this throws a SQLException
              */
-            messageContainer.getChildren().removeAll(messageContainer.getChildren());
-            messageContainer.getChildren().add(progressIndicator);
+
             Data.getInstance();
+            Platform.runLater(new Runnable() {
+                @Override
+                public void run() {
+                    retry.setGraphic(null);
+                }
+            });
             authenticate();
 //            initComponents();
         }catch (SQLException e){
-            messageContainer.getChildren().removeAll(messageContainer.getChildren());
-            messageContainer.getChildren().addAll(icon, message, buttonContainer);
-            scene.setRoot(borderPane);
+            Platform.runLater(new Runnable() {
+                @Override
+                public void run() {
+                    messageContainer.getChildren().removeAll(messageContainer.getChildren());
+                    messageContainer.getChildren().addAll(icon, message, buttonContainer);
+                    scene.setRoot(borderPane);
+                    retry.setGraphic(null);
+                }
+            });
         }
     }
 
@@ -345,8 +418,13 @@ public class InventoryManagementApplication extends Application implements com.e
         if (!Session.isLoggedIn()){
             scene.setRoot(borderPane);
             signIn = new SignIn(stage);
-            messageContainer.getChildren().removeAll(messageContainer.getChildren());
-            messageContainer.getChildren().add(signIn);
+            Platform.runLater(new Runnable() {
+                @Override
+                public void run() {
+                    messageContainer.getChildren().removeAll(messageContainer.getChildren());
+                    messageContainer.getChildren().add(signIn);
+                }
+            });
         }
     }
 

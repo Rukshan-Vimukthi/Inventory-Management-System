@@ -57,36 +57,7 @@ public class AddNewItem extends Dialog<Boolean> {
         flowPane.setHgap(10.0D);
 
         itemName = new FormField<>("Item Name", TextField.class);
-//        itemQty = new FormField<>("Item Qty", TextField.class);
-//        remainingQty = new FormField<>("Remaining Qty", TextField.class);
-//        remainingQty.setDisable(itemDetail == null);
-//        itemOrderedPrice = new FormField<>("Bought Price", TextField.class);
-//        itemSellingPrice = new FormField<>("Selling Price", TextField.class);
-//        itemColor = new FormField<>("Color", ColorPicker.class);
-
-//        if (itemDetail == null) {
-//            itemSize = new FormField<>("Size", ComboBox.class, Data.getInstance().getSize());
-//            itemStock = new FormField<>("Stock", ComboBox.class, Data.getInstance().getStocks());
-//        }else{
-//            itemSize = new FormField<>(
-//                    "Size",
-//                    ComboBox.class,
-//                    Data.getInstance().getSize(),
-//                    Connection.getInstance().getSize(itemDetail.getSizeID()));
-//
-//            itemStock = new FormField<>(
-//                    "Stock",
-//                    ComboBox.class,
-//                    Data.getInstance().getStocks(),
-//                    Connection.getInstance().getStock(itemDetail.getSizeID()));
-//
-//            itemName.setValue(itemDetail.getName());
-//            itemQty.setValue(String.valueOf(itemDetail.getOrderedQty()));
-//            remainingQty.setValue(String.valueOf(itemDetail.getRemainingQty()));
-//            itemOrderedPrice.setValue(String.valueOf(itemDetail.getPrice()));
-//            itemSellingPrice.setValue(String.valueOf(itemDetail.getSellingPrice()));
-//            itemColor.setValue(itemDetail.getItemColor());
-//        }
+        itemName.setEnabled(itemDetail == null);
 
         itemName.setMinWidth(400.0D);
 
@@ -96,13 +67,6 @@ public class AddNewItem extends Dialog<Boolean> {
 
         flowPane.getChildren().addAll(
                 itemName
-//                itemQty,
-//                remainingQty,
-//                itemOrderedPrice,
-//                itemSellingPrice,
-//                itemColor,
-//                itemSize,
-//                itemStock
         );
 
         HBox footer = new HBox();
@@ -112,72 +76,73 @@ public class AddNewItem extends Dialog<Boolean> {
             @Override
             public void handle(ActionEvent event) {
                 System.out.println((String) itemName.getValue());
-//                System.out.println(itemQty.getValue());
-//                System.out.println(itemOrderedPrice.getValue());
-//                System.out.println(itemSellingPrice.getValue());
-//                System.out.println(itemStock.getValue());
-//                System.out.println(itemSize.getValue());
-//                System.out.println("#" + ((String)itemColor.getValue()).split("0x")[1]);
                 try {
-                    int id = Connection.getInstance().addSingleItem((String) itemName.getValue());
-                    if (id > 0) {
-                        for (NewItemVariant itemVariant : variantContainer.getItems()) {
-                            int stockID = itemVariant.getStockID();
-                            int sizeID = itemVariant.getSizeID();
-                            int colorID = itemVariant.getColorID();
-                            double price = itemVariant.getPrice();
-                            double sellingPrice = itemVariant.getSellingPrice();
-                            int orderedQty = itemVariant.getOrderedQty();
-                            File selectedFile = itemVariant.getSelectedImage();
+                    int id = 0;
+                    if (itemDetail == null) {
+                        id = Connection.getInstance().addSingleItem((String) itemName.getValue());
+                    }
 
-                            if (itemVariant.isUpdate()) {
-                                System.out.println("Item Should Be Updated!");
-                                Connection.getInstance().updateItem(
-                                        itemVariant.getItemId(),
-                                        itemVariant.getItemHasSizeID(),
-                                        itemVariant.getItemHasSizeHasStockID(),
-                                        itemVariant.getColorHasItemHasSizeID(),
-                                        (String) itemName.getValue(),
-                                        orderedQty,
-                                        orderedQty,
-                                        price,
-                                        sellingPrice, stockID,
-                                        sizeID,
-                                        colorID
-                                );
-                            } else {
-                                Path destinationPath = Paths.get(Constants.itemsMediaDirectory);
-                                try {
-                                    Files.createDirectories(destinationPath);
-                                } catch (IOException exception) {
-                                    exception.printStackTrace();
-                                }
+                    for (NewItemVariant itemVariant : variantContainer.getItems()) {
+                        int stockID = itemVariant.getStockID();
+                        int sizeID = itemVariant.getSizeID();
+                        int colorID = itemVariant.getColorID();
+                        double price = itemVariant.getPrice();
+                        double sellingPrice = itemVariant.getSellingPrice();
+                        int orderedQty = itemVariant.getOrderedQty();
+                        File selectedFile = itemVariant.getSelectedImage();
 
-                                Path destinationFilePath = destinationPath.resolve(selectedFile.getName());
-                                Path sourcePath = selectedFile.toPath();
-
-                                String selectedFilePath = null;
-
-                                try {
-                                    Files.copy(sourcePath, destinationFilePath, StandardCopyOption.REPLACE_EXISTING);
-                                    selectedFilePath = destinationFilePath.toAbsolutePath().toString().replace('\\', '/');
-                                    System.out.println(selectedFilePath);
-                                } catch (IOException exception) {
-                                    Alert alert = new Alert(Alert.AlertType.ERROR);
-                                    alert.setContentText("Could not copy the image to the destination location");
-                                    alert.show();
-                                }
-                                Connection.getInstance().addNewVariant(
-                                        id,
-                                        stockID,
-                                        sizeID,
-                                        colorID,
-                                        orderedQty,
-                                        price,
-                                        sellingPrice,
-                                        selectedFilePath
-                                );
+                        String selectedFilePath = null;
+                        if (selectedFile != null) {
+                            Path destinationPath = Paths.get(Constants.itemsMediaDirectory);
+                            try {
+                                Files.createDirectories(destinationPath);
+                            } catch (IOException exception) {
+                                exception.printStackTrace();
                             }
+
+                            Path destinationFilePath = destinationPath.resolve(selectedFile.getName());
+                            Path sourcePath = selectedFile.toPath();
+
+                            try {
+                                Files.copy(sourcePath, destinationFilePath, StandardCopyOption.REPLACE_EXISTING);
+                                selectedFilePath = destinationFilePath.toAbsolutePath().toString().replace('\\', '/');
+                                System.out.println(selectedFilePath);
+                            } catch (IOException exception) {
+                                Alert alert = new Alert(Alert.AlertType.ERROR);
+                                alert.setContentText("Could not copy the image to the destination location");
+                                alert.show();
+                            }
+                        }
+
+                        if (itemVariant.isUpdate()) {
+                            System.out.println("Item Should Be Updated!");
+
+                            Connection.getInstance().updateItem(
+                                    itemVariant.getItemId(),
+                                    itemVariant.getItemHasSizeID(),
+                                    itemVariant.getItemHasSizeHasStockID(),
+                                    itemVariant.getColorHasItemHasSizeID(),
+                                    (String) itemName.getValue(),
+                                    orderedQty,
+                                    orderedQty,
+                                    price,
+                                    sellingPrice, stockID,
+                                    sizeID,
+                                    colorID,
+                                    selectedFilePath
+                            );
+                        } else {
+
+                            Connection.getInstance().addNewVariant(
+                                    id,
+                                    stockID,
+                                    sizeID,
+                                    colorID,
+                                    orderedQty,
+                                    price,
+                                    sellingPrice,
+                                    selectedFilePath
+                            );
                         }
                     }
 
