@@ -14,6 +14,10 @@ public class Settings implements ISettings {
         initSettingsFile();
     }
 
+    /**
+     * initialize the settings file. prepare everything from creating the dir and file if it does not exist and write
+     * the default settings if it does not exist
+     */
     private void initSettingsFile(){
         File applicationDir = new File(Constants.APPLICATION_DIR);
         if (!applicationDir.exists()){
