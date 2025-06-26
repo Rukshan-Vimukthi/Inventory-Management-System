@@ -54,11 +54,9 @@
     -fx-border-radius: 6px;
     -fx-background-radius: 6px;
     -fx-font-size: 14px;
-    -fx-fill: white;
+    -fx-fill: lightBlue;
     -fx-prompt-text-fill: gray;
 }
-
-
 
 .default-dropdowns .text-input{
     -fx-prompt-text-fill: white;
@@ -277,5 +275,3 @@
     -fx-text-fill: lightGray;
     -fx-font-size: 14px;
 }
-
-

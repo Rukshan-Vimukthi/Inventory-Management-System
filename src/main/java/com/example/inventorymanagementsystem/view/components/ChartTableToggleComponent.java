@@ -54,4 +54,9 @@ public class ChartTableToggleComponent extends VBox {
         this.setSpacing(10);
         this.getChildren().addAll(container, buttonContainer);
     }
+
+    public TableView<?> getTable() {
+        return this.table;
+    }
+
 }

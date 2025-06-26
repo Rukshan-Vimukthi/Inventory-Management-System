@@ -1,6 +1,7 @@
 module com.example.inventorymanagementsystem {
-    requires javafx.controls;
     requires javafx.fxml;
+    requires javafx.controls;
+    requires javafx.graphics;
 
     requires org.controlsfx.controls;
     requires com.dlsc.formsfx;
@@ -9,8 +10,11 @@ module com.example.inventorymanagementsystem {
     requires org.kordamp.ikonli.core;
     requires org.kordamp.ikonli.fontawesome5;
     requires java.sql;
-    requires java.prefs;
     requires com.google.gson;
+    requires org.apache.poi.ooxml;
+    requires org.apache.pdfbox;
+    requires java.desktop;
+    requires java.prefs;
 //    requires org.apache.commons.configuration2;
 
     opens com.example.inventorymanagementsystem to javafx.fxml;

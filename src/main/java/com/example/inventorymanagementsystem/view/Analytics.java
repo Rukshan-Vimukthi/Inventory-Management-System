@@ -5,6 +5,8 @@ import com.example.inventorymanagementsystem.InventoryManagementApplicationContr
 import com.example.inventorymanagementsystem.db.Connection;
 import com.example.inventorymanagementsystem.models.*;
 import com.example.inventorymanagementsystem.services.interfaces.ThemeObserver;
+import com.example.inventorymanagementsystem.services.utils.ExcelExportUtil;
+import com.example.inventorymanagementsystem.services.utils.PdfExportUtil;
 import com.example.inventorymanagementsystem.view.components.*;
 import javafx.animation.ScaleTransition;
 import javafx.collections.ObservableList;
@@ -13,14 +15,32 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.scene.SnapshotParameters;
 import javafx.scene.chart.*;
 import javafx.scene.control.*;
+import javafx.scene.image.WritableImage;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
+import javafx.stage.FileChooser;
 import javafx.util.Duration;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import javax.imageio.ImageIO;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.util.*;
@@ -665,14 +685,55 @@ public class Analytics extends VBox implements ThemeObserver {
         inventoryLink.getStyleClass().add("default-buttons");
 
         HBox footerSEc = new HBox();
-        ComboBox<String> footerExports = new ComboBox<>(
-                FXCollections.observableArrayList(
-                        Arrays.asList(
-                                "Export as PDF",
-                                "Export as Excel"
-                        )
-                )
-        );
+        ComboBox<String> footerExports = new ComboBox<>(FXCollections.observableArrayList("Export as PDF", "Export as Excel"));
+        footerExports.setOnAction(e -> {
+            String selectedFormat = footerExports.getValue();
+            if (selectedFormat == null) return;
+
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setInitialFileName("report");
+
+            List<TableView<?>> tables = List.of(
+                    currentSalesTable,
+                    stockToggleComponent.getTable(),
+                    reorderToggleComponent.getTable(),
+                    revenueToggleComponent.getTable()
+            );
+
+            List<String> titles = List.of(
+                    "Current Sales",
+                    "Stock Levels",
+                    "Reorder Summary",
+                    "Revenue Breakdown"
+            );
+
+            if ("Export as PDF".equals(selectedFormat)) {
+                fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF files (*.pdf)", "*.pdf"));
+                File file = fileChooser.showSaveDialog(null);
+
+                if (file != null) {
+                    try {
+                        PdfExportUtil.exportMultipleTablesToPdf(tables, titles, file);
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            } else if ("Export as Excel".equals(selectedFormat)) {
+                fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel files (*.xlsx)", "*.xlsx"));
+
+                File file = fileChooser.showSaveDialog(null);
+
+                if (file != null) {
+                    try {
+                        ExcelExportUtil.exportMultipleTablesToExcel(tables, titles, file);
+                        System.out.println("Tables count: " + tables.size() + ", Titles count: " + titles.size());
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            }
+        });
+
         footerExports.setPromptText("Export");
         footerExports.getStyleClass().add("default-dropdowns");
 
@@ -680,7 +741,7 @@ public class Analytics extends VBox implements ThemeObserver {
         footerSEc.setSpacing(30);
         footerSEc.setPadding(new Insets(10, 0, 0 ,0));
 
-        Text helpText = new Text("Need help?  Contact rukshan.info@gmail.com / sandunsathyajith1@gmail.com");
+        Text helpText = new Text("Need help?  Contact rukshanse.info@gmail.com / sandunsathyajith1@gmail.com");
         helpText.setStyle("-fx-font-size: 17px; -fx-font-weight: 500;");
         helpText.getStyleClass().add("paragraph-texts");
 
@@ -774,7 +835,6 @@ public class Analytics extends VBox implements ThemeObserver {
         allChartsContainer.add(stockToggleComponent2, 0, 0);
         allChartsContainer.add(reorderToggleComponent2, 1, 0);
         allChartsContainer.add(revenueToggleComponent2, 0, 1);
-
 
         stockContainer.getChildren().add(0, reorderToggleComponent);
         stockContainer.getChildren().add(0, stockToggleComponent);
