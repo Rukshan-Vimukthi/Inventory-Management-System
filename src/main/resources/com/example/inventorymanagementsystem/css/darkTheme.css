@@ -51,6 +51,8 @@
     -fx-prompt-text-fill: gray;
 }
 
+
+
 .default-dropdowns .text-input{
     -fx-prompt-text-fill: white;
 }

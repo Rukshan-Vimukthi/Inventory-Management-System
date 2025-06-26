@@ -15,7 +15,9 @@ public class Customer implements DataModel {
 
     private DoubleProperty points;
 
-    public Customer(int id, String firstName, String lastName, String phone, String email, String registeredDate, String pathToImage, double points){
+    private DoubleProperty refundAmount;
+
+    public Customer(int id, String firstName, String lastName, String phone, String email, String registeredDate, String pathToImage, double points, double refundAmount){
         setId(id);
         setFirstName(firstName);
         setLastName(lastName);
@@ -24,7 +26,7 @@ public class Customer implements DataModel {
         setRegisteredDate(registeredDate);
         imagePathProperty().setValue(pathToImage);
         pointsProperty().setValue(points);
-
+        refundAmountProperty().setValue(refundAmount);
     }
 
     public IntegerProperty idProperty(){
@@ -81,6 +83,21 @@ public class Customer implements DataModel {
             points = new SimpleDoubleProperty(this, "points");
         }
         return points;
+    }
+
+    public double getRefundAmount() {
+        return refundAmount.get();
+    }
+
+    public DoubleProperty refundAmountProperty() {
+        if (refundAmount == null){
+            refundAmount = new SimpleDoubleProperty(this, "refundAmount");
+        }
+        return refundAmount;
+    }
+
+    public void setRefundAmount(double refundAmount) {
+        this.refundAmount.set(refundAmount);
     }
 
     public String getImagePath(){

@@ -34,7 +34,6 @@ public class SignIn extends VBox {
         this.setMaxWidth(300.0D);
         this.setMinHeight(180.0D);
         this.setPadding(new Insets(10.0D));
-
         try {
             spinnerGIF = new Image(String.valueOf(InventoryManagementApplication.class.getResource("images/spinner.gif").toURI()));
             spinnerImageView = new ImageView(spinnerGIF);

@@ -24,6 +24,7 @@ import org.kordamp.ikonli.javafx.FontIcon;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 
 public class TableContainer<T> extends VBox implements ThemeObserver {
@@ -166,30 +167,33 @@ public class TableContainer<T> extends VBox implements ThemeObserver {
     public <DT> void addColumn(String name, String columnName){
         TableColumn<T, DT> column = new TableColumn<>(columnName);
         column.setCellValueFactory(new PropertyValueFactory<>(name));
-        column.setCellFactory(new Callback<TableColumn<T, DT>, TableCell<T, DT>>() {
-            @Override
-            public TableCell<T, DT> call(TableColumn<T, DT> param) {
-                return new TableCell<T, DT>(){
-                    @Override
-                    protected void updateItem(DT item, boolean empty) {
-                        super.updateItem(item, empty);
-                        HBox pane = new HBox();
-                        pane.setMaxWidth(20.0D);
-                        pane.setMinWidth(20.0D);
-                        pane.setMaxHeight(20.0D);
-                        pane.setMinHeight(20.0D);
-                        System.out.println("Background Color: " + item);
-                        if (item != null){
-                            pane.setStyle("-fx-background-color: " + String.valueOf(item) + "; ");
-                        }
+        if (Objects.equals(name, "itemColor")) {
+            column.setCellFactory(new Callback<TableColumn<T, DT>, TableCell<T, DT>>() {
+                @Override
+                public TableCell<T, DT> call(TableColumn<T, DT> param) {
+                    return new TableCell<T, DT>() {
+                        @Override
+                        protected void updateItem(DT item, boolean empty) {
+                            super.updateItem(item, empty);
+                            HBox pane = new HBox();
+                            pane.setMaxWidth(20.0D);
+                            pane.setMinWidth(20.0D);
+                            pane.setMaxHeight(20.0D);
+                            pane.setMinHeight(20.0D);
+                            System.out.println("Background Color: " + item);
+                            if (item != null) {
+                                pane.setStyle("-fx-background-color: " + String.valueOf(item) + "; ");
+                            }
+
 //                        pane.setStyle("-fx-background-color: #FFF; ");
-                        setText(null);
-                        setGraphic(pane);
-                        setGraphicTextGap(10.0D);
-                    }
-                };
-            }
-        });
+                            setText(null);
+                            setGraphic(pane);
+                            setGraphicTextGap(10.0D);
+                        }
+                    };
+                }
+            });
+        }
         tableView.getColumns().add(column);
     }
 

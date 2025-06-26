@@ -10,6 +10,8 @@ public class ThemeObserver {
     private static ThemeObserver themeObserver;
     private static List<com.example.inventorymanagementsystem.services.interfaces.ThemeObserver> nodes;
 
+    int currentTheme = 0;
+
     private ThemeObserver(){
         if (nodes == null) {
             nodes = new ArrayList<>();
@@ -28,14 +30,24 @@ public class ThemeObserver {
     }
 
     public void applyLightThemeChange(){
+        currentTheme = 1;
         for (var item : nodes){
             item.lightTheme();
         }
     }
 
     public void applyDarkThemeChange(){
+        currentTheme = 0;
         for (var item : nodes){
             item.darkTheme();
+        }
+    }
+
+    public void notifyAllListeners(){
+        if (currentTheme == 0){
+            applyDarkThemeChange();
+        }else{
+            applyLightThemeChange();
         }
     }
 }

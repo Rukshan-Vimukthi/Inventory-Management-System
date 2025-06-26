@@ -1,7 +1,9 @@
 package com.example.inventorymanagementsystem.db;
 
 import com.example.inventorymanagementsystem.models.*;
+import com.example.inventorymanagementsystem.services.utils.Logger;
 import com.example.inventorymanagementsystem.state.Data;
+import com.example.inventorymanagementsystem.view.Checkout;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.chart.XYChart;
@@ -17,6 +19,11 @@ import java.util.*;
  * This is a singleton class. Use to do insert, update, delete, retrieve items from the database. to use methods to do those tasks with the
  * database use Connection.getInstance() to get the instance of the database connection. then call the methods available
  * to perform the operations with the database.
+ * <br/><br/>
+ * Lis of methods available<br/>
+ * {@link #getInstance()} - returns the Connection object instance
+ * {@link #getColors()} - get all the colors stored in the database
+ * {@link #getItemHasSize(ItemDetail)} - get only the item information stored in the item_has_size table
  */
 public class Connection {
     private java.sql.Connection connection;
@@ -27,9 +34,9 @@ public class Connection {
     private Connection() throws SQLException{
         String dbLink = "jdbc:mysql://localhost:3306/sandyafashioncorner?useSSL=false&allowPublicKeyRetrieval=true";
         String username = "root";
-        String password = "Sandun@2008.sd";
+        String password = "root@techlix2002";
 //        String password = "Sandun@2008.sd";
-//            String password = "root@2025sfc";
+//        String password = "root@2025sfc";
         connection = DriverManager.getConnection(dbLink, username, password);
     }
 
@@ -41,6 +48,8 @@ public class Connection {
         if (connectionObject == null){
             connectionObject = new Connection();
         }
+
+        System.out.println();
         return connectionObject;
     }
 
@@ -69,6 +78,7 @@ public class Connection {
             }
 
         }catch(SQLException exception){
+            Logger.logError(exception.getMessage(), exception);
             exception.printStackTrace();
         }
         return itemHasSize;
@@ -106,6 +116,7 @@ public class Connection {
             query.close();
             statement.close();
         } catch (SQLException e) {
+            Logger.logError(e.getMessage(), e);
             e.printStackTrace();
         }
         return orderedItemsValue;
@@ -125,6 +136,7 @@ public class Connection {
 
 
         }catch (SQLException e){
+            Logger.logError(e.getMessage(), e);
             e.printStackTrace();
         }
         return totalProducts;
@@ -134,7 +146,7 @@ public class Connection {
         int totalProductValue = 0;
         try {
             statement = connection.createStatement();
-            ResultSet query = statement.executeQuery("SELECT SUM(price) AS totalPrice FROM item_has_size");
+            ResultSet query = statement.executeQuery("SELECT SUM(price * remaining_qty) AS totalPrice FROM item_has_size");
 
             if (query.next()) {
                 totalProductValue = query.getInt("totalPrice");
@@ -143,6 +155,7 @@ public class Connection {
             statement.close();
 
         } catch (SQLException e) {
+            Logger.logError(e.getMessage(), e);
             e.printStackTrace();
         }
         return totalProductValue;
@@ -161,6 +174,7 @@ public class Connection {
             statement.close();
 
         } catch (SQLException e) {
+            Logger.logError(e.getMessage(), e);
             throw new RuntimeException(e);
         }
         return totalRemainingProducts;
@@ -296,6 +310,7 @@ public class Connection {
             soldResult.put("topFive", topFiveSelling);
             soldResult.put("bottomFive", bottomFiveSelling);
         } catch (SQLException e) {
+            Logger.logError(e.getMessage(), e);
             e.printStackTrace();
         }
         return soldResult;
@@ -321,6 +336,7 @@ public class Connection {
             }
 
         } catch (SQLException e) {
+            Logger.logError(e.getMessage(), e);
             e.printStackTrace();
         }
 
@@ -339,6 +355,7 @@ public class Connection {
             rs.close();
             stmt.close();
         } catch (SQLException e) {
+            Logger.logError(e.getMessage(), e);
             e.printStackTrace();
         }
         return name;
@@ -355,6 +372,7 @@ public class Connection {
             rs.close();
             stmt.close();
         } catch (SQLException e) {
+            Logger.logError(e.getMessage(), e);
             e.printStackTrace();
         }
         return size;
@@ -385,6 +403,7 @@ public class Connection {
                 ));
             }
         } catch (SQLException exception) {
+            Logger.logError(exception.getMessage(), exception);
             exception.printStackTrace();
         }
         return items;
@@ -400,10 +419,10 @@ public class Connection {
             ResultSet generatedKeys = statement.getGeneratedKeys();
             generatedKeys.next();
             int id = generatedKeys.getInt(1);
-            System.out.println("New Color ID: " + id);
             Data.getInstance().refreshColors();
             return id;
         }catch(SQLException sqlException){
+            Logger.logError(sqlException.getMessage(), sqlException);
             sqlException.printStackTrace();
         }
         return -1;
@@ -419,10 +438,10 @@ public class Connection {
         try{
             statement = connection.createStatement();
             int result = statement.executeUpdate("UPDATE `color` SET `color` = '%s' WHERE `id` = %d".formatted(colorCode, id));
-            System.out.println(result);
             Data.getInstance().refreshColors();
             return result > 0;
         }catch(SQLException exception){
+            Logger.logError(exception.getMessage(), exception);
             exception.printStackTrace();
         }
         return false;
@@ -440,6 +459,7 @@ public class Connection {
                 rows.add(color);
             }
         }catch(SQLException sqlException){
+            Logger.logError(sqlException.getMessage(), sqlException);
             sqlException.printStackTrace();
         }
         return rows;
@@ -461,6 +481,7 @@ public class Connection {
             String colorCodeValue = resultSet.getString(2);
             color = new Color(id, colorCodeValue);
         }catch(SQLException sqlException){
+            Logger.logError(sqlException.getMessage(), sqlException);
             sqlException.printStackTrace();
         }
         return color;
@@ -482,6 +503,7 @@ public class Connection {
                 rows.add(color);
             }
         }catch(SQLException sqlException){
+            Logger.logError(sqlException.getMessage(), sqlException);
             sqlException.printStackTrace();
         }
         return rows;
@@ -494,6 +516,7 @@ public class Connection {
             Data.getInstance().refreshColors();
             return isDeleted;
         }catch(SQLException e){
+            Logger.logError(e.getMessage(), e);
             e.printStackTrace();
         }
         return false;
@@ -542,6 +565,7 @@ public class Connection {
             Data.getInstance().refreshItemDetails();
             return true;
         }catch(SQLException e){
+            Logger.logError(e.getMessage(), e);
             e.printStackTrace();
         }
         return false;
@@ -559,6 +583,7 @@ public class Connection {
 
             return generatedKeys.getInt(1);
         }catch(SQLException e){
+            Logger.logError(e.getMessage(), e);
             e.printStackTrace();
         }
         return -1;
@@ -567,10 +592,19 @@ public class Connection {
     public boolean addNewVariant(int itemID, int stockID, int sizeID, int colorID, int orderedQty, double price, double sellingPrice, String imagePath){
         try{
             statement = connection.createStatement();
+            String size = "NULL";
+            if (sizeID != 0){
+                size = String.valueOf(sizeID);
+            }
+
+            String color = "NULL";
+            if (colorID != 0){
+                color = String.valueOf(colorID);
+            }
             statement.execute("INSERT INTO `item_has_size` (" +
                     "`item_id`, `item_stock_id`, `size_id`, `ordered_qty`, `cost`, `price`, `remaining_qty`) " +
-                    "VALUES(%d, %d, %d, %d, %f, %f, %d)".formatted(
-                            itemID, stockID, sizeID, orderedQty, price, sellingPrice, orderedQty), Statement.RETURN_GENERATED_KEYS);
+                    "VALUES(%d, %d, %s, %d, %f, %f, %d)".formatted(
+                            itemID, stockID, size, orderedQty, price, sellingPrice, orderedQty), Statement.RETURN_GENERATED_KEYS);
             ResultSet generatedKeys = statement.getGeneratedKeys();
             generatedKeys.next();
             int id = generatedKeys.getInt(1);
@@ -578,12 +612,13 @@ public class Connection {
                     "`item_has_size_id`, `stock_id`) VALUES(%d, %d)".formatted(
                             id, stockID), Statement.RETURN_GENERATED_KEYS);
             statement.execute("INSERT INTO `color_has_item_has_size` (" +
-                    "`color_id`, `item_has_size_id`, `image_path`) VALUES('%d', '%d', '%s')".formatted(
-                            colorID, id, imagePath
+                    "`color_id`, `item_has_size_id`, `image_path`) VALUES(%s, '%d', '%s')".formatted(
+                            color, id, imagePath
                     ), Statement.RETURN_GENERATED_KEYS);
             Data.getInstance().refreshItemDetails();
             return true;
         }catch(SQLException e){
+            Logger.logError(e.getMessage(), e);
             e.printStackTrace();
         }
         return false;
@@ -622,13 +657,14 @@ public class Connection {
                         "VALUES('%d', '%d')");
             }else{
                 statement.execute("UPDATE `color_has_item_has_size` SET " +
-                        "`color_id` = %d WHERE `id` = %d".formatted(
-                                colorID, colorHasItemHasSizeId
+                        "`color_id` = %d, `image_path` = '%s' WHERE `id` = %d".formatted(
+                                colorID, newImagePath, colorHasItemHasSizeId
                         ));
             }
             Data.getInstance().refreshItemDetails();
             return true;
         }catch(SQLException sqlException){
+            Logger.logError(sqlException.getMessage(), sqlException);
             sqlException.printStackTrace();
         }
         return false;
@@ -650,8 +686,6 @@ public class Connection {
 
     public Sale getSale(String date, int customerID){
         Sale sale = null;
-        System.out.println("Date: " + date);
-        System.out.println("Customer ID: " + customerID);
         try{
             statement = connection.createStatement();
             ResultSet resultSet = statement.executeQuery("SELECT * FROM `sale` WHERE `date` = '%s' AND `customer_id` = %d".formatted(date, customerID));
@@ -661,7 +695,6 @@ public class Connection {
                 double receivedAmount = resultSet.getDouble("received_amount");
                 double totalCost = resultSet.getDouble("total_cost");
                 int remainsStatusID = resultSet.getInt("remains_statuss_id");
-                System.out.println("Sale Date: " + saleDate);
                 sale = new Sale(id, saleDate, receivedAmount, totalCost, remainsStatusID);
             }
         }catch(SQLException e){
@@ -681,14 +714,32 @@ public class Connection {
                 double receivedAmount = resultSet.getDouble("received_amount");
                 double totalCost = resultSet.getDouble("total_cost");
                 int remainsStatusID = resultSet.getInt("remains_statuss_id");
-                System.out.println("Sale Date: " + saleDate);
                 Sale sale = new Sale(id, saleDate, receivedAmount, totalCost, remainsStatusID);
                 sales.add(sale);
             }
         }catch(SQLException e){
+            Logger.logError(e.getMessage(), e);
             e.printStackTrace();
         }
         return sales;
+    }
+
+    public void payFromPoints(double amount, Customer customer){
+        try{
+            statement = connection.createStatement();
+            statement.executeUpdate("UPDATE `customer` SET `points` = `points` - %f WHERE `id` = %d".formatted(amount, customer.getId()));
+        }catch(SQLException e){
+            e.printStackTrace();
+        }
+    }
+
+    public void payFromRefundAmount(double amount, Customer customer){
+        try{
+            statement = connection.createStatement();
+            statement.executeUpdate("UPDATE `customer` SET `refund_amount` = `refund_amount` - %f WHERE `id` = %d".formatted(amount, customer.getId()));
+        }catch(SQLException e){
+            e.printStackTrace();
+        }
     }
 
     public boolean insertCustomerItem(
@@ -715,14 +766,12 @@ public class Connection {
 
             int saleID = 0;
             if (!doesSaleExist){
-                System.out.println("Sale record does not exist. creating new record...");
                 statement = connection.createStatement();
                 statement.execute("INSERT INTO `sale` (`date`,`received_amount`, `total_cost`, `remains_statuss_id`, `customer_id`) " +
                         "VALUES('%s', %f, %f, %d, %d)".formatted(date, receivedAmount, priceWithDiscount, remainsStatusID, customer_id), Statement.RETURN_GENERATED_KEYS);
                 ResultSet resultSet = statement.getGeneratedKeys();
                 resultSet.next();
                 saleID = resultSet.getInt(1);
-                System.out.println("New Sale ID: " + saleID);
                 PreparedStatement ps = connection.prepareStatement(
                         "INSERT INTO customer_has_item_has_size (" +
                                 "customer_id, " +
@@ -744,9 +793,7 @@ public class Connection {
                 int rowsInserted = ps.executeUpdate();
                 return rowsInserted > 0;
             }else{
-                System.out.printf("Sale record already exists. updating record %d ...%n", sale.getId());
                 saleID = sale.getId();
-                System.out.println("Sale ID: " + sale.getId());
                 statement = connection.createStatement();
 
                 double newReceivedAmount = sale.getReceivedMoney() + receivedAmount;
@@ -754,7 +801,6 @@ public class Connection {
 
                 int rowsAffected = 0;
                 rowsAffected = statement.executeUpdate("UPDATE `sale` SET `received_amount` = %f, `total_cost` = %f WHERE `customer_id` = %d AND `date` = '%s' AND id = %d".formatted(newReceivedAmount, newTotalCost, customer_id, date, saleID));
-                System.out.println("Rows Affected: " + rowsAffected);
                 if (rowsAffected > 0) {
                     PreparedStatement ps = connection.prepareStatement(
                             "INSERT INTO customer_has_item_has_size (" +
@@ -780,10 +826,244 @@ public class Connection {
                 return false;
             }
         } catch (SQLException e) {
+            Logger.logError(e.getMessage(), e);
             e.printStackTrace();
             return false;
         }
     }
+
+
+    public boolean insertCheckoutItem(
+            Customer customer,
+            List<CheckoutItem> checkoutItems,
+            double totalCost,
+            double receivedAmount,
+            int remainsStatusID,
+            double discountForAll,
+            boolean payFromPoints,
+            boolean payFromRefunds,
+            boolean saveRemaindersForPoints) {
+        try {
+            String date = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            boolean doesSaleExist = false;
+            Sale sale = null;
+            for (Sale sale_ : filterSales(date, customer.getId())){
+                if (sale_.getRemainsStatusID() == remainsStatusID && sale_.getDate().equals(date)){
+                    doesSaleExist = true;
+                    sale = sale_;
+                    break;
+                }
+            }
+
+            double pointAvailable = customer.getPoints();
+            double refundsAvailable = customer.getRefundAmount();
+
+            double updatedPoints = 0.0D;
+            double updatedRefunds = 0.0D;
+            double remaining = 0.0D;
+
+            statement = connection.createStatement();
+
+            boolean fullPaymentMade = false;
+            double totalAmountPaid = 0.0D;
+            if (payFromPoints){
+                if (pointAvailable >= totalCost){
+                    updatedPoints = pointAvailable - totalCost;
+                    fullPaymentMade = true;
+                }else{
+                    totalAmountPaid += pointAvailable;
+                    remaining = totalCost - pointAvailable;
+                }
+            }
+
+            if (!fullPaymentMade) {
+                if (payFromRefunds) {
+                    if (remaining != 0) {
+                        if (remaining <= refundsAvailable) {
+                            updatedRefunds = refundsAvailable - remaining;
+                            fullPaymentMade = true;
+                        } else {
+                            totalAmountPaid += refundsAvailable;
+                            remaining -= refundsAvailable;
+                        }
+                    }else{
+                        if (refundsAvailable >= totalCost){
+                            updatedRefunds = refundsAvailable - totalCost;
+                            fullPaymentMade = true;
+                        }else{
+                            totalAmountPaid += refundsAvailable;
+                            remaining = totalCost - refundsAvailable;
+                        }
+                    }
+                }
+            }
+
+            System.out.println("Updated Points: " + updatedPoints);
+            System.out.println("Total amount paid: " + totalAmountPaid);
+            System.out.println("Updated refunds:" + updatedRefunds);
+
+            if (!payFromPoints && !payFromRefunds){
+                if (saveRemaindersForPoints){
+                    totalAmountPaid += totalCost;
+                    fullPaymentMade = true;
+                    updatedPoints = receivedAmount - totalCost;
+                    statement.execute("UPDATE customer SET `points` = `points` + %f WHERE id = %d".formatted(updatedPoints, customer.getId()));
+                }
+            }
+
+            if(payFromPoints){
+                if (saveRemaindersForPoints){
+                    if (receivedAmount > totalCost){
+                        statement.execute("UPDATE customer SET `points` = %f WHERE id = %d".formatted(receivedAmount - totalCost, customer.getId()));
+                    }
+                }else {
+                    statement.execute("UPDATE customer SET `points` = %f WHERE id = %d".formatted(updatedPoints, customer.getId()));
+                }
+            }
+
+            if(payFromRefunds) {
+                if (saveRemaindersForPoints && !payFromPoints){
+                    if (receivedAmount > totalCost){
+                        statement.execute("UPDATE customer SET `points` = `points` + %f WHERE id = %d".formatted(receivedAmount - totalCost, customer.getId()));
+                    }
+                    statement.execute("UPDATE customer SET `refund_amount` = %f WHERE id = %d".formatted(updatedRefunds, customer.getId()));
+                }else {
+                    statement.execute("UPDATE customer SET `refund_amount` = %f WHERE id = %d".formatted(updatedRefunds, customer.getId()));
+                }
+            }
+
+            if (payFromPoints && payFromRefunds){
+                if ((pointAvailable + refundsAvailable) >= totalCost || receivedAmount == totalCost || (receivedAmount > totalCost && saveRemaindersForPoints)){
+                    fullPaymentMade = true;
+                }
+            }
+
+
+            int saleID = 0;
+            if (!doesSaleExist){
+                if (fullPaymentMade){
+                    statement.execute("INSERT INTO `sale` (`date`,`received_amount`, `total_cost`, `remains_statuss_id`, `customer_id`) " +
+                            "VALUES('%s', %f, %f, %d, %d)".formatted(date, totalCost, totalCost, remainsStatusID, customer.getId()), Statement.RETURN_GENERATED_KEYS);
+                }else{
+                    statement.execute("INSERT INTO `sale` (`date`,`received_amount`, `total_cost`, `remains_statuss_id`, `customer_id`) " +
+                            "VALUES('%s', %f, %f, %d, %d)".formatted(date, receivedAmount, totalCost, remainsStatusID, customer.getId()), Statement.RETURN_GENERATED_KEYS);
+                }
+                ResultSet resultSet = statement.getGeneratedKeys();
+                resultSet.next();
+                saleID = resultSet.getInt(1);
+                System.out.println("Sale created!");
+            }else{
+                saleID = sale.getId();
+                if(fullPaymentMade) {
+                    int rowsAffected = statement.executeUpdate("UPDATE `sale` SET `received_amount` = %f, `total_cost` = %f WHERE `customer_id` = %d AND `date` = '%s' AND id = %d".formatted(sale.getReceivedMoney() + totalCost, sale.getTotalCost() + totalCost, customer.getId(), date, saleID));
+                }else {
+                    int rowsAffected = statement.executeUpdate("UPDATE `sale` SET `received_amount` = %f, `total_cost` = %f WHERE `customer_id` = %d AND `date` = '%s' AND id = %d".formatted(sale.getReceivedMoney() + receivedAmount, sale.getTotalCost() + totalCost, customer.getId(), date, saleID));
+                }
+            }
+
+            for (CheckoutItem checkoutItem : checkoutItems){
+                double priceWithDiscount = checkoutItem.getCostWithDiscount();
+                double unitPrice = checkoutItem.getPrice();
+                int amount = checkoutItem.getAmount();
+                int itemHasSizeID = checkoutItem.getitemHasSizeId();
+                int customerID = customer.getId();
+                int itemStatusID = 1;
+                double discount = checkoutItem.getDiscount();
+
+                if (discount == 0.0D && discountForAll != 0.0D){
+                    discount = discountForAll;
+                }
+
+                statement = connection.createStatement();
+                statement.execute("INSERT INTO `customer_has_item_has_size` (" +
+                        "customer_id, " +
+                        "item_has_size_id, " +
+                        "amount, " +
+                        "price, " +
+                        "item_status_id, " +
+                        "discount, " +
+                        "price_with_discount, sale_id) VALUES" +
+                        "(%d, %d, %d, %f, %d, %f, %f, %d)".formatted(
+                                customerID,
+                                itemHasSizeID,
+                                amount,
+                                unitPrice,
+                                itemStatusID,
+                                discount,
+                                priceWithDiscount,
+                                saleID)
+                );
+
+            }
+            return true;
+//            int saleID = 0;
+//            if (!doesSaleExist){
+//                statement = connection.createStatement();
+//                statement.execute("INSERT INTO `sale` (`date`,`received_amount`, `total_cost`, `remains_statuss_id`, `customer_id`) " +
+//                        "VALUES('%s', %f, %f, %d, %d)".formatted(date, receivedAmount, priceWithDiscount, remainsStatusID, customer_id), Statement.RETURN_GENERATED_KEYS);
+//                ResultSet resultSet = statement.getGeneratedKeys();
+//                resultSet.next();
+//                saleID = resultSet.getInt(1);
+//                PreparedStatement ps = connection.prepareStatement(
+//                        "INSERT INTO customer_has_item_has_size (" +
+//                                "customer_id, " +
+//                                "item_has_size_id, " +
+//                                "amount, " +
+//                                "price, " +
+//                                "item_status_id, " +
+//                                "discount, " +
+//                                "price_with_discount, sale_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+//                );
+//                ps.setInt(1, customer_id);
+//                ps.setInt(2, itemHasSizeId);
+//                ps.setInt(3, amount);
+//                ps.setDouble(4, price);
+//                ps.setInt(5, itemStatusId);
+//                ps.setDouble(6, discount);
+//                ps.setDouble(7, priceWithDiscount);
+//                ps.setDouble(8, saleID);
+//                int rowsInserted = ps.executeUpdate();
+//                return rowsInserted > 0;
+//            }else{
+//                saleID = sale.getId();
+//                statement = connection.createStatement();
+//
+//                double newReceivedAmount = sale.getReceivedMoney() + receivedAmount;
+//                double newTotalCost = sale.getTotalCost() + priceWithDiscount;
+//
+//                int rowsAffected = 0;
+//                rowsAffected = statement.executeUpdate("UPDATE `sale` SET `received_amount` = %f, `total_cost` = %f WHERE `customer_id` = %d AND `date` = '%s' AND id = %d".formatted(newReceivedAmount, newTotalCost, customer_id, date, saleID));
+//                if (rowsAffected > 0) {
+//                    PreparedStatement ps = connection.prepareStatement(
+//                            "INSERT INTO customer_has_item_has_size (" +
+//                                    "customer_id, " +
+//                                    "item_has_size_id, " +
+//                                    "amount, " +
+//                                    "price, " +
+//                                    "item_status_id, " +
+//                                    "discount, " +
+//                                    "price_with_discount, sale_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+//                    );
+//                    ps.setInt(1, customer_id);
+//                    ps.setInt(2, itemHasSizeId);
+//                    ps.setInt(3, amount);
+//                    ps.setDouble(4, price);
+//                    ps.setInt(5, itemStatusId);
+//                    ps.setDouble(6, discount);
+//                    ps.setDouble(7, priceWithDiscount);
+//                    ps.setDouble(8, saleID);
+//                    int rowsInserted = ps.executeUpdate();
+//                    return rowsInserted > 0;
+//                }
+//                return false;
+//            }
+        } catch (SQLException e) {
+            Logger.logError(e.getMessage(), e);
+            e.printStackTrace();
+        }
+        return false;
+    }
+
 
     public ItemDetail getItemDetail(int itemId){
         ItemDetail itemDetail = null;
@@ -839,6 +1119,7 @@ public class Connection {
                 );
             }
         }catch(SQLException e){
+            Logger.logError(e.getMessage(), e);
             e.printStackTrace();
         }
         return itemDetail;
@@ -852,23 +1133,6 @@ public class Connection {
             updateStmt.setInt(2, customerId);
             updateStmt.executeUpdate();
 
-            String colorQuery = "SELECT color_id FROM color_has_item_has_size WHERE item_has_size_id = ? LIMIT 1";
-            PreparedStatement colorStmt = connection.prepareStatement(colorQuery);
-            colorStmt.setInt(1, itemHasSizeId);
-            ResultSet colorRs = colorStmt.executeQuery();
-
-            if (!colorRs.next()) {
-                messageLabel.setText("❌ Color ID not found for item_has_size_id " + itemHasSizeId);
-                return false;
-            }
-
-            int colorId = colorRs.getInt("color_id");
-            String insertQuery = "INSERT INTO color_has_item_has_size (color_id, item_has_size_id, image_path) VALUES (?, ?, NULL)";
-            PreparedStatement insertStmt = connection.prepareStatement(insertQuery);
-            insertStmt.setInt(1, colorId);
-            insertStmt.setInt(2, itemHasSizeId);
-            insertStmt.executeUpdate();
-
             String updateStockQuery = "UPDATE item_has_size SET remaining_qty = remaining_qty + 1 WHERE id = ?";
             PreparedStatement stockStmt = connection.prepareStatement(updateStockQuery);
             stockStmt.setInt(1, itemHasSizeId);
@@ -878,6 +1142,116 @@ public class Connection {
 
         } catch (SQLException  e) {
             messageLabel.setText("❌ DB error: " + e.getMessage());
+            Logger.logError(e.getMessage(), e);
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public ItemHasSize getItemHasSizeByID(int itemHasSizeID){
+        ItemHasSize itemHasSize = null;
+        try{
+            statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM `item_has_size`  WHERE id = %d".formatted(itemHasSizeID));
+            while (resultSet.next()){
+                int id = resultSet.getInt("id");
+                int itemID = resultSet.getInt("item_id");
+                int stockID = resultSet.getInt("item_has_size_has_stock.stock_id");
+                int sizeID = resultSet.getInt("size_id");
+                int orderedQty = resultSet.getInt("ordered_qty");
+                int remainingQty = resultSet.getInt("remaining_qty");
+                double cost = resultSet.getDouble("cost");
+                double sellingPrice = resultSet.getDouble("price");
+                itemHasSize = new ItemHasSize(id, itemID, stockID, sizeID, orderedQty, cost, sellingPrice,  remainingQty);
+            }
+        }catch(SQLException exception){
+            exception.printStackTrace();
+        }
+        return itemHasSize;
+    }
+
+    public List<CustomerSale> getCustomerSales(String date, int customerID){
+        List<CustomerSale> customerSales = new ArrayList<>();
+        try{
+            statement = connection.createStatement();
+            ResultSet resultSet;
+
+            if (date == null && customerID == 0) {
+                resultSet = statement.executeQuery("SELECT * FROM sale INNER JOIN customer_has_item_has_size ON customer_has_item_has_size.sale_id = sale.id INNER JOIN `color_has_item_has_size` ON `color_has_item_has_size`.`item_has_size_id` = `customer_has_item_has_size`.`item_has_size_id`");
+            }else if(date != null && customerID == 0){
+                resultSet = statement.executeQuery("SELECT * FROM sale INNER JOIN customer_has_item_has_size ON customer_has_item_has_size.sale_id = sale.id INNER JOIN `color_has_item_has_size` ON `color_has_item_has_size`.`item_has_size_id` = `customer_has_item_has_size`.`item_has_size_id` WHERE `date` = '%s'".formatted(date));
+            }else if(date == null && customerID != 0){
+                resultSet = statement.executeQuery("SELECT * FROM sale INNER JOIN customer_has_item_has_size ON customer_has_item_has_size.sale_id = sale.id INNER JOIN `color_has_item_has_size` ON `color_has_item_has_size`.`item_has_size_id` = `customer_has_item_has_size`.`item_has_size_id` WHERE `sale`.`customer_id` = %d".formatted(customerID));
+            }else {
+                resultSet = statement.executeQuery("SELECT * FROM sale INNER JOIN customer_has_item_has_size ON customer_has_item_has_size.sale_id = sale.id INNER JOIN `color_has_item_has_size` ON `color_has_item_has_size`.`item_has_size_id` = `customer_has_item_has_size`.`item_has_size_id` WHERE `date` = '%s' AND `sale`.`customer_id` = %d".formatted(date, customerID));
+            }
+
+            HashMap<String, HashMap<Integer, CustomerSale>> itemsOverview = new HashMap<>();
+
+            while (resultSet.next()){
+                int saleID = resultSet.getInt("sale.id");
+                String saleDate = resultSet.getString("sale.date");
+                double receivedMoney = resultSet.getDouble("sale.received_amount");
+                double cost = resultSet.getDouble("sale.total_cost");
+                int colorHasItemHasSizeID = resultSet.getInt("color_has_item_has_size.id");
+
+                int customerHasItemHasSizeID = resultSet.getInt("customer_has_item_has_size.id");
+                int boughtAmount = resultSet.getInt("customer_has_item_has_size.amount");
+                double discount = resultSet.getDouble("customer_has_item_has_size.discount");
+                double unitPrice = resultSet.getDouble("customer_has_item_has_size.price");
+                double costWithDiscount = resultSet.getDouble("customer_has_item_has_size.price_with_discount");
+                double refundAmount = resultSet.getDouble("customer_has_item_has_size.refund_amount");
+                ItemDetail itemDetail = getItemDetail(colorHasItemHasSizeID);
+
+                System.out.println("Refund amountX: " + refundAmount);
+
+                double totalCost = boughtAmount * unitPrice;
+
+                CheckoutItem checkoutItem = new CheckoutItem(
+                        customerHasItemHasSizeID,
+                        itemDetail.getName(),
+                        itemDetail.getSize(),
+                        itemDetail.getItemColor(),
+                        boughtAmount,
+                        itemDetail.getPrice(),
+                        itemDetail.getSellingPrice(),
+                        discount,
+                        String.valueOf(totalCost),
+                        costWithDiscount,
+                        refundAmount
+                );
+
+                int customerId = resultSet.getInt("customer_has_item_has_size.customer_id");
+                int amount = resultSet.getInt("customer_has_item_has_size.amount");
+                Customer customer = getCustomer(customerId);
+                CustomerSale customerSale = new CustomerSale(saleID, receivedMoney, cost, amount, saleDate, customer, itemDetail, checkoutItem);
+                customerSales.add(customerSale);
+            }
+
+        }catch(Exception e){
+            e.printStackTrace();
+            Logger.logError(e.getMessage(), e);
+        }
+        System.out.println("Customer sale list length: " + customerSales.size());
+        return customerSales;
+    }
+
+    public boolean handleItemReturn (int itemHasSizeId, int customerId, String date) {
+        try {
+            String updateQuery = "UPDATE customer_has_item_has_size SET  item_status_id = 2 WHERE item_has_size_id = ? AND customer_id = ? AND `date`";
+            PreparedStatement updateStmt = connection.prepareStatement(updateQuery);
+            updateStmt.setInt(1, itemHasSizeId);
+            updateStmt.setInt(2, customerId);
+            updateStmt.executeUpdate();
+
+            String updateStockQuery = "UPDATE item_has_size SET remaining_qty = remaining_qty + 1 WHERE id = ?";
+            PreparedStatement stockStmt = connection.prepareStatement(updateStockQuery);
+            stockStmt.setInt(1, itemHasSizeId);
+            stockStmt.executeUpdate();
+            return true;
+
+        } catch (SQLException  e) {
+            Logger.logError(e.getMessage(), e);
             e.printStackTrace();
             return false;
         }
@@ -948,10 +1322,64 @@ public class Connection {
     }
 
 
-    public void returnItem(int itemID){
+    public void returnItem(int itemID, String date, CustomerSale customersale, int returnedQty){
         try{
             statement = connection.createStatement();
-            int rowsAffected = statement.executeUpdate("UPDATE `color_has_item_has_size`");
+            if (customersale != null){
+                System.out.println("Updating database");
+                System.out.println("Amount bought: " + customersale.getCheckoutItem().getAmount());
+                System.out.println("Returned Qty: " + returnedQty);
+                System.out.println("Checkout Item ID: " + customersale.getCheckoutItem().getId());
+
+                int checkoutItemId = customersale.getCheckoutItem().getId();
+                int saleId = customersale.getSaleID();
+                int itemHasSizeId = customersale.getItemDetails().getItemHasSizeID();
+
+                System.out.println("Price: " + customersale.getCheckoutItem().getSellingPrice());
+                System.out.println("Discount: " + customersale.getCheckoutItem().getDiscount());
+
+                double amountToReduce = 0.0D;
+                double unitPrice = customersale.getCheckoutItem().getSellingPrice();
+                double discount = customersale.getCheckoutItem().getDiscount();
+                int newBoughtQty = customersale.getCheckoutItem().getAmount() - returnedQty;
+
+                System.out.println("Unit Price: " + unitPrice);
+                System.out.println("Discount: " + discount);
+
+                double newCostWithDiscount = (newBoughtQty * unitPrice);
+                if (discount != 0.0D){
+                    newCostWithDiscount *= (discount / 100);
+                }
+                double refundAmount = customersale.getCheckoutItem().getCostWithDiscount() - newCostWithDiscount;
+                System.out.println("Refund Amount: " + refundAmount);
+                System.out.println(customersale.getCheckoutItem().getRefundAmount());
+                refundAmount += customersale.getCheckoutItem().getRefundAmount();
+
+                System.out.println("New bought qty: " + newBoughtQty);
+                System.out.println("New Cost With Discount: " + newCostWithDiscount);
+                System.out.println("Refund Amount: " + refundAmount);
+
+                int rowsAffected = statement.executeUpdate("UPDATE `customer_has_item_has_size` SET `item_status_id` = %d, `amount` = %d, `price_with_discount` = %f, `refund_amount` = %f WHERE id = %d".formatted(2, newBoughtQty, newCostWithDiscount, refundAmount, checkoutItemId));
+                System.out.println("Rows affected for changing customer_has_item_has_size table: " + rowsAffected);
+
+                rowsAffected = statement.executeUpdate("UPDATE customer SET refund_amount = %f WHERE id = %d".formatted(refundAmount, customersale.getCustomer().getId()));
+                System.out.println("Rows affected for changing customer table: " + rowsAffected);
+
+                rowsAffected = statement.executeUpdate("UPDATE `item_has_size` SET `remaining_qty` = `remaining_qty` + %d WHERE id = %d".formatted(returnedQty, itemHasSizeId));
+                System.out.println("Rows affected for changing item_has_size table: " + rowsAffected);
+
+                double newReceivedAmount = 0.0D;
+                if (refundAmount > customersale.getReceivedAmount()){
+                    newReceivedAmount = 0;
+                }else{
+                    newReceivedAmount = customersale.getReceivedAmount() - refundAmount;
+                }
+
+                System.out.println("New received amount: " + newReceivedAmount);
+
+                rowsAffected = statement.executeUpdate("UPDATE `sale` SET `total_cost` = %f, `received_amount` = %f WHERE `id` = %d".formatted(newCostWithDiscount, newReceivedAmount, saleId));
+                System.out.println("Rows affected for changing sale table: " + rowsAffected);
+            }
         }catch(SQLException e){
             e.printStackTrace();
         }
@@ -966,7 +1394,7 @@ public class Connection {
         try {
             statement = connection.createStatement();
             ResultSet resultSet = statement.executeQuery("SELECT * FROM `item` " +
-                    "LEFT JOIN `item_has_size` " +
+                    "INNER JOIN `item_has_size` " +
                     "ON `item`.`id` = `item_has_size`.`item_id`" +
                     "INNER JOIN `item_has_size_has_stock` ON `item_has_size`.`id` = `item_has_size_has_stock`.`item_has_size_id` " +
                     "LEFT JOIN `stock` ON `item_has_size_has_stock`.`stock_id` = `stock`.`id` " +
@@ -994,6 +1422,8 @@ public class Connection {
                 int colorHasItemHasSizeID = resultSet.getInt("color_has_item_has_size.id");
                 String pathToImage = resultSet.getString("color_has_item_has_size.image_path");
 
+                System.out.println("Item Has Size ID: " + itemHasSizeID);
+
                 ItemDetail itemDetail = new ItemDetail(
                         itemID,
                         name,
@@ -1014,12 +1444,12 @@ public class Connection {
                         pathToImage
                 );
 
-                System.out.println(name);
 
                 itemDetails.add(itemDetail);
             }
 
         }catch(SQLException exception){
+            Logger.logError(exception.getMessage(), exception);
             exception.printStackTrace();
         }
         return itemDetails;
@@ -1198,6 +1628,7 @@ public class Connection {
                 itemDetails.add(itemDetail);
             }
         }catch(SQLException exception){
+            Logger.logError(exception.getMessage(), exception);
             exception.printStackTrace();
         }
         Data.getInstance().setItemDetails(itemDetails);
@@ -1214,6 +1645,7 @@ public class Connection {
             boolean isAdded = statement.execute("INSERT INTO `size` (`size`) VALUES ('%s')".formatted(size));
             Data.getInstance().refreshSize();
         }catch(SQLException e){
+            Logger.logError(e.getMessage(), e);
             e.printStackTrace();
         }
         return false;
@@ -1235,6 +1667,7 @@ public class Connection {
                 rows.add(size);
             }
         } catch (SQLException sqlException) {
+            Logger.logError(sqlException.getMessage(), sqlException);
             sqlException.printStackTrace();
         }
         return rows;
@@ -1251,6 +1684,7 @@ public class Connection {
                 size = new Size(id, sizeText);
             }
         } catch (SQLException sqlException) {
+            Logger.logError(sqlException.getMessage(), sqlException);
             sqlException.printStackTrace();
         }
         return size;
@@ -1268,6 +1702,7 @@ public class Connection {
                 sizes.add(size);
             }
         } catch (SQLException sqlException) {
+            Logger.logError(sqlException.getMessage(), sqlException);
             sqlException.printStackTrace();
         }
         return sizes;
@@ -1277,10 +1712,10 @@ public class Connection {
         try{
             statement = connection.createStatement();
             int result = statement.executeUpdate("UPDATE `size` SET `size` = '%s' WHERE `id` = %d".formatted(newSize, id));
-            System.out.println(result);
             Data.getInstance().refreshSize();
             return result > 0;
         }catch(SQLException exception){
+            Logger.logError(exception.getMessage(), exception);
             exception.printStackTrace();
         }
         return false;
@@ -1293,6 +1728,7 @@ public class Connection {
             Data.getInstance().refreshSize();
             return isDeleted;
         }catch(SQLException e){
+            Logger.logError(e.getMessage(), e);
             e.printStackTrace();
         }
         return false;
@@ -1338,6 +1774,7 @@ public class Connection {
             Data.getInstance().refreshUsers();
             return 1;
         }catch(SQLException exception){
+            Logger.logError(exception.getMessage(), exception);
             exception.printStackTrace();
         }
         return -1;
@@ -1355,6 +1792,7 @@ public class Connection {
             Data.getInstance().refreshUsers();
             return 1;
         }catch (SQLException exception){
+            Logger.logError(exception.getMessage(), exception);
             exception.printStackTrace();
         }
         return -1;
@@ -1380,12 +1818,11 @@ public class Connection {
                 String imagePath = resultSet.getString("image_path");
                 String phone = resultSet.getString("phone");
 
-                System.out.println(firstName + " " + lastName);
-
                 User user = new User(id, firstName, lastName, userName, email, password, registeredDate, role, imagePath, phone);
                 users.add(user);
             }
         }catch(SQLException exception){
+            Logger.logError(exception.getMessage(), exception);
             exception.printStackTrace();
         }
         return users;
@@ -1415,12 +1852,12 @@ public class Connection {
                 String imagePath = resultSet.getString("image_path");
                 String phone = resultSet.getString("phone");
 
-                System.out.println(firstName + " " + lastName);
 
                 User user = new User(id, firstName, lastName, userName, email, password, registeredDate, role, imagePath, phone);
                 users.add(user);
             }
         }catch(SQLException exception){
+            Logger.logError(exception.getMessage(), exception);
             exception.printStackTrace();
         }
         Data.getInstance().setUsers(users);
@@ -1436,6 +1873,7 @@ public class Connection {
             Data.getInstance().refreshUsers();
             return 1;
         }catch(SQLException exception){
+            Logger.logError(exception.getMessage(), exception);
             exception.printStackTrace();
         }
         return -1;
@@ -1452,11 +1890,13 @@ public class Connection {
                 System.out.println(resultSet.getString("username"));
                 return resultSet;
             } catch(SQLException e){
+                Logger.logError(e.getMessage(), e);
                 e.printStackTrace();
                 return null;
             }
 //            System.out.println(resultSet.getFetchSize());
         }catch(SQLException sqlException){
+            Logger.logError(sqlException.getMessage(), sqlException);
             sqlException.printStackTrace();
         }
         return null;
@@ -1483,11 +1923,6 @@ public class Connection {
         int dayInTheYear = endTime.getDayOfYear();
         int monthsElapsed = 0;
 
-        System.out.println(dayInTheYear);
-        System.out.println(endTime.getMonth());
-        System.out.println(endTime.getYear());
-        System.out.println(dayOfTheWeek);
-
         switch (timeFrame) {
             case "Today" -> startTime = todayStart;
             case "This Week" -> startTime = endTime.minusDays(dayOfTheWeek);
@@ -1503,14 +1938,6 @@ public class Connection {
             case "This Year" -> startTime = endTime.minusDays(dayInTheYear);
             case "Last Year" -> startTime = endTime.minusDays(dayInTheYear).minusYears(1);
         }
-
-        if(startTime != null) {
-            System.out.print("Start Time: ");
-            System.out.println(startTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-        }
-
-        System.out.print("End Time: ");
-        System.out.println(endTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
 
 
         List<Customer> customers = new ArrayList<>();
@@ -1533,11 +1960,13 @@ public class Connection {
                 String registeredDate = resultSet.getString("registered_date");
                 String pathToImage = resultSet.getString("image_path");
                 double points = resultSet.getDouble("points");
+                double refundAmount = resultSet.getDouble("refund_amount");
 
-                Customer customer = new Customer(id, firstName, lastName, phone, email, registeredDate, pathToImage, points);
+                Customer customer = new Customer(id, firstName, lastName, phone, email, registeredDate, pathToImage, points, refundAmount);
                 customers.add(customer);
             }
         }catch(SQLException exception){
+            Logger.logError(exception.getMessage(), exception);
             exception.printStackTrace();
         }
         return customers;
@@ -1557,13 +1986,13 @@ public class Connection {
                 String registeredDate = resultSet.getString("registered_date");
                 String pathToImage = resultSet.getString("image_path");
                 double points = resultSet.getDouble("points");
+                double refundAmount = resultSet.getDouble("refund_amount");
 
-                System.out.println(firstName + " " + lastName);
-
-                Customer customer = new Customer(id, firstName, lastName, phone, email, registeredDate,pathToImage, points);
+                Customer customer = new Customer(id, firstName, lastName, phone, email, registeredDate,pathToImage, points, refundAmount);
                 customers.add(customer);
             }
         }catch(SQLException exception){
+            Logger.logError(exception.getMessage(), exception);
             exception.printStackTrace();
         }
         return customers;
@@ -1619,6 +2048,7 @@ public class Connection {
             Data.getInstance().refreshCustomers();
             return 1;
         }catch (SQLException exception){
+            Logger.logError(exception.getMessage(), exception);
             exception.printStackTrace();
         }
         return -1;
@@ -1644,13 +2074,13 @@ public class Connection {
                 String registeredDate = resultSet.getString("registered_date");
                 String pathToImage = resultSet.getString("image_path");
                 double points = resultSet.getDouble("points");
+                double refundAmount = resultSet.getDouble("refund_amount");
 
-                System.out.println(firstName + " " + lastName);
-
-                Customer customer = new Customer(id, firstName, lastName, phone, email, registeredDate,pathToImage, points);
+                Customer customer = new Customer(id, firstName, lastName, phone, email, registeredDate,pathToImage, points, refundAmount);
                 customers.add(customer);
             }
         }catch(SQLException exception){
+            Logger.logError(exception.getMessage(), exception);
             exception.printStackTrace();
         }
         Data.getInstance().setCustomers(customers);
@@ -1670,7 +2100,9 @@ public class Connection {
             checkPs.setString(2, last_name);
             checkPs.setString(3, phone);
             checkPs.setString(4, email);
+
             ResultSet rs = checkPs.executeQuery();
+
             if (rs.next() && rs.getInt(1) > 0) {
                 return "Customer already exists!";
             }
@@ -1689,6 +2121,7 @@ public class Connection {
             Data.getInstance().refreshCustomers();
             return "Customer added successfully!";
         } catch (SQLException e) {
+            Logger.logError(e.getMessage(), e);
             e.printStackTrace();
             return "Error: Could not add customer.";
         }
@@ -1710,6 +2143,7 @@ public class Connection {
             statement.close();
 
         } catch (SQLException e){
+            Logger.logError(e.getMessage(), e);
             e.printStackTrace();
         }
         return totalCustomers;
@@ -1729,7 +2163,6 @@ public class Connection {
             stmt.setInt(6, item_status_id);
 
             stmt.executeUpdate();
-            System.out.println("sale recorded successfully");
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -1745,12 +2178,8 @@ public class Connection {
             stmt.setInt(2, itemHasSizeId);;
 
             int rowsAffected = stmt.executeUpdate();
-            if (rowsAffected > 0) {
-                System.out.println("Stock updated successfully for itemHasSizeId: " + itemHasSizeId);
-            } else {
-            System.out.println("No stock record found for itemHasSizeId: " + itemHasSizeId);
-            }
         } catch (SQLException e) {
+            Logger.logError(e.getMessage(), e);
             e.printStackTrace();
         }
     }
@@ -1759,7 +2188,7 @@ public class Connection {
         ObservableList<CheckoutItem> itemList = FXCollections.observableArrayList();
         try {
             PreparedStatement stmt = connection.prepareStatement(
-                    "SELECT i.name AS item_name, s.size AS item_size, c.color AS item_color, " +
+                    "SELECT chs.id AS id, chs.refund_amount AS refund_amount, i.name AS item_name, s.size AS item_size, c.color AS item_color, " +
                             "chs.amount, chs.price AS checkout_price, sale.date, ihs.price AS selling_price, chs.discount AS discount " +  // <-- FIXED
                             "FROM customer_has_item_has_size chs INNER JOIN sale ON chs.sale_id = sale.id " +
                             "JOIN item_has_size ihs ON chs.item_has_size_id = ihs.id " +
@@ -1771,6 +2200,7 @@ public class Connection {
             ResultSet rs = stmt.executeQuery();
 
             while (rs.next()) {
+                int id = rs.getInt("id");
                 String name = rs.getString("item_name");
                 String size = rs.getString("item_size");
                 String color = rs.getString("item_color");
@@ -1778,6 +2208,7 @@ public class Connection {
                 int price = rs.getInt("price");
                 double sellingPrice = rs.getDouble("selling_price");
                 double discount = rs.getDouble("discount");
+                double refundAmount = rs.getDouble("refund_amount");
                 double totalCost = amount * sellingPrice;
 
                 String date = rs.getString("date");
@@ -1785,6 +2216,7 @@ public class Connection {
                 double costWithDiscount = (sellingPrice * discount / 100) * amount;
 
                 CheckoutItem item = new CheckoutItem(
+                        id,
                         name,
                         size,
                         color,
@@ -1793,11 +2225,13 @@ public class Connection {
                         sellingPrice,
                         discount,
                         String.valueOf(totalCost),
-                        costWithDiscount);
+                        costWithDiscount,
+                        refundAmount);
                 itemList.add(item);
             }
 
         } catch (SQLException e) {
+            Logger.logError(e.getMessage(), e);
             e.printStackTrace();
         }
 
@@ -1809,7 +2243,7 @@ public class Connection {
 
         try {
             PreparedStatement stmt = connection.prepareStatement(
-                    "SELECT i.name AS item_name, s.size AS item_size, " +
+                    "SELECT chs.id AS id, chs.refund_amount AS refund_amount, i.name AS item_name, s.size AS item_size, " +
                             "chs.amount, chs.discount as discount, chs.price AS checkout_price, sale.date, ihs.price AS selling_price " +
                             "FROM customer_has_item_has_size chs INNER JOIN sale ON chs.sale_id = sale.id " +
                             "JOIN item_has_size ihs ON chs.item_has_size_id = ihs.id " +
@@ -1819,6 +2253,7 @@ public class Connection {
             ResultSet rs = stmt.executeQuery();
 
             while (rs.next()) {
+                int id = rs.getInt("id");
                 String name = rs.getString("item_name");
                 String size = rs.getString("item_size");
                 String color = "N/A";
@@ -1826,16 +2261,19 @@ public class Connection {
                 int price = rs.getInt("checkout_price");
                 double sellingPrice = rs.getDouble("selling_price");
                 double discount = rs.getDouble("discount");
+                double refundAmount = rs.getDouble("refund_amount");
+
                 double totalCost = amount * sellingPrice;
 
 //                String date = rs.getString("sale.date");
 
                 double costWithDiscount = (sellingPrice * discount / 100) * amount;
 
-                CheckoutItem item = new CheckoutItem(name, size, color, amount, price, sellingPrice, String.valueOf(totalCost), costWithDiscount);
+                CheckoutItem item = new CheckoutItem(id, name, size, color, amount, price, sellingPrice, String.valueOf(totalCost), costWithDiscount, refundAmount);
                 itemList.add(item);
             }
         } catch (SQLException e) {
+            Logger.logError(e.getMessage(), e);
             e.printStackTrace();;
         }
         return itemList;
@@ -1857,6 +2295,7 @@ public class Connection {
                 roles.add(role);
             }
         }catch(SQLException sqlException){
+            Logger.logError(sqlException.getMessage(), sqlException);
             sqlException.printStackTrace();
         }
         return roles;
@@ -1885,6 +2324,7 @@ public class Connection {
             }
 
         } catch (SQLException e) {
+            Logger.logError(e.getMessage(), e);
             e.printStackTrace();
         }
 
@@ -1901,6 +2341,7 @@ public class Connection {
             Data.getInstance().refreshStock();
             return isStockAdded;
         }catch(SQLException e){
+            Logger.logError(e.getMessage(), e);
             e.printStackTrace();
         }
         return false;
@@ -1910,10 +2351,10 @@ public class Connection {
         try{
             statement = connection.createStatement();
             int result = statement.executeUpdate("UPDATE `stock` SET `name` = '%s', `date` = '%s' WHERE `id` = %d".formatted(newName, date, id));
-            System.out.println(result);
             Data.getInstance().refreshStock();
             return result > 0;
         }catch(SQLException exception){
+            Logger.logError(exception.getMessage(), exception);
             exception.printStackTrace();
         }
         return false;
@@ -1931,11 +2372,11 @@ public class Connection {
                 int id = resultSet.getInt(1);
                 String date = resultSet.getString(2);
                 String name = resultSet.getString(3);
-                System.out.println(id + " " + date + " " + name);
                 Stock stock = new Stock(id, date, name);
                 rows.add(stock);
             }
         }catch(SQLException sqlException){
+            Logger.logError(sqlException.getMessage(), sqlException);
             sqlException.printStackTrace();
         }
         return rows;
@@ -1950,10 +2391,10 @@ public class Connection {
                 int id = resultSet.getInt(1);
                 String date = resultSet.getString(2);
                 String name = resultSet.getString(3);
-                System.out.println(id + " " + date + " " + name);
                 stock = new Stock(id, date, name);
             }
         }catch(SQLException sqlException){
+            Logger.logError(sqlException.getMessage(), sqlException);
             sqlException.printStackTrace();
         }
         return stock;
@@ -1973,11 +2414,11 @@ public class Connection {
                 int id = resultSet.getInt(1);
                 String date = resultSet.getString(2);
                 String name = resultSet.getString(3);
-                System.out.println(id + " " + date + " " + name);
                 Stock stock = new Stock(id, date, name);
                 rows.add(stock);
             }
         }catch(SQLException sqlException){
+            Logger.logError(sqlException.getMessage(), sqlException);
             sqlException.printStackTrace();
         }
         return rows;
@@ -1990,6 +2431,7 @@ public class Connection {
             Data.getInstance().refreshStock();
             return isDeleted;
         }catch(SQLException e){
+            Logger.logError(e.getMessage(), e);
             e.printStackTrace();
         }
         return false;
@@ -2006,8 +2448,6 @@ public class Connection {
 
             while (resultSet.next()){
                 String role = resultSet.getString("role.role");
-                System.out.println(role);
-                System.out.println(resultSet.getString("role.role"));
                 if (role.equals("Admin")){
                     totalAdminUsers += 1;
                 }else if(role.equals("Cashier")){
@@ -2028,6 +2468,7 @@ public class Connection {
             userAnalytics = new UserAnalytics(totalUsers, totalAdminUsers, totalStaffMembers, totalCustomers, 0, new String[]{});
 
         }catch (SQLException exception){
+            Logger.logError(exception.getMessage(), exception);
             exception.printStackTrace();
         }
         return userAnalytics;
@@ -2047,11 +2488,13 @@ public class Connection {
                 String registeredDate = resultSet.getString("registered_date");
                 String pathToImage = resultSet.getString("image_path");
                 double points = resultSet.getDouble("points");
+                double refundAmount = resultSet.getDouble("refund_amount");
 
-                Customer customer = new Customer(id, firstName, lastName, phone, email, registeredDate, pathToImage, points);
+                Customer customer = new Customer(id, firstName, lastName, phone, email, registeredDate, pathToImage, points, refundAmount);
                 customerList.add(customer);
             }
         }catch(SQLException e){
+            Logger.logError(e.getMessage(), e);
             e.printStackTrace();
         }
         return customerList;
@@ -2071,9 +2514,12 @@ public class Connection {
                 String registeredDate = resultSet.getString("registered_date");
                 String pathToImage = resultSet.getString("image_path");
                 double points = resultSet.getDouble("points");
-                customer = new Customer(id, firstName, lastName, phone, email, registeredDate, pathToImage, points);
+                double refundAmount = resultSet.getDouble("refund_amount");
+
+                customer = new Customer(id, firstName, lastName, phone, email, registeredDate, pathToImage, points, refundAmount);
             }
         }catch(SQLException e){
+            Logger.logError(e.getMessage(), e);
             e.printStackTrace();
         }
         return customer;
@@ -2101,6 +2547,7 @@ public class Connection {
                 numberOfCustomers += 1;
             }
         }catch(SQLException exception){
+            Logger.logError(exception.getMessage(), exception);
             exception.printStackTrace();
         }
         return new int[]{numberOfAdmins, numberOfUsers, numberOfCustomers};
@@ -2122,12 +2569,14 @@ public class Connection {
                 }
             }
         }catch(SQLException e){
+            Logger.logError(e.getMessage(), e);
             e.printStackTrace();
         }
         return totalDueBalance;
     }
 
-    public void clearCustomerDebt(Customer customer, double amount, int saleID, boolean fromPoints){
+    public String clearCustomerDebt(Customer customer, double amount, int saleID, boolean fromPoints){
+        double remains = amount;
         try {
             statement = connection.createStatement();
             HashMap<Integer, List<Double>> saleIDs = new HashMap<>();
@@ -2149,29 +2598,32 @@ public class Connection {
             }
             if (fromPoints) {
                 double points = customer.getPoints();
-                if (points >= amount){
-                    points -= amount;
+                if (points >= remains){
+                    points -= remains;
                     statement.execute("UPDATE `customer` SET `points` = %f WHERE `id` = %d".formatted(points, customer.getId()));
-                }
 
-                for (Map.Entry<Integer, List<Double>> dataEntry : saleIDs.entrySet()){
-                    int saleId = dataEntry.getKey();
-                    double receivedMoney = dataEntry.getValue().get(0);
-                    double liableAmount = dataEntry.getValue().get(1);
-                    double totalCost = dataEntry.getValue().get(2);
+                    for (Map.Entry<Integer, List<Double>> dataEntry : saleIDs.entrySet()){
+                        int saleId = dataEntry.getKey();
+                        double receivedMoney = dataEntry.getValue().get(0);
+                        double liableAmount = dataEntry.getValue().get(1);
+                        double totalCost = dataEntry.getValue().get(2);
 
-                    double newReceivedAmount = 0.0;
+                        double newReceivedAmount = 0.0;
+                        if (liableAmount > remains) {
+                            newReceivedAmount = receivedMoney + remains;
+                            remains = 0.0D;
+                        } else if (liableAmount <= remains) {
+                            remains -= liableAmount;
+                            newReceivedAmount = totalCost;
+                        }
 
-                    if (liableAmount > amount){
-                        newReceivedAmount = receivedMoney + amount;
-                    }else if(liableAmount <= amount){
-                        newReceivedAmount = totalCost;
+                        statement.execute(("" +
+                                "UPDATE `sale` SET `received_amount` = %f WHERE `id` = %d").formatted(newReceivedAmount, saleId));
                     }
-
-                    statement.execute(("" +
-                            "UPDATE `sale` SET `received_amount` = %f WHERE `id` = %d").formatted(newReceivedAmount, saleId));
+                    return "Debt cleared successfully!";
+                }else{
+                    return "There is no enough points to clear debt!";
                 }
-
             }else{
                 for (Map.Entry<Integer, List<Double>> dataEntry : saleIDs.entrySet()){
                     int saleId = dataEntry.getKey();
@@ -2181,9 +2633,11 @@ public class Connection {
 
                     double newReceivedAmount = 0.0;
 
-                    if (liableAmount > amount){
-                        newReceivedAmount = receivedMoney + amount;
-                    }else if(liableAmount <= amount){
+                    if (liableAmount > remains){
+                        newReceivedAmount = receivedMoney + remains;
+                        remains = 0.0D;
+                    }else if(liableAmount <= remains){
+                        remains -= liableAmount;
                         newReceivedAmount = totalCost;
                     }
 
@@ -2192,8 +2646,12 @@ public class Connection {
                 }
             }
         }catch(SQLException e){
+            Logger.logError(e.getMessage(), e);
             e.printStackTrace();
+            return "An error occurred";
         }
+
+        return "Debt settled successfully!";
     }
 
     public HashMap<Customer, Map<Integer, Sale>> getLiabilities(){
@@ -2229,6 +2687,7 @@ public class Connection {
             }
 
         }catch(SQLException e){
+            Logger.logError(e.getMessage(), e);
             e.printStackTrace();
         }
         return customerSalesMap;
@@ -2258,11 +2717,11 @@ public class Connection {
                 Sale sale = new Sale(saleID, saleDate, receivedMoney, totalCost, remainsStatus);
 
                 if (receivedMoney < totalCost && remainsStatus == 4){
-                    System.out.println( "Liable Item ID: " + colorHasItemHasSizeID);
                     customerLiableItems.add(itemDetail);
                 }
             }
         }catch(SQLException e){
+            Logger.logError(e.getMessage(), e);
             e.printStackTrace();
         }
         return customerLiableItems;
@@ -2277,9 +2736,6 @@ public class Connection {
         int currentDayOfYear = now.getDayOfYear();
         int currentDayOfMonth = now.getDayOfMonth();
         int currentDayOfWeek = now.getDayOfWeek().getValue();
-        int currentHour = now.getHour();
-        int currentMinute = now.getMinute();
-        int currentSecond = now.getSecond();
 
         LocalDate from = LocalDate.parse(today);
         if (dateRange.equals("This week")){
@@ -2299,9 +2755,6 @@ public class Connection {
         }
 
         String fromDate = from.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        System.out.println("Trying to get total liabilities");
-        System.out.println(fromDate);
-        System.out.println(today);
         try{
             statement = connection.createStatement();
             ResultSet resultSet = statement.executeQuery("SELECT * FROM `sale` WHERE `date` >= '%s' AND `date` <= '%s'".formatted(fromDate, today));
@@ -2312,9 +2765,9 @@ public class Connection {
                 if (receivedAmount < totalCost){
                     accountsReceivable += ((receivedAmount - totalCost) * -1);
                 }
-                System.out.println("Inside the while loop!");
             }
         }catch(SQLException sqlException){
+            Logger.logError(sqlException.getMessage(), sqlException);
             sqlException.printStackTrace();
         }
         return accountsReceivable;
@@ -2328,9 +2781,6 @@ public class Connection {
         int currentDayOfYear = now.getDayOfYear();
         int currentDayOfMonth = now.getDayOfMonth();
         int currentDayOfWeek = now.getDayOfWeek().getValue();
-        int currentHour = now.getHour();
-        int currentMinute = now.getMinute();
-        int currentSecond = now.getSecond();
 
         LocalDate from = LocalDate.parse(today);
         if (dateRange.equals("This week")){
@@ -2350,14 +2800,13 @@ public class Connection {
         }
 
         String fromDate = from.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        System.out.println("From: " + fromDate);
-        System.out.println("To: " + today);
         try{
             statement = connection.createStatement();
             String query = "SELECT * FROM `sale` WHERE `date` = '%s'".formatted(today);
             if (!dateRange.equals("Today")){
                 query = "SELECT * FROM `sale` WHERE `date` >= '%s' AND `date` <= '%s'".formatted(fromDate, today);
             }
+
             query = "SELECT * FROM `sale` WHERE `date` >= '%s' AND `date` <= '%s'".formatted(fromDate, today);
             ResultSet resultSet = statement.executeQuery(query);
             while (resultSet.next()){
@@ -2371,9 +2820,9 @@ public class Connection {
                 }
             }
         }catch(SQLException sqlException){
+            Logger.logError(sqlException.getMessage(), sqlException);
             sqlException.printStackTrace();
         }
-        System.out.println("Available points: " + points);
         return points;
     }
 

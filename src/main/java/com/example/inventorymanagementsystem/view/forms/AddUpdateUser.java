@@ -1,17 +1,19 @@
 package com.example.inventorymanagementsystem.view.forms;
 
 import com.example.inventorymanagementsystem.db.Connection;
-import com.example.inventorymanagementsystem.models.Customer;
 import com.example.inventorymanagementsystem.models.Role;
 import com.example.inventorymanagementsystem.models.User;
+import com.example.inventorymanagementsystem.services.interfaces.ThemeObserver;
 import com.example.inventorymanagementsystem.state.Constants;
 import com.example.inventorymanagementsystem.state.Data;
 import com.example.inventorymanagementsystem.view.components.FormField;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -39,15 +41,16 @@ public class AddUpdateUser extends VBox {
 
     Button addUserButton;
     Button closeButton;
-    Dialog parentDialog;
-
+    Stage stage;
     User user;
 
     private String selectedFilePath = null;
 
-    public AddUpdateUser(User user, Dialog<Boolean> dialog) throws SQLException {
+    public AddUpdateUser(User user, Stage stage) throws SQLException {
         this.user = user;
-        parentDialog = dialog;
+        this.stage = stage;
+        this.setPadding(new Insets(15.0D));
+        this.setStyle("-fx-background-color: #335; -fx-background-radius: 10px;");
         firstNameField = new FormField<>("First Name", TextField.class);
         lastNameField = new FormField<>("Last Name", TextField.class);
         userNameField = new FormField<>("User Name", TextField.class);
@@ -83,19 +86,20 @@ public class AddUpdateUser extends VBox {
         });
 
         addUserButton = new Button("Add");
+        addUserButton.getStyleClass().add("success-button");
         addUserButton.setOnAction(actionEvent -> {
             addUser();
         });
         closeButton = new Button("Close");
+        closeButton.getStyleClass().add("button-danger");
         closeButton.setOnAction(actionEvent -> {
-            if (dialog != null){
-                dialog.setResult(false);
-            }
+            this.stage.close();
         });
 
         HBox buttonContainer = new HBox();
         buttonContainer.getChildren().addAll(addUserButton, closeButton);
         buttonContainer.setAlignment(Pos.CENTER_RIGHT);
+        buttonContainer.setSpacing(10.0D);
 
         if (user != null){
             firstNameField.setValue(user.getFirstName());
@@ -106,6 +110,8 @@ public class AddUpdateUser extends VBox {
             phoneNumber.setValue(user.getPhoneNumber());
             addUserButton.setText("Update");
         }
+
+        this.setSpacing(10.0D);
 
         this.getChildren().addAll(
                 firstNameField,
@@ -119,6 +125,7 @@ public class AddUpdateUser extends VBox {
                 openFileChooserButton,
                 buttonContainer
         );
+        this.getStylesheets().add(Constants.DARK_THEME_CSS);
     }
 
     public void addUser(){
@@ -150,9 +157,6 @@ public class AddUpdateUser extends VBox {
                 );
             }
 
-            if(result == 1 && parentDialog != null){
-                parentDialog.setResult(true);
-            }
         }catch(SQLException e){
             e.printStackTrace();
         }

@@ -112,6 +112,8 @@ public class AddNewItem extends Dialog<Boolean> {
                                 alert.setContentText("Could not copy the image to the destination location");
                                 alert.show();
                             }
+                        }else if(itemDetail != null){
+                            selectedFilePath = itemDetail.getImagePath();
                         }
 
                         if (itemVariant.isUpdate()) {
@@ -132,7 +134,6 @@ public class AddNewItem extends Dialog<Boolean> {
                                     selectedFilePath
                             );
                         } else {
-
                             Connection.getInstance().addNewVariant(
                                     id,
                                     stockID,

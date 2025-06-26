@@ -1,5 +1,6 @@
 package com.example.inventorymanagementsystem.view.components;
 
+import com.example.inventorymanagementsystem.models.Customer;
 import com.example.inventorymanagementsystem.models.Size;
 import com.example.inventorymanagementsystem.models.Stock;
 import com.example.inventorymanagementsystem.services.interfaces.DataModel;
@@ -11,9 +12,11 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
 import javafx.util.Callback;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 public class FormField<C extends Control, M> extends VBox implements ThemeObserver {
     private Control node;
@@ -127,6 +130,7 @@ public class FormField<C extends Control, M> extends VBox implements ThemeObserv
 
     private void buildTextField(){
         node = new TextField();
+        node.getStyleClass().add("default-text-areas");
     }
 
     private void buildPasswordField(){
@@ -138,6 +142,7 @@ public class FormField<C extends Control, M> extends VBox implements ThemeObserv
     }
     private void buildComboBox(){
         ComboBox<M> comboBox = new ComboBox<M>();
+        comboBox.getStyleClass().add("default-dropdowns");
         comboBox.setCellFactory(new Callback<ListView<M>, ListCell<M>>() {
             @Override
             public ListCell<M> call(ListView<M> param) {
@@ -150,6 +155,16 @@ public class FormField<C extends Control, M> extends VBox implements ThemeObserv
                         }
                     }
                 };
+            }
+        });
+        comboBox.setButtonCell(new ListCell<>(){
+            @Override
+            protected void updateItem(M item, boolean empty) {
+                super.updateItem(item, empty);
+                if (item != null) {
+                    setText(((DataModel)item).getValue());
+                }
+                setTextFill(Paint.valueOf("#0088FF"));
             }
         });
         node = comboBox;
@@ -157,6 +172,7 @@ public class FormField<C extends Control, M> extends VBox implements ThemeObserv
 
     private void buildComboBox(ObservableList<M> data){
         ComboBox<M> comboBox = new ComboBox<M>(data);
+        comboBox.getStyleClass().add("default-dropdowns");
         comboBox.setCellFactory(new Callback<ListView<M>, ListCell<M>>() {
             @Override
             public ListCell<M> call(ListView<M> param) {
@@ -171,11 +187,22 @@ public class FormField<C extends Control, M> extends VBox implements ThemeObserv
                 };
             }
         });
+        comboBox.setButtonCell(new ListCell<>(){
+            @Override
+            protected void updateItem(M item, boolean empty) {
+                super.updateItem(item, empty);
+                if (item != null) {
+                    setText(((DataModel)item).getValue());
+                }
+                setTextFill(Paint.valueOf("#0088FF"));
+            }
+        });
         node = comboBox;
     }
 
     private void buildComboBox(ObservableList<M> data, M selectedItem){
         ComboBox<M> comboBox = new ComboBox<M>(data);
+        comboBox.getStyleClass().add("default-dropdowns");
         comboBox.setCellFactory(new Callback<ListView<M>, ListCell<M>>() {
             @Override
             public ListCell<M> call(ListView<M> param) {
@@ -188,6 +215,17 @@ public class FormField<C extends Control, M> extends VBox implements ThemeObserv
                         }
                     }
                 };
+            }
+        });
+
+        comboBox.setButtonCell(new ListCell<>(){
+            @Override
+            protected void updateItem(M item, boolean empty) {
+                super.updateItem(item, empty);
+                if (item != null) {
+                    setText(((DataModel)item).getValue());
+                }
+                setTextFill(Paint.valueOf("#0088FF"));
             }
         });
 
@@ -217,13 +255,20 @@ public class FormField<C extends Control, M> extends VBox implements ThemeObserv
                 textField.setText(value);
             } else if (node instanceof ColorPicker colorPicker) {
                 colorPicker.setValue(Color.valueOf(value));
+            }else if (node instanceof DatePicker datePicker){
+                try{
+                    LocalDate localDate = LocalDate.parse(value);
+                    setValue(localDate);
+                }catch(Exception e){
+                    e.printStackTrace();
+                }
             }
         }
     }
 
     public void setValue(LocalDate localDate){
         if (node instanceof DatePicker datePicker){
-            datePicker.setValue(localDate);
+            datePicker.setValue(LocalDate.of(Integer.parseInt(localDate.format(DateTimeFormatter.ofPattern("yyyy"))), localDate.getMonthValue(), localDate.getDayOfMonth()));
         }
     }
 
@@ -243,36 +288,15 @@ public class FormField<C extends Control, M> extends VBox implements ThemeObserv
         node.setDisable(!isEnabled);
     }
 
-
     @Override
     public void lightTheme() {
         this.getStylesheets().clear();
         this.getStylesheets().add(Constants.LIGHT_THEME_CSS);
-
-//        try {
-//            label.getStyleClass().remove("custom-form-field-label-dark");
-//        }catch(Exception e){
-//            e.printStackTrace();
-//        }
-//        label.getStyleClass().add("custom-form-field-label-light");
-//
-//        if (node != null) {
-//            node.getStyleClass().add("default-text-areas");
-//        }
     }
 
     @Override
     public void darkTheme() {
         this.getStylesheets().clear();
         this.getStylesheets().add(Constants.DARK_THEME_CSS);
-//        try {
-//            label.getStyleClass().remove("custom-form-field-label-light");
-//        }catch(Exception e){
-//            e.printStackTrace();
-//        }
-//        label.getStyleClass().add("custom-form-field-label-dark");
-//        if(node != null) {
-//            node.getStyleClass().add("default-text-areas");
-//        }
     }
 }

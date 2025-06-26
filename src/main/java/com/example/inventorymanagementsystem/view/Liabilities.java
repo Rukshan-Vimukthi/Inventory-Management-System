@@ -9,6 +9,8 @@ import com.example.inventorymanagementsystem.state.Constants;
 import com.example.inventorymanagementsystem.state.Data;
 import com.example.inventorymanagementsystem.view.components.Card;
 import com.example.inventorymanagementsystem.view.components.FormField;
+import javafx.animation.FadeTransition;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -29,6 +31,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Paint;
 import javafx.util.Callback;
+import javafx.util.Duration;
 import org.kordamp.ikonli.fontawesome5.FontAwesomeSolid;
 import org.kordamp.ikonli.javafx.FontIcon;
 
@@ -44,10 +47,14 @@ public class Liabilities extends HBox implements ThemeObserver {
     Label pointsOnDate;
     ComboBox<String> pointsTimePicker;
     ComboBox<String> accountReceivableTimePicker;
+    Label messageLabel;
     public Liabilities() throws SQLException {
         super();
         this.setPadding(new Insets(10.0D));
         this.setSpacing(10.0D);
+
+        messageLabel = new Label("");
+        messageLabel.setTextFill(Paint.valueOf("#0055FF"));
 
         VBox cardsAndTableContainer = new VBox();
         HBox cardContainer = new HBox();
@@ -193,6 +200,14 @@ public class Liabilities extends HBox implements ThemeObserver {
             }
         });
 
+        TableColumn<LiableCustomers, String> refundsAvailableColumn = new TableColumn<>("Refunds Available");
+        refundsAvailableColumn.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<LiableCustomers, String>, ObservableValue<String>>() {
+            @Override
+            public ObservableValue<String> call(TableColumn.CellDataFeatures<LiableCustomers, String> param) {
+                return new SimpleStringProperty(String.valueOf(param.getValue().getCustomerObject().getRefundAmount()));
+            }
+        });
+
         pointsAvailableColumn.setCellFactory(new Callback<TableColumn<LiableCustomers, Customer>, TableCell<LiableCustomers, Customer>>() {
             @Override
             public TableCell<LiableCustomers, Customer> call(TableColumn<LiableCustomers, Customer> param) {
@@ -214,7 +229,7 @@ public class Liabilities extends HBox implements ThemeObserver {
 
         totalLiabilitiesAmount.setText(Constants.CURRENCY_UNIT + Data.getInstance().getTotalAccountsReceivable());
         totalLiableCustomersValue.setText(String.valueOf(Data.getInstance().getLiableCustomers().size()));
-        liableCustomersTableView.getColumns().addAll(firstNameColumn, lastNameColumn, phoneNumberColumn, liableAmountColumn, pointsAvailableColumn);
+        liableCustomersTableView.getColumns().addAll(firstNameColumn, lastNameColumn, phoneNumberColumn, liableAmountColumn, pointsAvailableColumn, refundsAvailableColumn);
 
         liableCustomersTableView.setItems(Data.getInstance().getLiableCustomers());
         com.example.inventorymanagementsystem.state.ThemeObserver.init().addObserver(this);
@@ -254,6 +269,7 @@ public class Liabilities extends HBox implements ThemeObserver {
         HBox tableAndFormContainer = new HBox();
 
         VBox formContainer = new VBox();
+        formContainer.setSpacing(10.0D);
 
         FormField<ComboBox, Customer> customer = new FormField<>("Customer", ComboBox.class, Data.getInstance().getCustomers());
         FormField<TextField, String> amountToClear = new FormField<>("Amount To Reduce", TextField.class);
@@ -265,7 +281,8 @@ public class Liabilities extends HBox implements ThemeObserver {
         Button clearDebt = new Button("Pay Debt");
         clearDebt.setOnAction(actionEvent -> {
             try{
-                Connection.getInstance().clearCustomerDebt(customer.getComboBox().getSelectionModel().getSelectedItem(), Double.parseDouble(String.valueOf(amountToClear.getValue())), 0, false);
+                String message = Connection.getInstance().clearCustomerDebt(customer.getComboBox().getSelectionModel().getSelectedItem(), Double.parseDouble(String.valueOf(amountToClear.getValue())), 0, false);
+                showToast(message);
             }catch(SQLException e){
                 e.printStackTrace();
             }
@@ -279,7 +296,8 @@ public class Liabilities extends HBox implements ThemeObserver {
         clearDebtUsingPoints.setDisable(true);
         clearDebtUsingPoints.setOnAction(actionEvent -> {
             try{
-                Connection.getInstance().clearCustomerDebt(customer.getComboBox().getSelectionModel().getSelectedItem(), Double.parseDouble(String.valueOf(amountToClear.getValue())), 0, true);
+                String message = Connection.getInstance().clearCustomerDebt(customer.getComboBox().getSelectionModel().getSelectedItem(), Double.parseDouble(String.valueOf(amountToClear.getValue())), 0, true);
+                showToast(message);
             }catch(SQLException e){
                 e.printStackTrace();
             }
@@ -296,20 +314,14 @@ public class Liabilities extends HBox implements ThemeObserver {
         customer.getComboBox().getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Customer>() {
             @Override
             public void changed(ObservableValue<? extends Customer> observable, Customer oldValue, Customer newValue) {
-//                boughtItems.getSelectionModel().clearSelection();
                 if (newValue != null) {
                     System.out.println("Selected Customer name to pay off debt: " + newValue.getFirstName());
-//                    try {
-//                        Data.getInstance().refreshCustomerLiableItems(newValue);
-//                    } catch (SQLException e) {
-//                        e.printStackTrace();
-//                    }
                     clearDebtUsingPoints.setDisable(!(newValue.getPoints() > 0.0D));
                 }
             }
         });
 
-        formContainer.getChildren().addAll(customer, amountToClear, footer);
+        formContainer.getChildren().addAll(customer, amountToClear, footer, messageLabel);
         formContainer.setMinWidth(200.0D);
         formContainer.setMaxWidth(200.0D);
         formContainer.setSpacing(10.0D);
@@ -376,4 +388,30 @@ public class Liabilities extends HBox implements ThemeObserver {
             e.printStackTrace();
         }
     }
+
+    public void showToast(String message){
+        messageLabel.setText(message);
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try{
+                    Thread.sleep(1000);
+                }catch(InterruptedException e){
+                    e.printStackTrace();
+                }
+                Platform.runLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        FadeTransition fadeOut = new FadeTransition(Duration.seconds(2), messageLabel);
+                        fadeOut.setFromValue(1.0D);
+                        fadeOut.setToValue(0.0D);
+                        fadeOut.play();
+                    }
+                });
+            }
+        });
+
+        thread.start();
+    }
+
 }

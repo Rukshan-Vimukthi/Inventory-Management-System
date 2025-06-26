@@ -2,6 +2,7 @@ package com.example.inventorymanagementsystem;
 
 import com.example.inventorymanagementsystem.models.User;
 import com.example.inventorymanagementsystem.services.interfaces.AuthenticateStateListener;
+import com.example.inventorymanagementsystem.services.utils.Logger;
 import com.example.inventorymanagementsystem.state.Constants;
 
 import com.example.inventorymanagementsystem.state.Data;
@@ -49,6 +50,8 @@ public class InventoryManagementApplication extends Application implements com.e
     Tab inventory;
     Tab users;
     Tab liabilitiesTab;
+
+    Tab salesTab;
     TitleBar titleBar;
     TabPane tabPane;
 
@@ -57,6 +60,8 @@ public class InventoryManagementApplication extends Application implements com.e
     Analytics analyticsView;
     Users userTabView;
     Liabilities liabilities;
+
+    Sales sales;
 
     BorderPane borderPane;
     VBox messageContainer;
@@ -71,7 +76,24 @@ public class InventoryManagementApplication extends Application implements com.e
     SignIn signIn;
     @Override
     public void start(Stage stage) {
+        Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
+            Logger.logError("Unhandled exception in thread: " + thread.getName(), throwable);
+        });
+
+        Thread.currentThread().setUncaughtExceptionHandler((thread, throwable) -> {
+            Logger.logError("FX Application Thread exception: " + thread.getName(), throwable);
+        });
+
+        Thread fxThread = Thread.currentThread();
+        Platform.runLater(() -> {
+            fxThread.setUncaughtExceptionHandler((t, e) -> {
+                Logger.logError("Exception in FX Platform.runLater()", e);
+            });
+        });
+
+
         System.out.println("Initializing application...");
+        Logger.logMessage("Starting application...");
         this.stage = stage;
         rootContainer = new VBox();
         Session.addListener(this);
@@ -137,6 +159,7 @@ public class InventoryManagementApplication extends Application implements com.e
             spinner.setFitWidth(180.0D);
             spinner.setFitHeight(180.0D);
         }catch(URISyntaxException e){
+            Logger.logError(e.getMessage(), e);
             e.printStackTrace();
         }
 
@@ -163,6 +186,8 @@ public class InventoryManagementApplication extends Application implements com.e
         tabPane.setTabMinHeight(200.0D);
         tabPane.setTabMaxHeight(200.0D);
         tabPane.setFocusTraversable(false);
+        System.out.println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+        System.out.println(System.getenv("LOCALAPPDATA"));
 
         scene = new Scene(borderPane);
 
@@ -194,6 +219,7 @@ public class InventoryManagementApplication extends Application implements com.e
                     });
                 }catch(SQLException exception){
                     exception.printStackTrace();
+                    Logger.logError(exception.getMessage(), exception);
                     Platform.runLater(new Runnable() {
                         @Override
                         public void run() {
@@ -258,6 +284,7 @@ public class InventoryManagementApplication extends Application implements com.e
                     try {
                         initComponents();
                     }catch(SQLException exception){
+                        Logger.logError(exception.getMessage(), exception);
                         exception.printStackTrace();
                     }
                 }
@@ -295,6 +322,7 @@ public class InventoryManagementApplication extends Application implements com.e
             authenticate();
 //            initComponents();
         }catch (SQLException e){
+            Logger.logError(e.getMessage(), e);
             Platform.runLater(new Runnable() {
                 @Override
                 public void run() {
@@ -320,6 +348,9 @@ public class InventoryManagementApplication extends Application implements com.e
             FontIcon liabilitiesIcon = new FontIcon(FontAwesomeSolid.MONEY_BILL_WAVE);
             liabilitiesIcon.setFill(Paint.valueOf("#FFF"));
 
+            FontIcon saleIcon = new FontIcon(FontAwesomeSolid.MONEY_CHECK);
+            saleIcon.setFill(Paint.valueOf("#FFF"));
+
             FontIcon userLiabilitiesIcon = new FontIcon(FontAwesomeSolid.USER_MINUS);
             userLiabilitiesIcon.setFill(Paint.valueOf("#FFF"));
 
@@ -329,6 +360,7 @@ public class InventoryManagementApplication extends Application implements com.e
             inventory = TabBuilder.buildTab("Inventory", inventoryIcon);
             users = TabBuilder.buildTab("Users", userIcon);
             liabilitiesTab = TabBuilder.buildTab("Liabilities", liabilitiesIcon);
+            salesTab = TabBuilder.buildTab("Sales", saleIcon);
 
             if (inventoryView == null) {
                 // create the inventory view (custom javaFX layout container ex. HBox, VBox)
@@ -380,6 +412,11 @@ public class InventoryManagementApplication extends Application implements com.e
                 liabilitiesTab.setContent(liabilities);
             }
 
+            if (sales == null){
+                sales = new Sales();
+                salesTab.setContent(sales);
+            }
+
             ThemeObserver.init().addObserver(inventoryView);
             ThemeObserver.init().addObserver(analyticsView);
             ThemeObserver.init().addObserver(checkoutLayout);
@@ -392,7 +429,8 @@ public class InventoryManagementApplication extends Application implements com.e
                     analyticsTab,
                     inventory,
                     users,
-                    liabilitiesTab
+                    liabilitiesTab,
+                    salesTab
             );
 
             rootContainer.getChildren().addAll(titleBar, tabPane);

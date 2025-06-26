@@ -133,15 +133,27 @@ public class NewItemVariant extends HBox {
     }
 
     public int getStockID(){
-        return ((Stock)stock.getValue()).getId();
+        Stock stockData = ((Stock)stock.getValue());
+        if (stockData != null) {
+            return stockData.getId();
+        }
+        return 0;
     }
 
     public int getSizeID(){
-        return ((Size)sizeOfItem.getValue()).getId();
+        Size size = ((Size)sizeOfItem.getValue());
+        if (size != null) {
+            return size.getId();
+        }
+        return 0;
     }
 
     public int getColorID(){
-        return ((Color)colorOfItem.getValue()).getId();
+        Color color = ((Color)colorOfItem.getValue());
+        if(color != null) {
+            return color.getId();
+        }
+        return 0;
     }
 
     public double getPrice(){

@@ -139,7 +139,7 @@ public class ItemDetail implements DataModel {
 
     public IntegerProperty itemHasSizeIDProperty(){
         if (itemHasSizeID == null) {
-            itemHasSizeID = new SimpleIntegerProperty(this, "itemHasID");
+            itemHasSizeID = new SimpleIntegerProperty(this, "itemHasSizeID");
         }
         return itemHasSizeID;
     }

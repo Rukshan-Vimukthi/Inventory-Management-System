@@ -419,3 +419,23 @@
     -fx-padding: 5px;
     -fx-background-radius: 5px;
 }
+
+.button-info{
+    -fx-background-color: #FFDD00;
+    -fx-text-fill: black;
+    -fx-font-weight: bold;
+    -fx-padding: 5px;
+    -fx-background-radius: 5px;
+}
+
+.button-info:hover{
+    -fx-background-color: #DDBB00;
+}
+
+.scroll-pane{
+    -fx-background-color: transparent;
+}
+
+.scroll-pane .viewport{
+    -fx-background-color: transparent;
+}

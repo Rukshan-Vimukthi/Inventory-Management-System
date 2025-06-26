@@ -44,7 +44,9 @@ public class EasyCheckoutItem extends VBox {
 
             VBox infoBox = new VBox(2, itemName, valueContainer);
             Circle colorBox = new Circle(6);
-            colorBox.setFill(Color.web(itemDetail.getItemColor()));
+            if (itemDetail.getItemColor() != null){
+                colorBox.setFill(Color.web(itemDetail.getItemColor()));
+            }
             colorBox.setStroke(Color.WHITE);
             colorBox.setStrokeWidth(1.5);
 

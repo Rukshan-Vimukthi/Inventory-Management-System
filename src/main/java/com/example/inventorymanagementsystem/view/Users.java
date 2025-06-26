@@ -76,7 +76,6 @@ public class Users extends HBox implements ThemeObserver {
             @Override
             public void addItem() {
                 AddUpdateUserDialog addUpdateUserDialog = new AddUpdateUserDialog(null);
-                addUpdateUserDialog.show();
             }
 
             @Override
@@ -91,7 +90,6 @@ public class Users extends HBox implements ThemeObserver {
             @Override
             public void update(User user) {
                 AddUpdateUserDialog addUpdateUserDialog = new AddUpdateUserDialog(user);
-                addUpdateUserDialog.show();
             }
 
             @Override

@@ -154,9 +154,9 @@ public class Analytics extends VBox implements ThemeObserver {
         Card productCard = new Card(totalProductsTxt, totalProducts, percentage);
         productCard.getStyleClass().add("summary-cards");
 
-        int totalProductValue = connection.getTotalProductValue();
-        int remainingItemAmount = connection.getRemainingProductsSum();
-        int totalInventoryValue = totalProductValue * remainingItemAmount;
+//        int totalProductValue = connection.getTotalProductValue();
+//        int remainingItemAmount = connection.getRemainingProductsSum();
+        int totalInventoryValue = connection.getTotalProductValue();
         DecimalFormat formatter = new DecimalFormat("#,###");
         String formattedTotalInventoryValue = formatter.format(totalInventoryValue);
         // Total Inventory Value card
@@ -595,9 +595,8 @@ public class Analytics extends VBox implements ThemeObserver {
             int updatedTotalItemsSum = connection.getTotalProducts();
             totalProducts.setText(updatedTotalItemsSum + " Products are Available");
 
-            int updatedTotalItemsValue = connection.getTotalProductValue();
-            int updatedRemainingAmount = connection.getRemainingProductsSum();
-            int updatedInventoryValue = updatedTotalItemsValue * updatedRemainingAmount;
+//            int updatedRemainingAmount = connection.getRemainingProductsSum();admin
+            int updatedInventoryValue = connection.getTotalProductValue();
             DecimalFormat inventoryFormatter = new DecimalFormat("#,###");
             String updateValue = inventoryFormatter.format(updatedInventoryValue);
             inventoryValue.setText("Rs." + updateValue + " of Value");

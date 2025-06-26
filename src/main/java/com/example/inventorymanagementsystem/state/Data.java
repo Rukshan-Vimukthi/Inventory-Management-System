@@ -40,6 +40,8 @@ public class Data {
 
     private ObservableList<ItemDetail> customerLiableItems;
 
+    private ObservableList<CustomerSale> customerSales;
+
     private Double totalAccountsReceivable = 0.0D;
     private Double totalPoints = 0.0D;
 
@@ -64,6 +66,7 @@ public class Data {
         customers = FXCollections.observableArrayList(connection.getCustomers());
         totalLiableCustomers = new SimpleIntegerProperty();
         customerLiableItems = FXCollections.observableArrayList(new ArrayList<>());
+        customerSales = FXCollections.observableArrayList(connection.getCustomerSales(null, 0));
 
         // Turn the liabilities map into an observable list which contains LiableCustomers objects
         liableCustomers = FXCollections.observableArrayList();
@@ -109,6 +112,11 @@ public class Data {
     public void refreshCustomers(){
         customers.clear();
         customers.addAll(connection.getCustomers());
+    }
+
+    public void refreshCustomerSales(String date, int customerID){
+        customerSales.clear();
+        customerSales.addAll(connection.getCustomerSales(date, customerID));
     }
 
     public void refreshCustomerLiableItems(Customer customer){
@@ -261,5 +269,9 @@ public class Data {
 
     public ObservableList<ItemDetail> getCustomerLiableItems(){
         return customerLiableItems;
+    }
+
+    public ObservableList<CustomerSale> getCustomerSales(){
+        return customerSales;
     }
 }

@@ -35,7 +35,7 @@ public class Inventory extends HBox implements ThemeObserver {
         itemTableContainer.setPadding(new Insets(10.0D));
 
         TableContainer<ItemDetail> itemsTable = new TableContainer<>(true, "Item Name", null);
-        itemsTable.addColumn("id", Integer.class);
+        itemsTable.addColumn("itemHasSizeID", "Item ID");
         itemsTable.addColumn("name", String.class);
         itemsTable.addColumn("price", Double.class);
         itemsTable.addColumn("sellingPrice", Double.class);
@@ -149,7 +149,6 @@ public class Inventory extends HBox implements ThemeObserver {
             }
 
         });
-
 
         itemPreview = new ItemPreview();
 

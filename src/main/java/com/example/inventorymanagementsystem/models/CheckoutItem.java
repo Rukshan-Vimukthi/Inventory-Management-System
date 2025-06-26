@@ -19,19 +19,23 @@ public class CheckoutItem implements DataModel {
     private DoubleProperty discount;
 
     private DoubleProperty costWithDiscount;
+
+    private DoubleProperty refundAmount;
+
+    private IntegerProperty id;
     private boolean isCheckedout = false;
 
-    public CheckoutItem(String name, String itemSize, String itemColor,
-                        int amount, double price, double sellingPrice, String itemTotalCost, double costWithDiscount) {
+    public CheckoutItem(int id, String name, String itemSize, String itemColor,
+                        int amount, double price, double sellingPrice, String itemTotalCost, double costWithDiscount, double refundAmount) {
 
-        this(name, itemSize, itemColor, amount, price, sellingPrice, 0.0, itemTotalCost, costWithDiscount); // Default discount = 0.0%
+        this(id, name, itemSize, itemColor, amount, price, sellingPrice, 0.0, itemTotalCost, costWithDiscount, refundAmount); // Default discount = 0.0%
     }
 
-    public CheckoutItem(String name, String itemSize, String itemColor,
+    public CheckoutItem(int id, String name, String itemSize, String itemColor,
                         int amount, double price, double sellingPrice, double discountValue, String itemTotalCost,
-                        double costWithDiscount) {
-        this.itemDetail = itemDetail;
-
+                        double costWithDiscount, double refundAmount) {
+//        this.itemDetail = itemDetail;
+        this.idProperty().setValue(id);
         this.name = new SimpleStringProperty(name);
         this.itemSize = new SimpleStringProperty(itemSize);
         this.itemColor = new SimpleStringProperty(itemColor);
@@ -40,8 +44,24 @@ public class CheckoutItem implements DataModel {
         this.sellingPrice = new SimpleDoubleProperty(sellingPrice);
         this.itemTotalCost = new SimpleStringProperty(itemTotalCost);
         this.discount = new SimpleDoubleProperty(discountValue);
+        this.refundAmountProperty().set(refundAmount);
         costWithDiscountProperty().setValue(costWithDiscount);
-        this.itemHasSizeId = itemHasSizeId;
+//        this.itemHasSizeId = itemHasSizeId;
+    }
+
+    public int getId() {
+        return id.get();
+    }
+
+    public IntegerProperty idProperty() {
+        if (id == null){
+            id = new SimpleIntegerProperty(this, "id");
+        }
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id.set(id);
     }
 
     public void function(){
@@ -148,5 +168,20 @@ public class CheckoutItem implements DataModel {
 
     public double getCostWithDiscount() {
         return costWithDiscount.get();
+    }
+
+    public double getRefundAmount() {
+        return refundAmount.get();
+    }
+
+    public DoubleProperty refundAmountProperty() {
+        if (refundAmount == null){
+            refundAmount = new SimpleDoubleProperty(this, "refundAmount");
+        }
+        return refundAmount;
+    }
+
+    public void setRefundAmount(double refundAmount) {
+        this.refundAmount.set(refundAmount);
     }
 }
