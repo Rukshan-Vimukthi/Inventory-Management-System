@@ -4,9 +4,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SettingsData {
-    private int lowStockLimit = 10;
-    private int overStockLimit = 100;
-    private Map<Integer, Integer> itemSpecificTargets = new HashMap<>();
+    public Integer lowStockLimit = 10;
+    public Integer overStockLimit = 100;
+    public Map<Integer, Integer> itemSpecificTargets = new HashMap<>();
 
     public int getLowStockLimit() {
         return lowStockLimit;

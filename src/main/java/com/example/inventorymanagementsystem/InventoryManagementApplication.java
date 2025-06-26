@@ -79,6 +79,8 @@ public class InventoryManagementApplication extends Application implements com.e
     SignIn signIn;
     @Override
     public void start(Stage stage) {
+//        com.example.inventorymanagementsystem.services.utils.Settings settings = com.example.inventorymanagementsystem.services.utils.Settings.getInstance();
+
         Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
             Logger.logError("Unhandled exception in thread: " + thread.getName(), throwable);
         });
@@ -235,6 +237,8 @@ public class InventoryManagementApplication extends Application implements com.e
             }
         });
         thread.start();
+
+        ThemeObserver.init().addObserver(this);
 
     }
 
@@ -400,13 +404,13 @@ public class InventoryManagementApplication extends Application implements com.e
 
             if (analyticsView == null) {
                 // The Stock Section
-                analyticsView = new Analytics(handler);
-                VBox analyticsViewContainer = analyticsView.getLayout();
+//                analyticsView = new Analytics(handler);
+//                VBox analyticsViewContainer = analyticsView.getLayout();
 
-                ScrollPane scrollableAnalytics = new ScrollPane(analyticsViewContainer);
-                scrollableAnalytics.setFitToWidth(true);
-                scrollableAnalytics.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-                analyticsTab.setContent(scrollableAnalytics);
+//                ScrollPane scrollableAnalytics = new ScrollPane(analyticsViewContainer);
+//                scrollableAnalytics.setFitToWidth(true);
+//                scrollableAnalytics.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+//                analyticsTab.setContent(scrollableAnalytics);
             }
 
             if (userTabView == null) {
@@ -425,8 +429,8 @@ public class InventoryManagementApplication extends Application implements com.e
             }
 
             if (settingsView == null){
-                settingsView = new Settings();
-                settings.setContent(settingsView);
+//                settingsView = new Settings();
+//                settings.setContent(settingsView);
             }
 
             ThemeObserver.init().addObserver(inventoryView);

@@ -6,5 +6,5 @@ public interface ISettings {
     void setLowStockLimit(int limit);
     void saveSettings();
     void loadSettings(File settingsFile);
-    void resetToDefaultSettings();
+    void resetToDefaultSettings(File settingsFile);
 }

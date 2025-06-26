@@ -2,15 +2,12 @@ package com.example.inventorymanagementsystem.view;
 
 import com.example.inventorymanagementsystem.InventoryManagementApplication;
 import com.example.inventorymanagementsystem.services.interfaces.ThemeObserver;
-import com.example.inventorymanagementsystem.state.Constants;
 import com.example.inventorymanagementsystem.state.SettingsData;
-import com.example.inventorymanagementsystem.state.SettingsManager;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import java.util.prefs.Preferences;
@@ -129,7 +126,7 @@ public class Settings extends VBox implements ThemeObserver{
         saveStockSettingsButton.getStyleClass().add("add-button");
 
         saveStockSettingsButton.setOnAction(e -> {
-            SettingsData settings = SettingsManager.getSettings();
+            com.example.inventorymanagementsystem.services.utils.Settings settings = com.example.inventorymanagementsystem.services.utils.Settings.getInstance();
 
             String selectedScope = stockScopeSelector.getValue();
             int targetAmount = stockTargetSpinner.getValue();
@@ -145,15 +142,14 @@ public class Settings extends VBox implements ThemeObserver{
 
                 try {
                     int itemId = Integer.parseInt(itemIdText);
-                    settings.setItemTarget(itemId, targetAmount);
+//                    settings.setItemTarget(itemId, targetAmount);
                 } catch (NumberFormatException ex) {
                     errorMessage.setText("Item ID must be a valid number.");
                     return;
                 }
             }
 
-            SettingsManager.saveSettings();
-
+            settings.saveSettings();
             errorMessage.setText("Stock settings saved successfully.");
         });
 

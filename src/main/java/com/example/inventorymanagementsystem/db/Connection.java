@@ -2,10 +2,9 @@ package com.example.inventorymanagementsystem.db;
 
 import com.example.inventorymanagementsystem.models.*;
 import com.example.inventorymanagementsystem.services.utils.Logger;
+import com.example.inventorymanagementsystem.services.utils.Settings;
 import com.example.inventorymanagementsystem.state.Data;
 import com.example.inventorymanagementsystem.state.SettingsData;
-import com.example.inventorymanagementsystem.state.SettingsManager;
-import com.example.inventorymanagementsystem.view.Checkout;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.chart.XYChart;
@@ -36,8 +35,9 @@ public class Connection {
     private Connection() throws SQLException{
         String dbLink = "jdbc:mysql://localhost:3306/sandyafashioncorner?useSSL=false&allowPublicKeyRetrieval=true";
         String username = "root";
-        String password = "Sandun@2008.sd";
-//        String password = "root@2025sfc";
+//        String password = "root@techlix2002";
+//        String password = "Sandun@2008.sd";
+        String password = "root@2025sfc";
         connection = DriverManager.getConnection(dbLink, username, password);
     }
 
@@ -182,15 +182,17 @@ public class Connection {
     }
 
     public static int getLowStockItemCount(Connection connection) {
-        SettingsData settings = SettingsManager.getSettings();
+//        Settings settings = Settings.getInstance();
         List<ItemHasSize> allItems = connection.getAllItemHasSizes();
         int count = 0;
 
         for (ItemHasSize item : allItems) {
             int itemId = item.getItemID();
-            int target = settings.getItemTarget(itemId) != null
-                    ? settings.getItemTarget(itemId)
-                    : settings.getLowStockLimit();
+//            int target = settings.getItemTarget(itemId) != null
+//                    ? settings.getItemTarget(itemId)
+//                    : settings.getLowStockLimit();
+
+            int target = 10;
 
             if (item.getRemainingQuantity() < target) {
                 count++;
@@ -200,15 +202,17 @@ public class Connection {
     }
 
     public static List<String> getLowStockitemNames(Connection connection) {
-        SettingsData settings = SettingsManager.getSettings();
+        Settings settings = Settings.getInstance();
         List<ItemHasSize> allItems = connection.getAllItemHasSizes();
         List<String> lowStockNames = new ArrayList<>();
 
         for (ItemHasSize item : allItems) {
             int itemId = item.getItemID();
-            int target = settings.getItemTarget(itemId) != null
-                    ? settings.getItemTarget(itemId)
-                    : settings.getLowStockLimit();
+//            int target = settings.getItemTarget(itemId) != null
+//                    ? settings.getItemTarget(itemId)
+//                    : settings.getLowStockLimit();
+
+            int target = 10;
 
             if (item.getRemainingQuantity() < target) {
                 String itemName = connection.getItemNameById(itemId);
@@ -223,33 +227,33 @@ public class Connection {
     }
 
     public static List<String> getOverStockitemNames(Connection connection) {
-        SettingsData settings = SettingsManager.getSettings();
+        Settings settings = Settings.getInstance();
         List<ItemHasSize> allItems = connection.getAllItemHasSizes();
         List<String> overStockNames = new ArrayList<>();
 
-        for (ItemHasSize item : allItems) {
-            int target = settings.getOverStockLimit();
-            if (item.getRemainingQuantity() > target) {
-                int itemId = item.getItemID();
-                String itemName = connection.getItemNameById(itemId);
-                String itemSize = connection.getItemSizeById(itemId);
-                overStockNames.add(itemName + "-" + itemSize);
-            }
-        }
-
-        if (overStockNames.isEmpty()) {
-            overStockNames.add("No over stocks");
-        }
+//        for (ItemHasSize item : allItems) {
+//            int target = settings.getOverStockLimit();
+//            if (item.getRemainingQuantity() > target) {
+//                int itemId = item.getItemID();
+//                String itemName = connection.getItemNameById(itemId);
+//                String itemSize = connection.getItemSizeById(itemId);
+//                overStockNames.add(itemName + "-" + itemSize);
+//            }
+//        }
+//
+//        if (overStockNames.isEmpty()) {
+//            overStockNames.add("No over stocks");
+//        }
         return overStockNames;
     }
 
     public static int getOverStockItems(Connection connection) {
-        SettingsData settings = SettingsManager.getSettings();
+        Settings settings = Settings.getInstance();
         List<ItemHasSize> allItems = connection.getAllItemHasSizes();
         int overStockItems = 0;
 
         for (ItemHasSize item : allItems) {
-            if (item.getRemainingQuantity() > settings.getOverStockLimit()) {
+            if (item.getRemainingQuantity() > 100) {
                 overStockItems++;
             }
         }
@@ -2225,7 +2229,7 @@ public class Connection {
                 String size = rs.getString("item_size");
                 String color = rs.getString("item_color");
                 int amount = rs.getInt("amount");
-                int price = rs.getInt("price");
+                int price = rs.getInt("checkout_price");
                 double sellingPrice = rs.getDouble("selling_price");
                 double discount = rs.getDouble("discount");
                 double refundAmount = rs.getDouble("refund_amount");

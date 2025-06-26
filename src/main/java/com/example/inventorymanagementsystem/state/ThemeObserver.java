@@ -32,14 +32,18 @@ public class ThemeObserver {
     public void applyLightThemeChange(){
         currentTheme = 1;
         for (var item : nodes){
-            item.lightTheme();
+            if (item != null) {
+                item.lightTheme();
+            }
         }
     }
 
     public void applyDarkThemeChange(){
         currentTheme = 0;
         for (var item : nodes){
-            item.darkTheme();
+            if (item != null) {
+                item.darkTheme();
+            }
         }
     }
 
