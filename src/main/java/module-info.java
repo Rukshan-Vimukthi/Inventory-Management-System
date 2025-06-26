@@ -9,6 +9,8 @@ module com.example.inventorymanagementsystem {
     requires org.kordamp.ikonli.core;
     requires org.kordamp.ikonli.fontawesome5;
     requires java.sql;
+    requires java.prefs;
+    requires com.google.gson;
 //    requires org.apache.commons.configuration2;
 
     opens com.example.inventorymanagementsystem to javafx.fxml;

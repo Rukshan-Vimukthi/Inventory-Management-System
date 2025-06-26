@@ -39,6 +39,7 @@ import org.kordamp.ikonli.javafx.FontIcon;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.sql.SQLException;
+import java.util.prefs.Preferences;
 
 public class InventoryManagementApplication extends Application implements com.example.inventorymanagementsystem.services.interfaces.ThemeObserver, AuthenticateStateListener {
 
@@ -52,6 +53,7 @@ public class InventoryManagementApplication extends Application implements com.e
     Tab liabilitiesTab;
 
     Tab salesTab;
+    Tab settings;
     TitleBar titleBar;
     TabPane tabPane;
 
@@ -62,6 +64,7 @@ public class InventoryManagementApplication extends Application implements com.e
     Liabilities liabilities;
 
     Sales sales;
+    Settings settingsView;
 
     BorderPane borderPane;
     VBox messageContainer;
@@ -354,6 +357,9 @@ public class InventoryManagementApplication extends Application implements com.e
             FontIcon userLiabilitiesIcon = new FontIcon(FontAwesomeSolid.USER_MINUS);
             userLiabilitiesIcon.setFill(Paint.valueOf("#FFF"));
 
+            FontIcon settingsTabIcon = new FontIcon(FontAwesomeSolid.COG);
+            settingsTabIcon.setFill(Paint.valueOf("#FFF"));
+
             // tabs in the main UI
             checkoutTab = TabBuilder.buildTab("Checkout", checkoutIcon);
             analyticsTab = TabBuilder.buildTab("Analytics", analyticsIcon);
@@ -361,6 +367,7 @@ public class InventoryManagementApplication extends Application implements com.e
             users = TabBuilder.buildTab("Users", userIcon);
             liabilitiesTab = TabBuilder.buildTab("Liabilities", liabilitiesIcon);
             salesTab = TabBuilder.buildTab("Sales", saleIcon);
+            settings = TabBuilder.buildTab("Settings", settingsTabIcon);
 
             if (inventoryView == null) {
                 // create the inventory view (custom javaFX layout container ex. HBox, VBox)
@@ -417,9 +424,16 @@ public class InventoryManagementApplication extends Application implements com.e
                 salesTab.setContent(sales);
             }
 
+            if (settingsView == null){
+                settingsView = new Settings();
+                settings.setContent(settingsView);
+            }
+
             ThemeObserver.init().addObserver(inventoryView);
             ThemeObserver.init().addObserver(analyticsView);
             ThemeObserver.init().addObserver(checkoutLayout);
+            ThemeObserver.init().addObserver(sales);
+            ThemeObserver.init().addObserver(settingsView);
 
             ThemeObserver.init().applyDarkThemeChange();
 
@@ -430,7 +444,8 @@ public class InventoryManagementApplication extends Application implements com.e
                     inventory,
                     users,
                     liabilitiesTab,
-                    salesTab
+                    salesTab,
+                    settings
             );
 
             rootContainer.getChildren().addAll(titleBar, tabPane);

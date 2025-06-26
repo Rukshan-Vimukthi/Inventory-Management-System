@@ -20,6 +20,11 @@
     -fx-font-size: 17px;
 }
 
+.normal-texts {
+    -fx-fill: black;
+    -fx-font-size: 15;
+}
+
 .summary-cards {
     -fx-background-color: #FFFFFF;
     -fx-background-radius: 12px;
@@ -362,4 +367,24 @@
     -fx-font-size: 13px;
     -fx-opacity: 0.85;
 }
+
+.settings-containers {
+    -fx-border-color: #ccc;
+    -fx-border-radius: 8;
+    -fx-padding: 15;
+}
+
+
+.normal-checkboxes-styles {
+    -fx-text-fill: darkGray;
+    -fx-font-size: 14px;
+}
+
+.normal-labels{
+    -fx-text-fill: lightGray;
+    -fx-font-size: 14px;
+}
+
+
+
 

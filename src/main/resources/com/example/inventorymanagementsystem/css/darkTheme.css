@@ -32,6 +32,13 @@
     -fx-font-size: 15;
 }
 
+.normal-texts {
+    -fx-fill: white;
+    -fx-font-size: 15;
+    -fx-padding-top: 5px;
+    -fx-padding-bottom: 5px;
+}
+
 .inverse-texts {
     -fx-text-fill: rgb(206, 206, 206);
     -fx-font-size: 17px;
@@ -253,6 +260,22 @@
     -fx-text-fill: lightGray;
     -fx-font-size: 13px;
     -fx-opacity: 0.8;
+}
+
+.settings-containers {
+    -fx-border-color: #2a2a2a;
+    -fx-border-radius: 8;
+    -fx-padding: 15;
+}
+
+.normal-checkboxes-styles {
+    -fx-text-fill: lightGray;
+    -fx-font-size: 14px;
+}
+
+.normal-labels{
+    -fx-text-fill: lightGray;
+    -fx-font-size: 14px;
 }
 
 
