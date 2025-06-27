@@ -35,8 +35,8 @@ public class Connection {
     private Connection() throws SQLException{
         String dbLink = "jdbc:mysql://localhost:3306/sandyafashioncorner?useSSL=false&allowPublicKeyRetrieval=true";
         String username = "root";
-        String password = "root@techlix2002";
-//        String password = "Sandun@2008.sd";
+//        String password = "root@techlix2002";
+        String password = "Sandun@2008.sd";
 //        String password = "root@2025sfc";
         connection = DriverManager.getConnection(dbLink, username, password);
     }
@@ -182,17 +182,17 @@ public class Connection {
     }
 
     public static int getLowStockItemCount(Connection connection) {
-//        Settings settings = Settings.getInstance();
+        Settings settings = Settings.getInstance();
         List<ItemHasSize> allItems = connection.getAllItemHasSizes();
         int count = 0;
 
         for (ItemHasSize item : allItems) {
             int itemId = item.getItemID();
-//            int target = settings.getItemTarget(itemId) != null
-//                    ? settings.getItemTarget(itemId)
-//                    : settings.getLowStockLimit();
+            Integer target = settings.getItemTarget(itemId);
 
-            int target = 10;
+            if (target == null) {
+                target = settings.getLowStockLimit(); // fallback
+            }
 
             if (item.getRemainingQuantity() < target) {
                 count++;
@@ -208,11 +208,11 @@ public class Connection {
 
         for (ItemHasSize item : allItems) {
             int itemId = item.getItemID();
-//            int target = settings.getItemTarget(itemId) != null
-//                    ? settings.getItemTarget(itemId)
-//                    : settings.getLowStockLimit();
+            Integer target = settings.getItemTarget(itemId);
 
-            int target = 10;
+            if (target == null) {
+                target = settings.getLowStockLimit();
+            }
 
             if (item.getRemainingQuantity() < target) {
                 String itemName = connection.getItemNameById(itemId);
@@ -223,7 +223,22 @@ public class Connection {
         if (lowStockNames.isEmpty()) {
             lowStockNames.add("No low stocks");
         }
+
         return lowStockNames;
+    }
+
+    public static int getOverStockItems(Connection connection) {
+        Settings settings = Settings.getInstance();
+        List<ItemHasSize> allItems = connection.getAllItemHasSizes();
+        int count = 0;
+
+        for (ItemHasSize item : allItems) {
+            int threshold = settings.getOverStockLimit();
+            if (item.getRemainingQuantity() > threshold) {
+                count++;
+            }
+        }
+        return count;
     }
 
     public static List<String> getOverStockitemNames(Connection connection) {
@@ -231,34 +246,24 @@ public class Connection {
         List<ItemHasSize> allItems = connection.getAllItemHasSizes();
         List<String> overStockNames = new ArrayList<>();
 
-//        for (ItemHasSize item : allItems) {
-//            int target = settings.getOverStockLimit();
-//            if (item.getRemainingQuantity() > target) {
-//                int itemId = item.getItemID();
-//                String itemName = connection.getItemNameById(itemId);
-//                String itemSize = connection.getItemSizeById(itemId);
-//                overStockNames.add(itemName + "-" + itemSize);
-//            }
-//        }
-//
-//        if (overStockNames.isEmpty()) {
-//            overStockNames.add("No over stocks");
-//        }
+        for (ItemHasSize item : allItems) {
+            int itemId = item.getItemID();
+            int threshold = settings.getOverStockLimit();
+
+            if (item.getRemainingQuantity() > threshold) {
+                String itemName = connection.getItemNameById(itemId);
+                String itemSize = connection.getItemSizeById(itemId);
+                overStockNames.add(itemName + " - " + itemSize);
+            }
+        }
+
+        if (overStockNames.isEmpty()) {
+            overStockNames.add("No over stocks");
+        }
+
         return overStockNames;
     }
 
-    public static int getOverStockItems(Connection connection) {
-        Settings settings = Settings.getInstance();
-        List<ItemHasSize> allItems = connection.getAllItemHasSizes();
-        int overStockItems = 0;
-
-        for (ItemHasSize item : allItems) {
-            if (item.getRemainingQuantity() > 100) {
-                overStockItems++;
-            }
-        }
-        return overStockItems;
-    }
 
     public static int getOutofStokeItems(Connection connection) {
         List<ItemHasSize> allItems = connection.getAllItemHasSizes();

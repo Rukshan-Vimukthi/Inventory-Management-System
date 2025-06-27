@@ -429,8 +429,8 @@ public class InventoryManagementApplication extends Application implements com.e
             }
 
             if (settingsView == null){
-//                settingsView = new Settings();
-//                settings.setContent(settingsView);
+                settingsView = new Settings();
+                settings.setContent(settingsView);
             }
 
             ThemeObserver.init().addObserver(inventoryView);
