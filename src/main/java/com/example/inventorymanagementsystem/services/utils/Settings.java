@@ -4,7 +4,6 @@ import com.example.inventorymanagementsystem.services.interfaces.ISettings;
 import com.example.inventorymanagementsystem.state.Constants;
 import com.example.inventorymanagementsystem.state.SettingsData;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 import java.io.*;
 import java.util.Map;
@@ -16,7 +15,7 @@ public class Settings implements ISettings {
     private File settingsFile;
     private Gson gson;
     private Settings(){
-        gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
+        gson = new Gson();
         initSettingsFile();
     }
 
@@ -30,7 +29,8 @@ public class Settings implements ISettings {
             boolean dirCreated = applicationDir.mkdirs();
         }
 
-        settingsFile = new File(Constants.APPLICATION_DIR + "\\settings.json");
+//        settingsFile = new File(Constants.APPLICATION_DIR + "\\settings.json");
+        settingsFile = new File("settings.json");
         if (!settingsFile.exists()){
             try {
                 boolean fileCreated = settingsFile.createNewFile();
@@ -42,6 +42,11 @@ public class Settings implements ISettings {
         loadSettings(settingsFile);
     }
 
+    /**
+     * Returns the instance of the Settings object to access public methods to retrieve application settings
+     * and set new settings.
+     * @return
+     */
     public static Settings getInstance(){
         if (settings == null){
             settings = new Settings();
@@ -49,6 +54,11 @@ public class Settings implements ISettings {
         return settings;
     }
 
+    /**
+     * set low stock limit in the settings file. if you wanna save this value in the settings file to be used when the
+     * application starts next time, call saveSettings() method.
+     * @param limit
+     */
     @Override
     public void setLowStockLimit(int limit) {
         if (settingData != null){
@@ -56,6 +66,16 @@ public class Settings implements ISettings {
         }
     }
 
+    public void setDark(boolean isDark){
+        if (settingData != null){
+            settingData.setDark(isDark);
+        }
+    }
+
+    /**
+     * returns the low stocks
+     * @return
+     */
     public int getLowStockLimit() {
         return settingData.getLowStockLimit();
     }
@@ -103,15 +123,16 @@ public class Settings implements ISettings {
     public void setOverStockLimit(int overStockLimit) {
         settingData.setOverStockLimit(overStockLimit);
     }
-    public void setItemTarget(int itemId, int target) {
-        settingData.setItemTarget(itemId, target);
-    }
-    public Integer getItemTarget(int itemId) {
-        return settingData.getItemTarget(itemId); // may return null
-    }
-    public Map<Integer, Integer> getAllItemTargets() {
-        return settingData.getAllItemTargets();
-    }
+
+//    public void setItemTarget(int itemId, int target) {
+//        settingData.setItemTarget(itemId, target);
+//    }
+//    public Integer getItemTarget(int itemId) {
+//        return settingData.getItemTarget(itemId); // may return null
+//    }
+//    public Map<Integer, Integer> getAllItemTargets() {
+//        return settingData.getAllItemTargets();
+//    }
 
     public int getOverStockLimit() {return settingData.getOverStockLimit();}
 

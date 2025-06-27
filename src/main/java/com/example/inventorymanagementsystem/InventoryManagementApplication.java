@@ -79,7 +79,7 @@ public class InventoryManagementApplication extends Application implements com.e
     SignIn signIn;
     @Override
     public void start(Stage stage) {
-//        com.example.inventorymanagementsystem.services.utils.Settings settings = com.example.inventorymanagementsystem.services.utils.Settings.getInstance();
+        com.example.inventorymanagementsystem.services.utils.Settings settings = com.example.inventorymanagementsystem.services.utils.Settings.getInstance();
 
         Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
             Logger.logError("Unhandled exception in thread: " + thread.getName(), throwable);

@@ -114,6 +114,9 @@ public class Checkout implements ThemeObserver {
     Label liableAmountLabel;
     double liableAmount = 0.0D;
 
+    Label points;
+    Label refunds;
+
     public Checkout() throws SQLException{
         dbConnection = Connection.getInstance();
         // The main container
@@ -366,6 +369,10 @@ public class Checkout implements ThemeObserver {
         customerComboBox.setOnAction(e -> {
             Customer selectedCustomer = customerComboBox.getValue();
             if (selectedCustomer != null) {
+
+                points.setText("%.2f".formatted(selectedCustomer.getPoints()));
+                refunds.setText("%.2f".formatted(selectedCustomer.getRefundAmount()));
+
                 if (selectedCustomer.getPoints() > 0){
                     availablePoints = selectedCustomer.getPoints();
                     payFromPoints.setDisable(false);
@@ -397,7 +404,6 @@ public class Checkout implements ThemeObserver {
             } else {
                 pointsLabel.setText("-");
             }
-
         });
 
         customerPointsContainer.getChildren().addAll(customerComboBox, pointsLabel);
@@ -549,7 +555,7 @@ public class Checkout implements ThemeObserver {
 
         mainTable.getColumns().addAll(discountCol);
 
-        ObservableList<CheckoutItem> itemList = dbConnection.getCheckoutItems(); // contains full item objects
+//        ObservableList<CheckoutItem> itemList = dbConnection.getCheckoutItems(); // contains full item objects
         mainTable.setItems(itemList);
 
         ObservableList<String> data = FXCollections.observableArrayList();
@@ -1390,11 +1396,33 @@ public class Checkout implements ThemeObserver {
         actionSection.setMaxWidth(Double.MAX_VALUE);
         actionSection.setAlignment(Pos.CENTER_RIGHT);
 
+        HBox pointsAndRefundsContainer = new HBox();
+        FontIcon pointsIconLarge = new FontIcon(FontAwesomeSolid.COINS);
+        pointsIconLarge.setFill(Paint.valueOf("#BBAA00"));
+        pointsIconLarge.setIconSize(20);
+        points = new Label();
+        points.setMinWidth(250.05D);
+        points.setStyle("-fx-font-size: 24px; -fx-text-fill: white;");
+        points.setGraphic(pointsIconLarge);
+        points.setGraphicTextGap(10.0D);
+
+        FontIcon refundIcon = new FontIcon(FontAwesomeSolid.UNDO);
+        refundIcon.setFill(Paint.valueOf("#BBAA00"));
+        refundIcon.setIconSize(20);
+        refunds = new Label();
+        refunds.setMinWidth(250.0D);
+        refunds.setStyle("-fx-font-size: 24px; -fx-text-fill: white;");
+        refunds.setGraphic(refundIcon);
+        refunds.setGraphicTextGap(10.0D);
+
+        pointsAndRefundsContainer.getChildren().addAll(points, refunds);
+
         AnchorPane floatingContainer = new AnchorPane();
         AnchorPane.setBottomAnchor(actionSection, 0.0);
         AnchorPane.setRightAnchor(actionSection, 0.0);
+        AnchorPane.setLeftAnchor(pointsAndRefundsContainer, 10.0D);
         floatingContainer.setPrefWidth(100);
-        floatingContainer.getChildren().addAll(actionSection);
+        floatingContainer.getChildren().addAll(pointsAndRefundsContainer, actionSection);
         floatingContainer.setPadding(new Insets(10, 0, 0, 0));
 
         // Show the most selling items
@@ -1486,8 +1514,13 @@ public class Checkout implements ThemeObserver {
 //        FlowPane checkoutDetailsContainer = new FlowPane();
 //        checkoutDetailsContainer.getChildren().addAll(totalCostTxt, totalCost, totalDiscountTxt, totalDiscount, grandTotalTxt, grandTotal);
 
-        bottomSection.getChildren().addAll(formAndDataContainer, balanceTxt, balance);
+        HBox balanceContainer = new HBox();
+        balanceContainer.getChildren().addAll(balanceTxt, balance);
+        balanceContainer.setAlignment(Pos.CENTER);
+
+        bottomSection.getChildren().addAll(formAndDataContainer, balanceContainer);
         bottomSection.setAlignment(Pos.CENTER_LEFT);
+
         HBox.setHgrow(formAndDataContainer, Priority.ALWAYS);
         mainFooterSec.getChildren().addAll(bottomSection, balanceSec);
         wholeBottomSec.getChildren().addAll(mainFooterSec);

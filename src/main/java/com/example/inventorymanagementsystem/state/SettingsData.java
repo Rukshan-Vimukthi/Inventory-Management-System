@@ -4,9 +4,22 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SettingsData {
-    public Integer lowStockLimit = 10;
-    public Integer overStockLimit = 100;
-    public Map<Integer, Integer> itemSpecificTargets = new HashMap<>();
+    public Integer lowStockLimit;
+    public Integer overStockLimit;
+    public boolean isDark;
+
+
+//    private Map<Integer, Integer> itemSpecificTargets;
+
+    /**
+     * Assign default values for all variables in the constructor
+     */
+    public SettingsData(){
+        lowStockLimit = 10;
+        overStockLimit = 100;
+        isDark = true;
+//        itemSpecificTargets = new HashMap<>();
+    }
 
     public int getLowStockLimit() {
         return lowStockLimit;
@@ -16,19 +29,32 @@ public class SettingsData {
         this.lowStockLimit = lowStockLimit;
     }
 
-    public int getOverStockLimit() {return overStockLimit;}
-
-    public void setOverStockLimit(int overStockLimit) {this.overStockLimit = overStockLimit;}
-
-    public void setItemTarget(int itemId, int target) {
-        itemSpecificTargets.put(itemId, target);
+    public int getOverStockLimit() {
+        return overStockLimit;
     }
 
-    public Integer getItemTarget(int itemId) {
-        return itemSpecificTargets.get(itemId); // may return null
+    public void setOverStockLimit(int overStockLimit) {
+        this.overStockLimit = overStockLimit;
     }
 
-    public Map<Integer, Integer> getAllItemTargets() {
-        return itemSpecificTargets;
+//    public void setItemTarget(int itemId, int target) {
+//        itemSpecificTargets.put(itemId, target);
+//    }
+
+//    public Integer getItemTarget(int itemId) {
+//        return itemSpecificTargets.get(itemId); // may return null
+//    }
+
+//    public Map<Integer, Integer> getAllItemTargets() {
+//        return itemSpecificTargets;
+//    }
+
+    public boolean isDark() {
+        return isDark;
     }
+
+    public void setDark(boolean dark) {
+        isDark = dark;
+    }
+
 }

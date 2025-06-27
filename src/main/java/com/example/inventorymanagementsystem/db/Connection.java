@@ -35,8 +35,8 @@ public class Connection {
     private Connection() throws SQLException{
         String dbLink = "jdbc:mysql://localhost:3306/sandyafashioncorner?useSSL=false&allowPublicKeyRetrieval=true";
         String username = "root";
-//        String password = "root@techlix2002";
-        String password = "Sandun@2008.sd";
+        String password = "root@techlix2002";
+//        String password = "Sandun@2008.sd";
 //        String password = "root@2025sfc";
         connection = DriverManager.getConnection(dbLink, username, password);
     }
@@ -202,18 +202,15 @@ public class Connection {
     }
 
     public static List<String> getLowStockitemNames(Connection connection) {
-        // Settings settings = Settings.getInstance();
-
+        Settings settings = Settings.getInstance();
         List<ItemHasSize> allItems = connection.getAllItemHasSizes();
         List<String> lowStockNames = new ArrayList<>();
 
         for (ItemHasSize item : allItems) {
             int itemId = item.getItemID();
-        /*
-        int target = settings.getItemTarget(itemId) != null
-                ? settings.getItemTarget(itemId)
-                : settings.getLowStockLimit();
-        */
+//            int target = settings.getItemTarget(itemId) != null
+//                    ? settings.getItemTarget(itemId)
+//                    : settings.getLowStockLimit();
 
             int target = 10;
 
@@ -226,65 +223,40 @@ public class Connection {
         if (lowStockNames.isEmpty()) {
             lowStockNames.add("No low stocks");
         }
-
         return lowStockNames;
     }
 
-
     public static List<String> getOverStockitemNames(Connection connection) {
-        // Settings settings = Settings.getInstance();
-
+        Settings settings = Settings.getInstance();
         List<ItemHasSize> allItems = connection.getAllItemHasSizes();
         List<String> overStockNames = new ArrayList<>();
 
-        int target = 100;
-
-        for (ItemHasSize item : allItems) {
-            if (item.getRemainingQuantity() > target) {
-                int itemId = item.getItemID();
-                String itemName = connection.getItemNameById(itemId);
-                String itemSize = connection.getItemSizeById(item.getItemSizeID());
-                overStockNames.add(itemName + " - " + itemSize);
-            }
-        }
-
-        if (overStockNames.isEmpty()) {
-            overStockNames.add("No over stocks");
-        }
-
+//        for (ItemHasSize item : allItems) {
+//            int target = settings.getOverStockLimit();
+//            if (item.getRemainingQuantity() > target) {
+//                int itemId = item.getItemID();
+//                String itemName = connection.getItemNameById(itemId);
+//                String itemSize = connection.getItemSizeById(itemId);
+//                overStockNames.add(itemName + "-" + itemSize);
+//            }
+//        }
+//
+//        if (overStockNames.isEmpty()) {
+//            overStockNames.add("No over stocks");
+//        }
         return overStockNames;
-
-    /*
-    for (ItemHasSize item : allItems) {
-        int target = settings.getOverStockLimit();
-        if (item.getRemainingQuantity() > target) {
-            int itemId = item.getItemID();
-            String itemName = connection.getItemNameById(itemId);
-            String itemSize = connection.getItemSizeById(itemId);
-            overStockNames.add(itemName + "-" + itemSize);
-        }
-    }
-
-    if (overStockNames.isEmpty()) {
-        overStockNames.add("No over stocks");
-    }
-    */
     }
 
     public static int getOverStockItems(Connection connection) {
-        // Settings settings = Settings.getInstance();
-
+        Settings settings = Settings.getInstance();
         List<ItemHasSize> allItems = connection.getAllItemHasSizes();
         int overStockItems = 0;
 
-        int target = 100;
-
         for (ItemHasSize item : allItems) {
-            if (item.getRemainingQuantity() > target) {
+            if (item.getRemainingQuantity() > 100) {
                 overStockItems++;
             }
         }
-
         return overStockItems;
     }
 
