@@ -7,7 +7,7 @@ public class SettingsData {
     public Integer lowStockLimit;
     public Integer overStockLimit;
     public boolean isDark;
-
+    private Map<Integer, Integer> itemSpecificTargets;
 
 //    private Map<Integer, Integer> itemSpecificTargets;
 
@@ -18,7 +18,7 @@ public class SettingsData {
         lowStockLimit = 10;
         overStockLimit = 100;
         isDark = true;
-//        itemSpecificTargets = new HashMap<>();
+        itemSpecificTargets = new HashMap<>();
     }
 
     public int getLowStockLimit() {
@@ -55,6 +55,18 @@ public class SettingsData {
 
     public void setDark(boolean dark) {
         isDark = dark;
+    }
+
+    public void setItemTarget(int itemId, int target) {
+        itemSpecificTargets.put(itemId, target);
+    }
+
+    public Integer getItemTarget(int itemId) {
+        return itemSpecificTargets.get(itemId);
+    }
+
+    public Map<Integer, Integer> getAllItemTargets() {
+        return itemSpecificTargets;
     }
 
 }

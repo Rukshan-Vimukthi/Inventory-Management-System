@@ -124,15 +124,15 @@ public class Settings implements ISettings {
         settingData.setOverStockLimit(overStockLimit);
     }
 
-//    public void setItemTarget(int itemId, int target) {
-//        settingData.setItemTarget(itemId, target);
-//    }
-//    public Integer getItemTarget(int itemId) {
-//        return settingData.getItemTarget(itemId); // may return null
-//    }
-//    public Map<Integer, Integer> getAllItemTargets() {
-//        return settingData.getAllItemTargets();
-//    }
+    public void setItemTarget(int itemId, int target) {
+        settingData.setItemTarget(itemId, target);
+    }
+    public Integer getItemTarget(int itemId) {
+        return settingData.getItemTarget(itemId); // may return null
+    }
+    public Map<Integer, Integer> getAllItemTargets() {
+        return settingData.getAllItemTargets();
+    }
 
     public int getOverStockLimit() {return settingData.getOverStockLimit();}
 
