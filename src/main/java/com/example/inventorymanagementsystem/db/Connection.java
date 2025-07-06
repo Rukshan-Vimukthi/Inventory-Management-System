@@ -623,6 +623,7 @@ public class Connection {
             if (colorID != 0){
                 color = String.valueOf(colorID);
             }
+            System.out.println("Adding new Item varient for the item: " + itemID);
             statement.execute("INSERT INTO `item_has_size` (" +
                     "`item_id`, `item_stock_id`, `size_id`, `ordered_qty`, `cost`, `price`, `remaining_qty`) " +
                     "VALUES(%d, %d, %s, %d, %f, %f, %d)".formatted(
@@ -865,6 +866,19 @@ public class Connection {
             boolean payFromPoints,
             boolean payFromRefunds,
             boolean saveRemaindersForPoints) {
+
+        System.out.println("====================== Checkout Data ========================");
+        System.out.println(customer);
+        System.out.println(totalCost);
+        System.out.println(receivedAmount);
+        System.out.println(remainsStatusID);
+        System.out.println(discountForAll);
+        System.out.println(payFromPoints);
+        System.out.println(payFromRefunds);
+        System.out.println(saveRemaindersForPoints);
+
+        System.out.println("Number of checkout items: " + checkoutItems.size());
+
         try {
             String date = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
             boolean doesSaleExist = false;
@@ -948,6 +962,7 @@ public class Connection {
                     if (receivedAmount > totalCost){
                         statement.execute("UPDATE customer SET `points` = `points` + %f WHERE id = %d".formatted(receivedAmount - totalCost, customer.getId()));
                     }
+
                     statement.execute("UPDATE customer SET `refund_amount` = %f WHERE id = %d".formatted(updatedRefunds, customer.getId()));
                 }else {
                     statement.execute("UPDATE customer SET `refund_amount` = %f WHERE id = %d".formatted(updatedRefunds, customer.getId()));
@@ -964,7 +979,7 @@ public class Connection {
             int saleID = 0;
             if (!doesSaleExist){
                 if (fullPaymentMade){
-                    statement.execute("INSERT INTO `sale` (`date`,`received_amount`, `total_cost`, `remains_statuss_id`, `customer_id`) " +
+                    statement.execute("INSERT INTO `sale` (`date`, `received_amount`, `total_cost`, `remains_statuss_id`, `customer_id`) " +
                             "VALUES('%s', %f, %f, %d, %d)".formatted(date, totalCost, totalCost, remainsStatusID, customer.getId()), Statement.RETURN_GENERATED_KEYS);
                 }else{
                     statement.execute("INSERT INTO `sale` (`date`,`received_amount`, `total_cost`, `remains_statuss_id`, `customer_id`) " +
@@ -1016,7 +1031,10 @@ public class Connection {
                                 saleID)
                 );
 
+                statement.execute("UPDATE `item_has_size` SET `remaining_qty` = `remaining_qty` - %d WHERE id = %d".formatted(amount, checkoutItem.getitemHasSizeId()));
+
             }
+            System.out.println("Items inserted successfully");
             return true;
 //            int saleID = 0;
 //            if (!doesSaleExist){
@@ -1080,9 +1098,10 @@ public class Connection {
 //                return false;
 //            }
         } catch (SQLException e) {
-            Logger.logError(e.getMessage(), e);
             e.printStackTrace();
+            Logger.logError(e.getMessage(), e);
         }
+        System.out.println("Exception threw while adding items");
         return false;
     }
 

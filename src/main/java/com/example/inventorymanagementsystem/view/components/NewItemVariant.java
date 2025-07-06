@@ -10,6 +10,7 @@ import com.example.inventorymanagementsystem.state.Data;
 
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.stage.FileChooser;
@@ -49,10 +50,19 @@ public class NewItemVariant extends HBox {
     File selectedImage;
 
     Button selectImageButton;
+    CheckBox editableCheckBox;
     public NewItemVariant(ItemDetail itemDetail) throws SQLException {
         super();
 
         if (itemDetail != null){
+            editableCheckBox = new CheckBox("Edit");
+            editableCheckBox.setOnAction(new EventHandler<ActionEvent>() {
+                @Override
+                public void handle(ActionEvent event) {
+                    orderedQty.setEnabled(editableCheckBox.isSelected());
+                }
+            });
+
             System.out.println("Item Stock ID: " + itemDetail.getStockID());
             stock = new FormField<>("Stock", ComboBox.class, Data.getInstance().getStocks(), Connection.getInstance().getStock(itemDetail.getStockID()));
             stock.setEnabled(false);
@@ -88,6 +98,8 @@ public class NewItemVariant extends HBox {
             itemHasSizeHasStockID = itemDetail.getItemHasSizeHasStockID();
             colorHasItemHasSizeID = itemDetail.getColorHasItemHasSizeID();
             id = itemDetail.getId();
+            this.getChildren().add(editableCheckBox);
+            editableCheckBox.setAlignment(Pos.CENTER_LEFT);
         }else{
             stock = new FormField<>("Stock", ComboBox.class, Data.getInstance().getStocks());
             sizeOfItem = new FormField<>("Size", ComboBox.class, Data.getInstance().getSize());

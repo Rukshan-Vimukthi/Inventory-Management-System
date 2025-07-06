@@ -44,6 +44,8 @@ public class Inventory extends HBox implements ThemeObserver {
         itemsTable.addColumn("size", Integer.class);
         itemsTable.addColumn("itemColor", Integer.class);
         itemsTable.addColumn("itemColor", "Color View");
+        itemsTable.addColumn("orderedQty", "OrderedQty");
+        itemsTable.addColumn("remainingQty", "Remaining Qty");
         itemsTable.addItems(Data.getInstance().getItemDetails());
 
         Button addSizeButton = new Button("Add Size");

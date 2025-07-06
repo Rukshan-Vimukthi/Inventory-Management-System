@@ -54,7 +54,18 @@ public class Liabilities extends HBox implements ThemeObserver {
         this.setSpacing(10.0D);
 
         messageLabel = new Label("");
-        messageLabel.setTextFill(Paint.valueOf("#0055FF"));
+        messageLabel.setStyle(
+                "-fx-background-color: #002288; " +
+                        "-fx-border: solid; " +
+                        "-fx-border-width: 1px; " +
+                        "-fx-border-color: #0055FF; " +
+                        "-fx-border-radius: 10px; " +
+                        "-fx-background-radius: 10px; " +
+                        "-fx-padding: 10px;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-font-size: 20px;");
+        messageLabel.setTextFill(Paint.valueOf("#00CCFF"));
+        messageLabel.setVisible(false);
 
         VBox cardsAndTableContainer = new VBox();
         HBox cardContainer = new HBox();
@@ -282,8 +293,31 @@ public class Liabilities extends HBox implements ThemeObserver {
         clearDebt.setOnAction(actionEvent -> {
             try{
                 String message = Connection.getInstance().clearCustomerDebt(customer.getComboBox().getSelectionModel().getSelectedItem(), Double.parseDouble(String.valueOf(amountToClear.getValue())), 0, false);
+                messageLabel.setStyle(
+                        "-fx-background-color: #002288; " +
+                                "-fx-border: solid; " +
+                                "-fx-border-width: 1px; " +
+                                "-fx-border-color: #0055FF; " +
+                                "-fx-border-radius: 10px; " +
+                                "-fx-background-radius: 10px; " +
+                                "-fx-padding: 10px;" +
+                                "-fx-font-weight: bold;" +
+                                "-fx-font-size: 20px;");
+                messageLabel.setTextFill(Paint.valueOf("#00CCFF"));
                 showToast(message);
             }catch(SQLException e){
+                messageLabel.setStyle(
+                        "-fx-background-color: #050000; " +
+                                "-fx-border: solid; " +
+                                "-fx-border-width: 1px; " +
+                                "-fx-border-color: #FF0000; " +
+                                "-fx-border-radius: 10px; " +
+                                "-fx-background-radius: 10px; " +
+                                "-fx-padding: 10px;" +
+                                "-fx-font-weight: bold;" +
+                                "-fx-font-size: 20px;");
+                messageLabel.setTextFill(Paint.valueOf("#FF0000"));
+                showToast("Clearing Debt Unsuccessful!");
                 e.printStackTrace();
             }
 //            Customer selectedCustomer = (Customer)customer.getValue();
@@ -391,6 +425,7 @@ public class Liabilities extends HBox implements ThemeObserver {
 
     public void showToast(String message){
         messageLabel.setText(message);
+        messageLabel.setVisible(true);
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {

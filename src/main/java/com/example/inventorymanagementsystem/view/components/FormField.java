@@ -108,9 +108,9 @@ public class FormField<C extends Control, M> extends VBox implements ThemeObserv
     public Object getValue(){
         if (node != null) {
             if (node instanceof TextField textField){
-                return ((TextField) node).getText();
+                return textField.getText();
             }else if(node instanceof ComboBox<?> comboBox){
-                return ((ComboBox<?>)node).getSelectionModel().getSelectedItem();
+                return comboBox.getSelectionModel().getSelectedItem();
             }else if(node instanceof ColorPicker colorPicker){
                 return colorPicker.getValue().toString();
             }else if(node instanceof DatePicker datePicker){
@@ -132,7 +132,6 @@ public class FormField<C extends Control, M> extends VBox implements ThemeObserv
         node = new TextField();
         node.getStyleClass().add("default-text-areas");
     }
-
     private void buildPasswordField(){
         node = new PasswordField();
     }
@@ -168,6 +167,10 @@ public class FormField<C extends Control, M> extends VBox implements ThemeObserv
             }
         });
         node = comboBox;
+    }
+
+    private void buildComboBoxWithFilterEnables(ListView<M> param){
+
     }
 
     private void buildComboBox(ObservableList<M> data){

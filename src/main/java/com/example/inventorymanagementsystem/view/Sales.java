@@ -9,12 +9,15 @@ import com.example.inventorymanagementsystem.state.Constants;
 import com.example.inventorymanagementsystem.state.Data;
 import com.example.inventorymanagementsystem.view.components.FormField;
 import com.example.inventorymanagementsystem.view.components.ItemPreview;
+import javafx.animation.FadeTransition;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
@@ -23,7 +26,11 @@ import javafx.scene.input.InputMethodEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Paint;
 import javafx.util.Callback;
+import javafx.util.Duration;
+import org.kordamp.ikonli.fontawesome5.FontAwesomeSolid;
+import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -38,8 +45,28 @@ public class Sales extends VBox implements ThemeObserver {
     CustomerSale selectedCustomerSale;
     FormField<TextField, String> itemID;
     ItemPreview itemPreview;
+    TableView<CustomerSale> customerSaleTableView;
+
+    Customer selectedCustomer;
+
+    Label messageLabel;
+
+    Button refreshSalesData = new Button("Refresh");
     public Sales() throws SQLException {
         super();
+        messageLabel = new Label("");
+        messageLabel.setStyle(
+                "-fx-background-color: #002288; " +
+                        "-fx-border: solid; " +
+                        "-fx-border-width: 1px; " +
+                        "-fx-border-color: #0055FF; " +
+                        "-fx-border-radius: 10px; " +
+                        "-fx-background-radius: 10px; " +
+                        "-fx-padding: 10px;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-font-size: 20px;");
+        messageLabel.setTextFill(Paint.valueOf("#00CCFF"));
+        messageLabel.setVisible(false);
         this.setPadding(new Insets(10.0D));
 
         datePicker = new FormField<>("Date", DatePicker.class);
@@ -50,15 +77,80 @@ public class Sales extends VBox implements ThemeObserver {
             Logger.logError(e.getMessage(), e);
             e.printStackTrace();
         }
+
+        customer.getComboBox().getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Customer>() {
+            @Override
+            public void changed(ObservableValue<? extends Customer> observable, Customer oldValue, Customer newValue) {
+                try {
+                    Data.getInstance().refreshCustomerSales((String)saleDatePicker.getValue(), newValue.getId());
+                    selectedCustomer = newValue;
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
+
+        customer.getComboBox().setCellFactory(new Callback<ListView<Customer>, ListCell<Customer>>() {
+            @Override
+            public ListCell<Customer> call(ListView<Customer> param) {
+                return new ListCell<>(){
+                    @Override
+                    protected void updateItem(Customer item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (!empty && item != null){
+                            setText(item.getFirstName() + " " + item.getLastName());
+                        }
+                    }
+                };
+            }
+        });
+
+        FontIcon refreshIcon = new FontIcon(FontAwesomeSolid.UNDO);
+        refreshIcon.setFill(Paint.valueOf("#FFF"));
+        refreshSalesData = new Button("Refresh");
+        refreshSalesData.setGraphic(refreshIcon);
+        refreshSalesData.getStyleClass().add("button-primary");
+        refreshSalesData.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                try {
+                    if (saleDatePicker != null && selectedCustomer != null) {
+                        Data.getInstance().refreshCustomerSales((String) saleDatePicker.getValue(), selectedCustomer.getId());
+                    }else{
+                        Data.getInstance().refreshCustomerSales(null, 0);
+                    }
+                }catch(SQLException exception){
+                    exception.printStackTrace();
+                }
+            }
+        });
+
+        ((DatePicker)datePicker.getControl()).valueProperty().addListener(new ChangeListener<LocalDate>() {
+            @Override
+            public void changed(ObservableValue<? extends LocalDate> observable, LocalDate oldValue, LocalDate newValue) {
+                try {
+                    int customerID = 0;
+                    Customer customer = customerSelector.getComboBox().getSelectionModel().getSelectedItem();
+                    if (customer != null){
+                        customerID = customer.getId();
+                    }
+                    Data.getInstance().refreshCustomerSales(newValue.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), customerID);
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
+
+
         HBox header = new HBox();
         header.setSpacing(10.0D);
-        header.getChildren().addAll(datePicker, customer);
+        header.getChildren().addAll(datePicker, customer, refreshSalesData);
         HBox body = new HBox();
 
         VBox tableAndPreviewContainer = new VBox();
         itemPreview = new ItemPreview();
 
-        TableView<CustomerSale> customerSaleTableView = new TableView<>();
+        customerSaleTableView = new TableView<>();
 
         TableColumn<CustomerSale, String> customerName = new TableColumn<>("Name");
         customerName.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<CustomerSale, String>, ObservableValue<String>>() {
@@ -147,32 +239,6 @@ public class Sales extends VBox implements ThemeObserver {
 
         saleDatePicker = new FormField<>("Date Picker", DatePicker.class);
         customerSelector = new FormField<>("Customer", ComboBox.class);
-        customerSelector.getComboBox().getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Customer>() {
-            @Override
-            public void changed(ObservableValue<? extends Customer> observable, Customer oldValue, Customer newValue) {
-                try {
-                    Data.getInstance().refreshCustomerSales((String)saleDatePicker.getValue(), newValue.getId());
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        });
-
-        ((DatePicker)saleDatePicker.getControl()).valueProperty().addListener(new ChangeListener<LocalDate>() {
-            @Override
-            public void changed(ObservableValue<? extends LocalDate> observable, LocalDate oldValue, LocalDate newValue) {
-                try {
-                    int customerID = 0;
-                    Customer customer = customerSelector.getComboBox().getSelectionModel().getSelectedItem();
-                    if (customer != null){
-                        customerID = customer.getId();
-                    }
-                    Data.getInstance().refreshCustomerSales(newValue.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), customerID);
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        });
 
         try{
             customerSelector = new FormField<>("Customer", ComboBox.class, Data.getInstance().getCustomers());
@@ -187,19 +253,41 @@ public class Sales extends VBox implements ThemeObserver {
         returnItem.setOnAction(actionEvent -> {
             String date = String.valueOf(saleDatePicker.getValue());
             int itemHasSizeID = Integer.parseInt(String.valueOf(itemID.getValue()));
-            Customer customer = (Customer) customerSelector.getValue();
             int returnedQty = Integer.parseInt(String.valueOf(amount.getValue()));
             try {
                 Connection.getInstance().returnItem(itemHasSizeID, date, selectedCustomerSale, returnedQty);
+                messageLabel.setStyle(
+                        "-fx-background-color: #002288; " +
+                                "-fx-border: solid; " +
+                                "-fx-border-width: 1px; " +
+                                "-fx-border-color: #0055FF; " +
+                                "-fx-border-radius: 10px; " +
+                                "-fx-background-radius: 10px; " +
+                                "-fx-padding: 10px;" +
+                                "-fx-font-weight: bold;" +
+                                "-fx-font-size: 20px;");
+                messageLabel.setTextFill(Paint.valueOf("#00CCFF"));
+                showToast("Item Returned Successfully!");
             }catch(SQLException e){
                 e.printStackTrace();
+                messageLabel.setStyle(
+                        "-fx-background-color: #050000; " +
+                                "-fx-border: solid; " +
+                                "-fx-border-width: 1px; " +
+                                "-fx-border-color: #FF0000; " +
+                                "-fx-border-radius: 10px; " +
+                                "-fx-background-radius: 10px; " +
+                                "-fx-padding: 10px;" +
+                                "-fx-font-weight: bold;" +
+                                "-fx-font-size: 20px;");
+                messageLabel.setTextFill(Paint.valueOf("#FF0000"));
+                showToast("Item Return Failed!");
             }
         });
 
         returnItem.getStyleClass().add("button-primary");
         formContainer.setFillWidth(true);
-        formContainer.getChildren().addAll(saleDatePicker, customerSelector, itemID, amount, returnItem);
-
+        formContainer.getChildren().addAll(saleDatePicker, customerSelector, itemID, amount, returnItem, messageLabel);
 
         customerSaleTableView.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<CustomerSale>() {
             @Override
@@ -208,7 +296,7 @@ public class Sales extends VBox implements ThemeObserver {
                     try {
                         selectedCustomerSale = newValue;
                         itemPreview.update(newValue.getItemDetails());
-                        loadData(newValue.getCustomer(), String.valueOf(newValue.getItemDetails().getItemHasSizeID()), newValue.getDate());
+                        loadData(newValue.getCustomer(), newValue, String.valueOf(newValue.getItemDetails().getItemHasSizeID()), newValue.getDate());
                         newValue.getCheckoutItem().getId();
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -220,7 +308,6 @@ public class Sales extends VBox implements ThemeObserver {
                 }
             }
         });
-
         customerSaleTableView.setItems(Data.getInstance().getCustomerSales());
 
         tableAndPreviewContainer.getChildren().addAll(customerSaleTableView, itemPreview);
@@ -234,10 +321,12 @@ public class Sales extends VBox implements ThemeObserver {
         this.setSpacing(10.0D);
     }
 
-    public void loadData(Customer customer, String itemID, String date){
+    public void loadData(Customer customer, CustomerSale customerSale, String itemID, String date){
         this.itemID.setValue(itemID);
-        customerSelector.getComboBox().getSelectionModel().select(customer);
-        saleDatePicker.setValue(date);
+        this.customerSelector.getComboBox().getSelectionModel().select(customer);
+        this.customerSaleTableView.getSelectionModel().clearSelection();
+        this.customerSaleTableView.getSelectionModel().select(customerSale);
+        this.saleDatePicker.setValue(date);
     }
 
     @Override
@@ -252,5 +341,31 @@ public class Sales extends VBox implements ThemeObserver {
         this.setStyle("-fx-background-color: #222; ");
         this.getStylesheets().remove(Constants.LIGHT_THEME_CSS);
         this.getStylesheets().add(Constants.DARK_THEME_CSS);
+    }
+
+    public void showToast(String message){
+        messageLabel.setText(message);
+        messageLabel.setVisible(true);
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try{
+                    Thread.sleep(1000);
+                }catch(InterruptedException e){
+                    e.printStackTrace();
+                }
+                Platform.runLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        FadeTransition fadeOut = new FadeTransition(Duration.seconds(2), messageLabel);
+                        fadeOut.setFromValue(1.0D);
+                        fadeOut.setToValue(0.0D);
+                        fadeOut.play();
+                    }
+                });
+            }
+        });
+
+        thread.start();
     }
 }

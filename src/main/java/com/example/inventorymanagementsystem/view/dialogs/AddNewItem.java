@@ -80,6 +80,8 @@ public class AddNewItem extends Dialog<Boolean> {
                     int id = 0;
                     if (itemDetail == null) {
                         id = Connection.getInstance().addSingleItem((String) itemName.getValue());
+                    }else{
+                        id = itemDetail.getId();
                     }
 
                     for (NewItemVariant itemVariant : variantContainer.getItems()) {
@@ -134,6 +136,7 @@ public class AddNewItem extends Dialog<Boolean> {
                                     selectedFilePath
                             );
                         } else {
+                            System.out.println("Adding new item.");
                             Connection.getInstance().addNewVariant(
                                     id,
                                     stockID,

@@ -29,6 +29,7 @@ public class AddNewSize extends Dialog<Boolean> {
         }else{
             this.setTitle("Add a new size");
         }
+
         addButton.setOnAction(event -> {
             String sizeFieldText = sizeField.getText();
             try {

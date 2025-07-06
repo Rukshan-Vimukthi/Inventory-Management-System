@@ -162,8 +162,8 @@ public class Customer implements DataModel {
         return getFirstName() + ' ' + getLastName();
     }
 
-    @Override
-    public String toString() {
-        return getFirstName() + ' ' + getLastName();
-    }
+//    @Override
+//    public String toString() {
+//        return getFirstName() + ' ' + getLastName();
+//    }
 }
