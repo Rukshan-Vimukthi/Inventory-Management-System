@@ -35,8 +35,8 @@ public class Connection {
     private Connection() throws SQLException{
         String dbLink = "jdbc:mysql://localhost:3306/sandyafashioncorner?useSSL=false&allowPublicKeyRetrieval=true";
         String username = "root";
-        String password = "root@techlix2002";
-//        String password = "Sandun@2008.sd";
+//        String password = "root@techlix2002";
+        String password = "Sandun@2008.sd";
 //        String password = "root@2025sfc";
         connection = DriverManager.getConnection(dbLink, username, password);
     }

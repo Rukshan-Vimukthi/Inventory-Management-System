@@ -12,6 +12,7 @@ import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
@@ -53,7 +54,7 @@ public class Settings extends VBox implements ThemeObserver {
         VBox headerSection = new VBox();
         headerSection.setAlignment(Pos.CENTER);
         headerSection.setSpacing(8);
-        headerSection.setPadding(new Insets(9, 0, 20, 0));
+        headerSection.setPadding(new Insets(19, 0, 20, 0));
 
         Text title = new Text("System Settings");
         title.getStyleClass().add("heading-texts");
@@ -181,6 +182,57 @@ public class Settings extends VBox implements ThemeObserver {
             }
         });
 
+        Text paymentMethodLabel = new Text("Select the payment method");
+        paymentMethodLabel.getStyleClass().add("normal-texts");
+
+        RadioButton payPal = new RadioButton("PayPal");
+        payPal.setStyle("-fx-text-fill: #1e90ff; -fx-font-size: 14px; -fx-font-weight: bold;");
+        RadioButton cashOption = new RadioButton("Cash");
+        cashOption.setStyle("-fx-text-fill: #1e90ff; -fx-font-size: 14px; -fx-font-weight: bold;");
+        RadioButton cardOption = new RadioButton("Card");
+        cardOption.setStyle("-fx-text-fill: #1e90ff; -fx-font-size: 14px; -fx-font-weight: bold;");
+        RadioButton unionPay = new RadioButton("UnionPay");
+        unionPay.setStyle("-fx-text-fill: #1e90ff; -fx-font-size: 14px; -fx-font-weight: bold;");
+        RadioButton trustly = new RadioButton("Trustly");
+        trustly.setStyle("-fx-text-fill: #1e90ff; -fx-font-size: 14px; -fx-font-weight: bold;");
+
+        ToggleGroup paymentsGroup = new ToggleGroup();
+        payPal.setToggleGroup(paymentsGroup);
+        cashOption.setToggleGroup(paymentsGroup);
+        cardOption.setToggleGroup(paymentsGroup);
+        unionPay.setToggleGroup(paymentsGroup);
+        trustly.setToggleGroup(paymentsGroup);
+
+        payPal.setSelected(true);
+
+        Text selectedPaymentMethodText = new Text("Selected: PayPal");
+        selectedPaymentMethodText.getStyleClass().add("normal-texts");
+        selectedPaymentMethodText.setStyle("-fx-font-weight: bold;");
+
+        Button paymentBtn = new Button("Add Payment");
+        paymentBtn.getStyleClass().add("primary-button");
+
+        paymentsGroup.selectedToggleProperty().addListener((obs, oldVal, newVal) -> {
+            RadioButton selected = (RadioButton) newVal;
+            selectedPaymentMethodText.setText("Selected: " + selected.getText());
+        });
+
+        VBox paymentsContainer = new VBox();
+        paymentsContainer.setSpacing(10);
+        paymentsContainer.setPadding(new Insets(9, 0, 20, 20));
+        paymentsContainer.getStyleClass().add("settings-containers");
+
+        HBox paymentMethodsContainer = new HBox();
+        paymentMethodsContainer.setSpacing(20);
+        paymentMethodsContainer.getChildren().addAll(payPal, cashOption, cardOption, unionPay, trustly);
+
+        HBox paymentButtonContainer = new HBox();
+        paymentButtonContainer.setSpacing(10);
+        paymentButtonContainer.setPadding(new Insets(16, 0, 16, 0));
+        paymentButtonContainer.getChildren().addAll(selectedPaymentMethodText, paymentBtn);
+
+        paymentsContainer.getChildren().addAll(paymentMethodLabel, paymentMethodsContainer, paymentButtonContainer);
+
         Text actionInfo = new Text("You can reset to default settings or cancel to return to the analytics section.");
         actionInfo.getStyleClass().add("normal-texts");
 
@@ -211,8 +263,9 @@ public class Settings extends VBox implements ThemeObserver {
                 showMessage("❌ Could not navigate to analytics.", false);
             }
         });
+
         VBox footerContainer = new VBox();
-        footerContainer.setPadding(new Insets(4, 0, 0, 10));
+        footerContainer.setPadding(new Insets(16, 0, 0, 10));
         footerContainer.setSpacing(3);
         HBox footerButtons = new HBox(10, reset, cancel);
         footerButtons.setPadding(new Insets(10, 10, 10, 0));
@@ -224,7 +277,33 @@ public class Settings extends VBox implements ThemeObserver {
         );
         footerContainer.getChildren().addAll(actionInfo, footerButtons);
 
-        getChildren().addAll(headerSection, themeSettingsBox, stockSettingsBox, footerContainer);
+        // Payment Light box
+        VBox paymentModel = new VBox(15);
+        paymentModel.setStyle("-fx-background-color: white; -fx-padding: 30; -fx-border-radius: 10; -fx-background-radius: 10;");
+        paymentModel.setMaxWidth(300);
+        paymentModel.setMaxHeight(200);
+        paymentModel.setAlignment(javafx.geometry.Pos.CENTER);
+
+        Text paymentModelHeader = new Text("The payment Lightbox");
+        Button closeLightboxBtn = new Button("Close");
+
+        paymentModel.getChildren().addAll(paymentModelHeader, closeLightboxBtn);
+
+        StackPane paymentModelOverlay = new StackPane(paymentModel);
+        paymentModelOverlay.setStyle("-fx-background-color: rgba(0, 0, 0, 0.6);");
+        paymentModelOverlay.setVisible(false);
+        paymentModelOverlay.setMaxHeight(Double.MAX_VALUE);
+
+        paymentBtn.setOnAction(e -> paymentModelOverlay.setVisible(true));
+        closeLightboxBtn.setOnAction(e -> paymentModelOverlay.setVisible(false));
+
+        // Adding the items / components
+        VBox mainContent = new VBox();
+        mainContent.getChildren().addAll(headerSection, themeSettingsBox, stockSettingsBox, paymentsContainer, footerContainer);
+
+        StackPane root = new StackPane(mainContent, paymentModelOverlay);
+        root.setMaxWidth(Double.MAX_VALUE);
+        getChildren().addAll(root);
     }
 
     private void showMessage(String msg, boolean isSuccess) {
