@@ -1123,7 +1123,7 @@ public class Connection {
                     "LEFT JOIN `size` ON `size`.`id` = `item_has_size`.`size_id` " +
                     "LEFT JOIN `color_has_item_has_size` " +
                     "ON `item_has_size`.`id` = `color_has_item_has_size`.`item_has_size_id` " +
-                    "LEFT JOIN `color` ON `color_has_item_has_size`.`color_id` = `color`.`id` WHERE `color_has_item_has_size`.`id` = %d".formatted(itemId));
+                    "LEFT JOIN `color` ON `color_has_item_has_size`.`color_id` = `color`.`id` WHERE `item_has_size`.`id` = %d".formatted(itemId));
 
             while (resultSet.next()){
                 int itemID = resultSet.getInt("item.id");

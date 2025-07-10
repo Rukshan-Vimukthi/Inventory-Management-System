@@ -27,7 +27,7 @@ public class EasyCheckoutItem extends VBox {
 
         this.itemDetail = itemDetail;
         HBox details = new HBox();
-        details.setAlignment(Pos.TOP_CENTER);
+        details.setPadding(new Insets(0.0D, 0.0D, 0.0D, 10.0D));
         details.setSpacing(3);
         HBox valueContainer = new HBox(5);
 
@@ -49,7 +49,7 @@ public class EasyCheckoutItem extends VBox {
             }
             colorBox.setStroke(Color.WHITE);
             colorBox.setStrokeWidth(1.5);
-
+            HBox.setMargin(colorBox, new Insets(5.0D, 0.0D, 0.0D, 0.0D));
             details.getChildren().addAll(colorBox, infoBox);
         }
         this.getChildren().add(details);

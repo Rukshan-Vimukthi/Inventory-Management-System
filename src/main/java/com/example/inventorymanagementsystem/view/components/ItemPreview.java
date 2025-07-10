@@ -80,9 +80,10 @@ public class ItemPreview extends HBox implements ItemPreviewObserver, ThemeObser
         imageView.setStyle("-fx-background-color: #888888;");
 
         try {
-            defaultImage = new Image(String.valueOf(InventoryManagementApplication.class.getResource("images/ChatGPT Image Jun 2, 2025, 07_50_06 AM.png").toURI()));
+            defaultImage = new Image(String.valueOf(InventoryManagementApplication.class.getResource("images/ChatGPT Image Jun 1, 2025, 07_19_47 PM.png").toURI()));
             imageView.setImage(defaultImage);
         }catch(URISyntaxException e){
+            System.out.println("Exception occurred when creating the default image");
             e.printStackTrace();
         }
 
@@ -239,38 +240,24 @@ public class ItemPreview extends HBox implements ItemPreviewObserver, ThemeObser
                 this.setAlignment(Pos.TOP_LEFT);
             }
 
-            String imageURI = null;
-            System.out.println("Image path: " + itemDetail.getImagePath());
             if (itemDetail.getImagePath() == null){
-                imageView.setImage(defaultImage);
+                if (imageView.getImage() != defaultImage) {
+                    imageView.setImage(defaultImage);
+                }
             }else if(itemDetail.getImagePath().isBlank() && itemDetail.getImagePath().isEmpty()){
-                imageView.setImage(defaultImage);
+                if (imageView.getImage() != defaultImage) {
+                    imageView.setImage(defaultImage);
+                }
             }else {
                 try {
                     File imageFile = new File(itemDetail.getImagePath());
-                    imageURI = imageFile.toURI().toURL().toString();
+                    String imageURI = imageFile.toURI().toURL().toString();
+                    imageView.setImage(new Image(imageURI));
                 } catch (IOException exception) {
+                    imageView.setImage(defaultImage);
                     exception.printStackTrace();
                 }
-                System.out.println(imageURI);
-                imageView.setImage(new Image(imageURI));
             }
-
-//            try {
-//                if (itemDetail.getImagePath() != null) {
-//                    File file = new File(itemDetail.getImagePath());
-//                    if (itemDetail.getImagePath() != null || !itemDetail.getImagePath().isBlank() || !itemDetail.getImagePath().isEmpty()) {
-//                        imageView.setImage(new Image(itemDetail.getImagePath()));
-//                    } else {
-//                        imageView.setImage(new Image(Constants.IMAGE_UNAVAILABLE));
-//                    }
-//                } else {
-//                    imageView.setImage(new Image(Constants.IMAGE_UNAVAILABLE));
-//                }
-//            }catch(Exception e){
-//                e.printStackTrace();
-//                imageView.setImage(new Image(Constants.IMAGE_UNAVAILABLE));
-//            }
 
             System.out.println(itemDetail.getName());
             System.out.println(itemDetail.getPrice());

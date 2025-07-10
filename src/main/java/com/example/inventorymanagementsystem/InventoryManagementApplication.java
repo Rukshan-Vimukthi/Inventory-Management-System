@@ -191,8 +191,6 @@ public class InventoryManagementApplication extends Application implements com.e
         tabPane.setTabMinHeight(200.0D);
         tabPane.setTabMaxHeight(200.0D);
         tabPane.setFocusTraversable(false);
-        System.out.println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
-        System.out.println(System.getenv("LOCALAPPDATA"));
 
         scene = new Scene(borderPane);
 
@@ -448,8 +446,8 @@ public class InventoryManagementApplication extends Application implements com.e
                     inventory,
                     users,
                     liabilitiesTab,
-                    salesTab,
-                    settings
+                    salesTab
+//                    settings
             );
 
             rootContainer.getChildren().addAll(titleBar, tabPane);

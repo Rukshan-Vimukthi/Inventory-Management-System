@@ -48,16 +48,16 @@ public class Inventory extends HBox implements ThemeObserver {
         itemsTable.addColumn("remainingQty", "Remaining Qty");
         itemsTable.addItems(Data.getInstance().getItemDetails());
 
-        Button addSizeButton = new Button("Add Size");
-        addSizeButton.getStyleClass().add("add-button");
-        addSizeButton.getStyleClass().add("default-buttons");
-
-        Button addColorButton = new Button("Add Color");
-        addColorButton.getStyleClass().add("add-button");
-        addColorButton.getStyleClass().add("default-buttons");
-
-        itemsTable.addExtraButton(addSizeButton);
-        itemsTable.addExtraButton(addColorButton);
+//        Button addSizeButton = new Button("Add Size");
+//        addSizeButton.getStyleClass().add("add-button");
+//        addSizeButton.getStyleClass().add("default-buttons");
+//
+//        Button addColorButton = new Button("Add Color");
+//        addColorButton.getStyleClass().add("add-button");
+//        addColorButton.getStyleClass().add("default-buttons");
+//
+//        itemsTable.addExtraButton(addSizeButton);
+//        itemsTable.addExtraButton(addColorButton);
 
         FormField<ComboBox, Size> sizeFilter = new FormField<>("Size", ComboBox.class, Data.getInstance().getSize());
         sizeFilter.setColumnName("`size`.`size`");
@@ -83,6 +83,8 @@ public class Inventory extends HBox implements ThemeObserver {
         itemsTable.addFilter(costFilter);
         itemsTable.addFilter(priceFilter);
         itemsTable.setTableTitle("Items");
+
+        itemsTable.showDeleteButton(false);
 
         itemsTable.setOnActionPerformed(new TableContainerInterface<ItemDetail>() {
 
@@ -116,6 +118,7 @@ public class Inventory extends HBox implements ThemeObserver {
 //                System.out.println(item.getName());
                 if (itemPreview != null){
                     itemPreview.update(item);
+                    itemsTable.showUpdateButton(true);
                 }
             }
 
@@ -172,6 +175,8 @@ public class Inventory extends HBox implements ThemeObserver {
         stockTableContainer.addColumn("name", String.class);
         stockTableContainer.addItems(Data.getInstance().getStocks());
         stockTableContainer.setTableTitle("Stock");
+        stockTableContainer.showDeleteButton(false);
+        stockTableContainer.showUpdateButton(false);
         stockTableContainer.setOnActionPerformed(new TableContainerInterface<Stock>() {
             @Override
             public void addItem() {
@@ -231,6 +236,8 @@ public class Inventory extends HBox implements ThemeObserver {
         colorTableContainer.addColumn("color", "color view");
         colorTableContainer.addItems(Data.getInstance().getColors());
         colorTableContainer.setTableTitle("Color");
+        colorTableContainer.showDeleteButton(false);
+        colorTableContainer.showUpdateButton(false);
         colorTableContainer.setOnActionPerformed(new TableContainerInterface<Color>() {
             @Override
             public void addItem() {
@@ -282,6 +289,8 @@ public class Inventory extends HBox implements ThemeObserver {
         itemSizeTableContainer.addColumn("size", String.class);
         itemSizeTableContainer.addItems(Data.getInstance().getSize());
         itemSizeTableContainer.setTableTitle("Size");
+        itemSizeTableContainer.showDeleteButton(false);
+        itemSizeTableContainer.showUpdateButton(false);
 
         itemSizeTableContainer.setOnActionPerformed(new TableContainerInterface<Size>() {
             @Override

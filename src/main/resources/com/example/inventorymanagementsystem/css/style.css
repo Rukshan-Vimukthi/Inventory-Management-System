@@ -439,3 +439,12 @@
 .scroll-pane .viewport{
     -fx-background-color: transparent;
 }
+
+
+
+.dialog{
+    -fx-background-color: #335;
+    -fx-background-radius: 10px;
+    -fx-border-color: #0055FF;
+    -fx-border-radius: 10px;
+}

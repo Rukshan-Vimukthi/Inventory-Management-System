@@ -72,6 +72,8 @@ public class Users extends HBox implements ThemeObserver {
         userTableContainer.addColumn("email", String.class);
         userTableContainer.addColumn("role", String.class);
         userTableContainer.addItems(Data.getInstance().getUsers());
+        userTableContainer.showUpdateButton(false);
+        userTableContainer.showDeleteButton(false);
         userTableContainer.setOnActionPerformed(new TableContainerInterface<User>() {
             @Override
             public void addItem() {
@@ -123,6 +125,8 @@ public class Users extends HBox implements ThemeObserver {
         customerTableContainer.addColumn("phone", Integer.class);
         customerTableContainer.addColumn("email", Integer.class);
         customerTableContainer.addColumn("registeredDate", Integer.class);
+        customerTableContainer.showUpdateButton(false);
+        customerTableContainer.showDeleteButton(false);
 
         customerTableContainer.addItems(Data.getInstance().getCustomers());
         customerTableContainer.setOnActionPerformed(new TableContainerInterface<Customer>() {
@@ -185,6 +189,7 @@ public class Users extends HBox implements ThemeObserver {
         int[] userCount = Connection.getInstance().getUserCounts();
 
         totalUsersIcon = new FontIcon(FontAwesomeSolid.USERS);
+        FontIcon totalCustomersIcon = new FontIcon(FontAwesomeSolid.USERS);
         adminUsersIcon = new FontIcon(FontAwesomeSolid.USER_SHIELD);
         userIcon = new FontIcon(FontAwesomeSolid.USER);
         customerIcon = new FontIcon(FontAwesomeSolid.USER_TAG);
@@ -193,13 +198,24 @@ public class Users extends HBox implements ThemeObserver {
         Label totalUsersCardHeader = new Label("Total Users", totalUsersIcon);
         totalUsersCardHeader.setGraphicTextGap(10.0D);
         totalUsersCardHeader.getStyleClass().add("card-heading");
-        Label totalUserCountLabel = new Label(String.valueOf(userCount[0] + userCount[1] + userCount[2]));
+        Label totalUserCountLabel = new Label(String.valueOf(userCount[0] + userCount[1]));
         totalUserCountLabel.getStyleClass().add("card-content");
         Card totalUsersCard = new Card(totalUsersCardHeader, totalUserCountLabel, null);
         totalUsersCard.setPadding(new Insets(5.0D));
         totalUsersCard.setCardWidth(150.0D);
         totalUsersCard.setRoundedCorner(10.0D);
         totalUsersCard.getStyleClass().add("user-analytics-card");
+
+        Label totalCustomerCardHeader = new Label("Total Customers", totalCustomersIcon);
+        totalCustomerCardHeader.setGraphicTextGap(10.0D);
+        totalCustomerCardHeader.getStyleClass().add("card-heading");
+        Label totalCustomersCountLabel = new Label(String.valueOf(userCount[2]));
+        totalCustomersCountLabel.getStyleClass().add("card-content");
+        Card totalCustomersCard = new Card(totalCustomerCardHeader, totalCustomersCountLabel, null);
+        totalCustomersCard.setPadding(new Insets(5.0D));
+        totalCustomersCard.setCardWidth(150.0D);
+        totalCustomersCard.setRoundedCorner(10.0D);
+        totalCustomersCard.getStyleClass().add("user-analytics-card");
 
         // Admin users card
         Label adminUsersCardHeader = new Label("Admins", adminUsersIcon);
@@ -305,7 +321,7 @@ public class Users extends HBox implements ThemeObserver {
 
         analyticsContainer.setHgap(10.0D);
         analyticsContainer.setVgap(10.0D);
-        analyticsContainer.getChildren().addAll(totalUsersCard, adminUsersCard, userCard, customerRegisteredOnATimeCard, topTenCustomersCard);
+        analyticsContainer.getChildren().addAll(totalUsersCard, totalCustomersCard, adminUsersCard, userCard, customerRegisteredOnATimeCard, topTenCustomersCard);
 
 
         HBox.setHgrow(tableAndFormContainer, Priority.ALWAYS);

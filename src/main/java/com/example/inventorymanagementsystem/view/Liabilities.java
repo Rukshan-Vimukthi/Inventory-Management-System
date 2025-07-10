@@ -290,6 +290,7 @@ public class Liabilities extends HBox implements ThemeObserver {
 //        boughtItems.setItems(Data.getInstance().getCustomerLiableItems());
 
         Button clearDebt = new Button("Pay Debt");
+        clearDebt.setStyle("-fx-background-color: #00AA00; -fx-text-fill: #FFF");
         clearDebt.setOnAction(actionEvent -> {
             try{
                 String message = Connection.getInstance().clearCustomerDebt(customer.getComboBox().getSelectionModel().getSelectedItem(), Double.parseDouble(String.valueOf(amountToClear.getValue())), 0, false);
@@ -327,6 +328,7 @@ public class Liabilities extends HBox implements ThemeObserver {
         });
 
         Button clearDebtUsingPoints = new Button("Pay Debt From Points");
+        clearDebtUsingPoints.setStyle("-fx-background-color: #FFBB00; -fx-text-fill: #150500");
         clearDebtUsingPoints.setDisable(true);
         clearDebtUsingPoints.setOnAction(actionEvent -> {
             try{
@@ -341,7 +343,8 @@ public class Liabilities extends HBox implements ThemeObserver {
 //            System.out.println("Amount to be clear: " + amount);
         });
 
-        HBox footer = new HBox();
+        VBox footer = new VBox();
+        footer.setFillWidth(true);
         footer.getChildren().addAll(clearDebt, clearDebtUsingPoints);
         footer.setSpacing(10.0D);
 

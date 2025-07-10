@@ -10,9 +10,13 @@ import com.example.inventorymanagementsystem.state.Data;
 
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.paint.Paint;
 import javafx.stage.FileChooser;
 import javafx.util.Callback;
 
@@ -31,7 +35,7 @@ import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
 
 
-public class NewItemVariant extends HBox {
+public class NewItemVariant extends FlowPane {
     FormField<ComboBox, Stock> stock;
     FormField<ComboBox, Size> sizeOfItem;
     FormField<ComboBox, Color> colorOfItem;
@@ -53,9 +57,11 @@ public class NewItemVariant extends HBox {
     CheckBox editableCheckBox;
     public NewItemVariant(ItemDetail itemDetail) throws SQLException {
         super();
-
+        this.setOrientation(Orientation.HORIZONTAL);
+        this.setStyle("-fx-background-color: #222244;");
         if (itemDetail != null){
             editableCheckBox = new CheckBox("Edit");
+            editableCheckBox.setTextFill(Paint.valueOf("#FFF"));
             editableCheckBox.setOnAction(new EventHandler<ActionEvent>() {
                 @Override
                 public void handle(ActionEvent event) {
@@ -140,7 +146,13 @@ public class NewItemVariant extends HBox {
                 };
             }
         });
-        this.setSpacing(5.0D);
+        this.setVgap(5.0D);
+        this.setHgap(5.0D);
+        this.setPadding(new Insets(10.0D));
+        if (selectImageButton != null){
+            selectImageButton.setStyle("-fx-background-color: #FF8800; -fx-text-fill: #FFF; -fx-font-size: 18px;");
+            FlowPane.setMargin(selectImageButton, new Insets(15.0D, 0.0D, 0.0D, 0.0D));
+        }
         this.getChildren().addAll(stock, sizeOfItem, colorOfItem, priceOfItem, sellingPriceOfItem, orderedQty, selectImageButton);
     }
 

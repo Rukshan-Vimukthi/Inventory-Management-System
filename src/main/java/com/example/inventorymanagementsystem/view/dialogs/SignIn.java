@@ -12,6 +12,8 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Paint;
@@ -27,6 +29,8 @@ public class SignIn extends VBox {
 
     private Image spinnerGIF;
     private ImageView spinnerImageView;
+
+    Button signInButton;
 
     Label errorLabel;
     public SignIn(Stage stage){
@@ -58,70 +62,13 @@ public class SignIn extends VBox {
         passwordField.setStyle("-fx-background-color: transparent; -fx-text-fill: #88DDFF; -fx-border-color: #0055FF; -fx-border-radius: 2px;");
 
         HBox footer = new HBox();
-        Button signInButton = new Button("SignIn");
+        signInButton = new Button("SignIn");
         signInButton.getStyleClass().add("primary-button");
         Button closeButton = new Button("Close");
         closeButton.getStyleClass().add("button-danger");
 
         signInButton.setOnAction(actionEvent -> {
-            errorLabel.setText("");
-            Platform.runLater(new Runnable() {
-                @Override
-                public void run() {
-                    signInButton.setGraphic(spinnerImageView);
-                }
-            });
-            Thread thread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        ResultSet resultSet = Connection.getInstance().getUser(userNameField.getText(), passwordField.getText());
-                        if (resultSet != null) {
-                            try {
-                                int userID = resultSet.getInt("id");
-                                String firstName = resultSet.getString("firstName");
-                                String lastName = resultSet.getString("lastName");
-                                String userName = resultSet.getString("username");
-                                String email = resultSet.getString("email");
-                                String password = resultSet.getString("password");
-                                String registeredDate = resultSet.getString("registered_date");
-                                String role = resultSet.getString("role.role");
-                                String phone = resultSet.getString("phone");
-
-                                String pathToImage = resultSet.getString("image_path");
-                                User user = new User(userID, firstName, lastName, userName, email, password, registeredDate, role, pathToImage, phone);
-
-                                Session.getInstance().setSessionUser(user);
-                                Platform.runLater(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        signInButton.setGraphic(null);
-                                    }
-                                });
-                            } catch (SQLException e) {
-                                e.printStackTrace();
-                            }
-                        } else {
-                            errorLabel.setText("Invalid username or password");
-                            Platform.runLater(new Runnable() {
-                                @Override
-                                public void run() {
-                                    signInButton.setGraphic(null);
-                                }
-                            });
-                        }
-                    }catch(SQLException exception){
-                        exception.printStackTrace();
-                        Platform.runLater(new Runnable() {
-                            @Override
-                            public void run() {
-                                signInButton.setGraphic(null);
-                            }
-                        });
-                    }
-                }
-            });
-            thread.start();
+            signIn();
         });
 
         closeButton.setOnAction(actionEvent -> {
@@ -139,5 +86,85 @@ public class SignIn extends VBox {
                 passwordLabel,
                 passwordField,
                 footer);
+
+        userNameField.setOnKeyReleased(new EventHandler<KeyEvent>() {
+            @Override
+            public void handle(KeyEvent event) {
+                if (event.getCode() == KeyCode.ENTER){
+                    passwordField.requestFocus();
+                }
+            }
+        });
+
+        passwordField.setOnKeyReleased(new EventHandler<KeyEvent>() {
+            @Override
+            public void handle(KeyEvent event) {
+                if (event.getCode() == KeyCode.ENTER){
+                    signIn();
+                }
+            }
+        });
+    }
+
+    private void signIn(){
+        errorLabel.setText("");
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                signInButton.setGraphic(spinnerImageView);
+            }
+        });
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    ResultSet resultSet = Connection.getInstance().getUser(userNameField.getText(), passwordField.getText());
+                    if (resultSet != null) {
+                        try {
+                            int userID = resultSet.getInt("id");
+                            String firstName = resultSet.getString("firstName");
+                            String lastName = resultSet.getString("lastName");
+                            String userName = resultSet.getString("username");
+                            String email = resultSet.getString("email");
+                            String password = resultSet.getString("password");
+                            String registeredDate = resultSet.getString("registered_date");
+                            String role = resultSet.getString("role.role");
+                            String phone = resultSet.getString("phone");
+
+                            String pathToImage = resultSet.getString("image_path");
+                            User user = new User(userID, firstName, lastName, userName, email, password, registeredDate, role, pathToImage, phone);
+
+                            Session.getInstance().setSessionUser(user);
+                            Platform.runLater(new Runnable() {
+                                @Override
+                                public void run() {
+                                    signInButton.setGraphic(null);
+                                }
+                            });
+                        } catch (SQLException e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        errorLabel.setText("Invalid username or password");
+                        Platform.runLater(new Runnable() {
+                            @Override
+                            public void run() {
+                                signInButton.setGraphic(null);
+                            }
+                        });
+                    }
+                }catch(SQLException exception){
+                    exception.printStackTrace();
+                    Platform.runLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            signInButton.setGraphic(null);
+                            errorLabel.setText("User with provided credentials could not be found");
+                        }
+                    });
+                }
+            }
+        });
+        thread.start();
     }
 }

@@ -1,5 +1,6 @@
 package com.example.inventorymanagementsystem.view.dialogs;
 
+import com.example.inventorymanagementsystem.InventoryManagementApplication;
 import com.example.inventorymanagementsystem.db.Connection;
 import com.example.inventorymanagementsystem.models.Color;
 import com.example.inventorymanagementsystem.models.ItemDetail;
@@ -9,14 +10,21 @@ import com.example.inventorymanagementsystem.state.Constants;
 import com.example.inventorymanagementsystem.state.Data;
 import com.example.inventorymanagementsystem.view.components.FormField;
 import com.example.inventorymanagementsystem.view.components.NewItemVariant;
+import javafx.animation.FadeTransition;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Paint;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
+import javafx.util.Duration;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,7 +34,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
 
-public class AddNewItem extends Dialog<Boolean> {
+public class AddNewItem extends Stage {
     private FormField<TextField, String> itemName;
     private FormField<TextField, String> itemQty;
     private FormField<TextField, String> remainingQty;
@@ -37,21 +45,46 @@ public class AddNewItem extends Dialog<Boolean> {
     private FormField<ComboBox, Stock> itemStock;
 
     ListView<NewItemVariant> variantContainer;
+    Label messageLabel;
     public AddNewItem(ItemDetail itemDetail){
-        DialogPane dialogPane = new DialogPane();
-        dialogPane.setMaxWidth(750.0D);
-        dialogPane.setMinWidth(750.0D);
-        dialogPane.setMaxHeight(500.0D);
-        dialogPane.setMinHeight(500.0D);
+        this.initStyle(StageStyle.TRANSPARENT);
+        this.setMaxWidth(750.0D);
+        this.setMinWidth(750.0D);
+        this.setMaxHeight(500.0D);
+        this.setMinHeight(500.0D);
+
+        Label title = new Label("");
+        title.setStyle("-fx-font-size: 15px; -fx-text-fill: white;");
+
+        messageLabel = new Label("");
+        messageLabel.setStyle(
+                "-fx-background-color: transparent; " +
+                        "-fx-border: solid; " +
+                        "-fx-border-width: 1px; " +
+                        "-fx-border-color: #0055FF; " +
+                        "-fx-border-radius: 10px; " +
+                        "-fx-background-radius: 10px; " +
+                        "-fx-font-weight: bold;" +
+                        "-fx-font-size: 20px;");
+        messageLabel.setTextFill(Paint.valueOf("#00CCFF"));
+        messageLabel.setVisible(false);
 
         if(itemDetail == null){
-            this.setTitle("Add a new item");
+            title.setText("Add a new item");
         }else{
-            this.setTitle("Update item");
+            title.setText("Update item");
         }
 
         VBox mainContainer = new VBox();
+        mainContainer.setPadding(new Insets(10.0D));
 
+        Scene scene = new Scene(mainContainer);
+        scene.setFill(Paint.valueOf("#00000000"));
+        scene.getStylesheets().clear();
+        scene.getStylesheets().add(String.valueOf(InventoryManagementApplication.class.getResource("css/style.css")));
+        scene.getStylesheets().add(String.valueOf(InventoryManagementApplication.class.getResource("css/darkTheme.css")));
+
+        mainContainer.getStyleClass().add("dialog");
         FlowPane flowPane = new FlowPane();
         flowPane.setVgap(10.0D);
         flowPane.setHgap(10.0D);
@@ -72,6 +105,7 @@ public class AddNewItem extends Dialog<Boolean> {
         HBox footer = new HBox();
         footer.setSpacing(10.0D);
         Button save = new Button("Save");
+        save.getStyleClass().add("primary-button");
         save.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
@@ -137,7 +171,7 @@ public class AddNewItem extends Dialog<Boolean> {
                             );
                         } else {
                             System.out.println("Adding new item.");
-                            Connection.getInstance().addNewVariant(
+                            boolean itemAdded = Connection.getInstance().addNewVariant(
                                     id,
                                     stockID,
                                     sizeID,
@@ -147,60 +181,17 @@ public class AddNewItem extends Dialog<Boolean> {
                                     sellingPrice,
                                     selectedFilePath
                             );
+
+                            if (itemAdded) {
+                                messageLabel.setTextFill(Paint.valueOf("#00AA00"));
+                                showToast("Item Added successfully!");
+                            }else{
+                                messageLabel.setTextFill(Paint.valueOf("#FF0000"));
+                                showToast("Failed to add item!");
+                            }
                         }
                     }
 
-//                String name = (String) itemName.getValue();
-//                Integer qty = Integer.parseInt((String)itemQty.getValue());
-//                Integer remainingQtyValue = Integer.parseInt((String)remainingQty.getValue());
-//                Double price = Double.parseDouble((String)itemOrderedPrice.getValue());
-//                Double sellImaingPrice = Double.parseDouble((String)itemSellingPrice.getValue());
-//                Stock stock = (Stock) itemStock.getValue();
-//                Size size = (Size) itemSize.getValue();
-//                String colorCode = "#" + ((String)itemColor.getValue()).split("0x")[1];
-//
-//                Color color = Connection.getInstance().getColorByCode(colorCode);
-//                int newColorID = -1;
-//                if (color == null){
-//                    newColorID = Connection.getInstance().addNewColor(colorCode);
-//                }else{
-//                    newColorID = color.getId();
-//                }
-//
-//                String sql = "INSERT INTO `item` " +
-//                        "(`name`, `stock_id`) " +
-//                        "VALUES('%s', %d)".formatted(itemName.getValue(), ((Stock)itemStock.getValue()).getId());
-//
-//
-//                if (itemDetail != null){
-//                    int itemID = itemDetail.getId();
-//                    int itemHasSizeID = itemDetail.getItemHasSizeID();
-//                    int colorHasItemHasSizeID = itemDetail.getColorHasItemHasSize();
-//
-//                    boolean isUpdated = Connection.getInstance().updateItem(
-//                            itemID,
-//                            itemHasSizeID,
-//                            colorHasItemHasSizeID,
-//                            name,
-//                            qty,
-//                            remainingQtyValue,
-//                            price, sellingPrice,
-//                            stock.getId(),
-//                            size.getId(),
-//                            newColorID
-//                    );
-//                }else{
-//                    boolean isInserted = Connection.getInstance().addNewItem(
-//                        name,
-//                        qty,
-//                        price,
-//                        sellingPrice,
-//                        stock.getId(),
-//                        size.getId(),
-//                        Connection.getInstance().getColorByCode(colorCode).getId()
-//                    );
-//                    System.out.println("New item is added!");
-//                }
                     Data.getInstance().refreshItemDetails();
                 }catch(SQLException e){
                     e.printStackTrace();
@@ -211,16 +202,20 @@ public class AddNewItem extends Dialog<Boolean> {
 
 //        Button saveAndAddAnother = new Button("Save & Add Another");
         Button close = new Button("Close");
+        close.getStyleClass().add("button-danger");
         close.setOnAction(actionEvent -> {
-            this.setResult(false);
+            this.close();
         });
-        footer.getChildren().addAll(save, close);
+
+        footer.getChildren().addAll(messageLabel, save, close);
+        footer.setAlignment(Pos.CENTER_RIGHT);
         footer.setPadding(new Insets(10.0D, 0.0D, 0.0D, 0.0D));
 
         System.out.println("Item detail: " + itemDetail);
 
         HBox variantCommandButtonsContainer = new HBox();
         Button addVariant = new Button("Add a new variant");
+        addVariant.getStyleClass().add("success-button");
         addVariant.setOnAction(event -> {
             NewItemVariant newItemVariant = null;
             try {
@@ -238,9 +233,8 @@ public class AddNewItem extends Dialog<Boolean> {
         variantContainer.setMinHeight(350.0D);
 
         mainContainer.setSpacing(10.0D);
-        mainContainer.getChildren().addAll(flowPane, variantCommandButtonsContainer, variantContainer, footer);
+        mainContainer.getChildren().addAll(title, flowPane, variantCommandButtonsContainer, variantContainer, footer);
 
-        dialogPane.setContent(mainContainer);
 
         if(itemDetail != null) {
             try {
@@ -252,6 +246,32 @@ public class AddNewItem extends Dialog<Boolean> {
             }
         }
 
-        this.setDialogPane(dialogPane);
+        this.setScene(scene);
+    }
+
+    public void showToast(String message){
+        messageLabel.setText(message);
+        messageLabel.setVisible(true);
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try{
+                    Thread.sleep(1000);
+                }catch(InterruptedException e){
+                    e.printStackTrace();
+                }
+                Platform.runLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        FadeTransition fadeOut = new FadeTransition(Duration.seconds(2), messageLabel);
+                        fadeOut.setFromValue(1.0D);
+                        fadeOut.setToValue(0.0D);
+                        fadeOut.play();
+                    }
+                });
+            }
+        });
+
+        thread.start();
     }
 }

@@ -41,6 +41,9 @@ public class TableContainer<T> extends VBox implements ThemeObserver {
     HBox filters;
     Label tableTitle;
 
+    Button delete;
+    Button update;
+
 //    private final ObservableList<TableColumn<T, ?>> tableColumns = FXCollections.observableArrayList();
     public TableContainer(boolean advancedSearchBar, String defaultSearchBarLabelText, String placeHolder){
         this.setPadding(new Insets(5.0D));
@@ -109,13 +112,13 @@ public class TableContainer<T> extends VBox implements ThemeObserver {
             tableContainerInterface.refresh();
         });
 
-        Button delete = new Button("Delete", deleteIcon);
+        delete = new Button("Delete", deleteIcon);
         delete.getStyleClass().add("delete-button");
         delete.setOnAction(event -> {
             tableContainerInterface.delete(tableView.getSelectionModel().getSelectedItem());
         });
 
-        Button update = new Button("Update");
+        update = new Button("Update");
         update.getStyleClass().add("update-button");
         update.setOnAction(event -> {
             tableContainerInterface.update(tableView.getSelectionModel().getSelectedItem());
@@ -133,7 +136,7 @@ public class TableContainer<T> extends VBox implements ThemeObserver {
         extraButtonsContainer = new HBox();
         extraButtonsContainer.setSpacing(10.0D);
 
-        toolBar.getChildren().addAll(addItemButton, refresh, delete, update, extraButtonsContainer);
+        toolBar.getChildren().addAll(addItemButton, refresh, update, delete, extraButtonsContainer);
 
         toolBarContainer.getChildren().addAll(searchBarContainer, toolBar);
 
@@ -220,6 +223,14 @@ public class TableContainer<T> extends VBox implements ThemeObserver {
 
     public void setTableTitle(String tableTitle){
         this.tableTitle.setText(tableTitle);
+    }
+
+    public void showUpdateButton(boolean show){
+        update.setVisible(show);
+    }
+
+    public void showDeleteButton(boolean show){
+        delete.setVisible(show);
     }
 
     @Override

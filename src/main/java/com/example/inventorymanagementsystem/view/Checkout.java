@@ -2,10 +2,12 @@ package com.example.inventorymanagementsystem.view;
 import com.example.inventorymanagementsystem.InventoryManagementApplication;
 import com.example.inventorymanagementsystem.db.Connection;
 import com.example.inventorymanagementsystem.models.*;
+import com.example.inventorymanagementsystem.services.interfaces.AuthenticateStateListener;
 import com.example.inventorymanagementsystem.services.interfaces.ThemeObserver;
 import com.example.inventorymanagementsystem.services.utils.Logger;
 import com.example.inventorymanagementsystem.state.Constants;
 import com.example.inventorymanagementsystem.state.Data;
+import com.example.inventorymanagementsystem.state.Session;
 import com.example.inventorymanagementsystem.view.components.CurrencyCellFactory;
 import com.example.inventorymanagementsystem.view.components.FormField;
 import com.example.inventorymanagementsystem.view.components.HoverTooltip;
@@ -64,7 +66,7 @@ import java.util.stream.Collectors;
 /**
  *
  */
-public class Checkout implements ThemeObserver {
+public class Checkout implements ThemeObserver, AuthenticateStateListener {
     @FXML
     private TableView<CheckoutItem> tableView;
     @FXML
@@ -130,6 +132,9 @@ public class Checkout implements ThemeObserver {
     Label refunds;
 
     FilteredList<Customer> filteredItems = null;
+    FilteredList<ItemDetail> checkoutItems;
+
+    TableColumn<CheckoutItem, Double> priceCol;
 
     public Checkout() throws SQLException{
         dbConnection = Connection.getInstance();
@@ -183,8 +188,12 @@ public class Checkout implements ThemeObserver {
         Text itemTxt = new Text("Item Information");
         itemTxt.getStyleClass().add("paragraph-texts");
 
+        checkoutItems = new FilteredList<>(Data.getInstance().getItemDetails());
+        checkoutItems.setPredicate(itemDetail -> itemDetail.getRemainingQty() > 0);
+
         itemComboBox = new ComboBox<>();
-        itemComboBox.setItems(Data.getInstance().getItemDetails());
+        itemComboBox.setItems(checkoutItems);
+
 
         itemComboBox.setCellFactory(lv -> new ListCell<>() {
             private final Circle colorCircle = new Circle(6);
@@ -439,7 +448,7 @@ public class Checkout implements ThemeObserver {
                         if (newValue == null || newValue.isBlank() || newValue.isEmpty()){
                             return true;
                         }else {
-                            return customer.getFirstName().toLowerCase().contains(newValue.toLowerCase()) || customer.getLastName().toLowerCase().contains(newValue.toLowerCase());
+                            return customer.getFirstName().toLowerCase().contains(newValue.toLowerCase()) || customer.getLastName().toLowerCase().contains(newValue.toLowerCase()) || customer.getPhone().contains(newValue);
                         }
                     }
                 });
@@ -696,7 +705,7 @@ public class Checkout implements ThemeObserver {
         TableColumn<CheckoutItem, Integer> amountCol = new TableColumn<>("Amount");
         amountCol.setCellValueFactory(cellData -> cellData.getValue().amountProperty().asObject());
 
-        TableColumn<CheckoutItem, Double> priceCol = new TableColumn<>("Price");
+        priceCol = new TableColumn<>("Price");
         priceCol.setCellValueFactory(cellData -> cellData.getValue().priceProperty().asObject());
         priceCol.setCellFactory(CurrencyCellFactory.withPrefix("Rs."));
 
@@ -753,6 +762,8 @@ public class Checkout implements ThemeObserver {
                 selectedCheckoutItem = selectedItem;
                 amount.setText(String.valueOf(selectedItem.getAmount()));
                 discount.setText(String.valueOf(selectedItem.getDiscount()));
+
+                addButton.setDisable(false);
 
                 for (ItemDetail item : itemComboBox.getItems()) {
                     if (item.getName().equals(selectedItem.getName()) &&
@@ -949,6 +960,7 @@ public class Checkout implements ThemeObserver {
         Text balanceTxt = new Text("Due Balance:");
         balanceTxt.setStyle("-fx-font-weight: bold; -fx-font-size: 19px;");
         balance = new Label("_");
+        balance.setMinWidth(150.0D);
         balance.setStyle("-fx-font-weight: bold; -fx-font-size: 19px;");
         balanceTxt.getStyleClass().add("information-texts");
         balance.getStyleClass().add("information-label");
@@ -1140,25 +1152,25 @@ public class Checkout implements ThemeObserver {
             stockMessageTimer.play();
         });
 
-        amount.textProperty().addListener((observable, oldValue, newValue) -> {
-            try {
-                ItemDetail selectedItemDetail = itemComboBox.getSelectionModel().getSelectedItem();
-                int typedAmount = Integer.parseInt(amount.getText().trim());
-                int remainingAmount = selectedItemDetail.getRemainingQty();
-
-                if (typedAmount >= remainingAmount) {
-                    stockMessage.setText("Not enough stock!");
-
-                    if (!(inputSection.getChildren().contains(stockMessageContainer))) {
-                        inputSection.getChildren().add(stockMessageContainer);
-                    }
-                } else {
-                    inputSection.getChildren().remove(stockMessageContainer);
-                }
-            } catch(NumberFormatException numberFormatException){
-                System.out.println("Amount text field is empty");
-            }
-        });
+//        amount.textProperty().addListener((observable, oldValue, newValue) -> {
+//            try {
+//                ItemDetail selectedItemDetail = itemComboBox.getSelectionModel().getSelectedItem();
+//                int typedAmount = Integer.parseInt(amount.getText().trim());
+//                int remainingAmount = selectedItemDetail.getRemainingQty();
+//
+//                if (typedAmount >= remainingAmount) {
+//                    stockMessage.setText("Not enough stock!");
+//
+//                    if (!(inputSection.getChildren().contains(stockMessageContainer))) {
+//                        inputSection.getChildren().add(stockMessageContainer);
+//                    }
+//                } else {
+//                    inputSection.getChildren().remove(stockMessageContainer);
+//                }
+//            } catch(NumberFormatException numberFormatException){
+//                System.out.println("Amount text field is empty");
+//            }
+//        });
 
 //        FormField<ComboBox, Customer> finalRegisteredCustomers = registeredCustomers;
         ComboBox<Customer> finalRegisteredCustomers = registeredCustomers.getComboBox();
@@ -1279,6 +1291,8 @@ public class Checkout implements ThemeObserver {
             }catch(SQLException sqlException){
                 sqlException.printStackTrace();
             }
+
+            checkoutItems.setPredicate(itemDetail -> itemDetail.getRemainingQty() > 0);
         });
 
         if (!receivedFund.getText().trim().equals("")) {
@@ -1435,7 +1449,7 @@ public class Checkout implements ThemeObserver {
         FontIcon pointsIconLarge = new FontIcon(FontAwesomeSolid.COINS);
         pointsIconLarge.setFill(Paint.valueOf("#BBAA00"));
         pointsIconLarge.setIconSize(20);
-        points = new Label();
+        points = new Label("00.0");
         points.setMinWidth(250.05D);
         points.setStyle("-fx-font-size: 24px; -fx-text-fill: white;");
         points.setGraphic(pointsIconLarge);
@@ -1444,7 +1458,7 @@ public class Checkout implements ThemeObserver {
         FontIcon refundIcon = new FontIcon(FontAwesomeSolid.UNDO);
         refundIcon.setFill(Paint.valueOf("#BBAA00"));
         refundIcon.setIconSize(20);
-        refunds = new Label();
+        refunds = new Label("00.0");
         refunds.setMinWidth(250.0D);
         refunds.setStyle("-fx-font-size: 24px; -fx-text-fill: white;");
         refunds.setGraphic(refundIcon);
@@ -1522,6 +1536,10 @@ public class Checkout implements ThemeObserver {
         VBox checkBoxContainer = new VBox();
         checkBoxContainer.getChildren().addAll(payFromRefundAmount, payFromPoints);
 
+        totalCost.setMinWidth(150.0D);
+        totalDiscount.setMinWidth(150.0D);
+        grandTotal.setMinWidth(150.0D);
+
         GridPane formAndDataContainer = new GridPane();
 
         formAndDataContainer.add(payFromRefundAmount, 0, 0);
@@ -1549,9 +1567,10 @@ public class Checkout implements ThemeObserver {
 //        FlowPane checkoutDetailsContainer = new FlowPane();
 //        checkoutDetailsContainer.getChildren().addAll(totalCostTxt, totalCost, totalDiscountTxt, totalDiscount, grandTotalTxt, grandTotal);
 
-        HBox balanceContainer = new HBox();
+        VBox balanceContainer = new VBox();
+        balanceContainer.setPadding(new Insets(0.0D, 100.0D, 0.0D, 0.0D));
         balanceContainer.getChildren().addAll(balanceTxt, balance);
-        balanceContainer.setAlignment(Pos.CENTER);
+        balanceContainer.setAlignment(Pos.CENTER_LEFT);
 
         bottomSection.getChildren().addAll(formAndDataContainer, balanceContainer);
         bottomSection.setAlignment(Pos.CENTER_LEFT);
@@ -1581,6 +1600,8 @@ public class Checkout implements ThemeObserver {
         mainLayout.setTop(headerSection);
         mainLayout.setCenter(mainCenterContainerParent);
         mainLayout.setBottom(wholeBottomSec);
+
+        Session.addListener(this);
     }
 
     public BorderPane getLayout() {
@@ -1692,4 +1713,19 @@ public class Checkout implements ThemeObserver {
     }
 
 
+    @Override
+    public void onLoggedIn() {
+        User user = Session.getInstance().getSessionUser();
+        if (user != null){
+            priceCol.setVisible(user.getRole().equals("Admin"));
+        }
+    }
+
+    @Override
+    public void onLoggedOut() {
+        User user = Session.getInstance().getSessionUser();
+        if (user != null) {
+            priceCol.setVisible(user.getRole().equals("Admin"));
+        }
+    }
 }

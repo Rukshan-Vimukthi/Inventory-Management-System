@@ -4,11 +4,13 @@ import com.example.inventorymanagementsystem.db.Connection;
 import com.example.inventorymanagementsystem.models.Customer;
 import com.example.inventorymanagementsystem.state.Constants;
 import com.example.inventorymanagementsystem.view.components.FormField;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,7 +32,10 @@ public class AddUpdateCustomer extends VBox {
     Button openFileChooserButton;
     String selectedFilePath;
 
-    public AddUpdateCustomer(Customer customer, Dialog<Boolean> dialog){
+    public AddUpdateCustomer(Customer customer, Stage parent){
+        this.setStyle("-fx-background-color: #335; -fx-background-radius: 10px;");
+        this.setPadding(new Insets(10.0D));
+        this.setSpacing(5.0D);
         firstNameField = new FormField<>("First Name", TextField.class);
         lastNameField = new FormField<>("Last Name", TextField.class);
         emailField = new FormField<>("Email", TextField.class);
@@ -63,6 +68,7 @@ public class AddUpdateCustomer extends VBox {
         });
 
         Button addCustomerButton = new Button("Add");
+        addCustomerButton.getStyleClass().add("success-button");
         addCustomerButton.setOnAction(actionEvent -> {
             if (customer == null) {
                 try {
@@ -79,11 +85,13 @@ public class AddUpdateCustomer extends VBox {
             }
         });
         Button closeButton = new Button("Close");
+        closeButton.getStyleClass().add("button-danger");
         closeButton.setOnAction(actionEvent -> {
-            dialog.setResult(false);
+            parent.close();
         });
 
         HBox footer = new HBox();
+        footer.setSpacing(5.0D);
         footer.getChildren().addAll(addCustomerButton, closeButton);
         footer.setAlignment(Pos.CENTER_RIGHT);
 
@@ -104,6 +112,9 @@ public class AddUpdateCustomer extends VBox {
                 openFileChooserButton,
                 footer
         );
+
+        this.getStylesheets().add(Constants.DARK_THEME_CSS);
+
     }
 
 }
