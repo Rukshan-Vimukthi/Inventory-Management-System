@@ -49,6 +49,7 @@ import javafx.util.StringConverter;
 import org.kordamp.ikonli.fontawesome5.FontAwesomeSolid;
 import org.kordamp.ikonli.javafx.FontIcon;
 
+import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -294,7 +295,10 @@ public class Checkout implements ThemeObserver, AuthenticateStateListener {
             });
 
             registeredCustomers = new FormField<>("Select Customer", ComboBox.class, filteredItems);
-            registeredCustomers.getComboBox().setVisibleRowCount(6);
+//            registeredCustomers.getComboBox().setVisibleRowCount(6);
+            registeredCustomers.getComboBox().setEditable(true);
+//            registeredCustomers.getComboBox().getEditor().setDisable(true);
+            registeredCustomers.getComboBox().getEditor().setOpacity(1);
             registeredCustomers.getComboBox().setCellFactory(new Callback<ListView<Customer>, ListCell<Customer>>() {
                 @Override
                 public ListCell<Customer> call(ListView<Customer> param) {
@@ -302,140 +306,58 @@ public class Checkout implements ThemeObserver, AuthenticateStateListener {
                         @Override
                         protected void updateItem(Customer item, boolean empty) {
                             super.updateItem(item, empty);
-                            if(item != null){
+                            if(item != null && !empty){
                                 setText(item.getFirstName() + " " + item.getLastName());
+                            }else{
+                                setText(null);
+                                setGraphic(null);
                             }
                         }
                     };
                 }
             });
-            registeredCustomers.getComboBox().setSkin(new ComboBoxListViewSkin<>(registeredCustomers.getComboBox()){
-                                                          {
-                                                              ListView<Customer> listView = (ListView<Customer>) getPopupContent();
-                                                              listView.setMinHeight(200);
-                                                              listView.setMaxHeight(200);
-                                                              listView.widthProperty().add(registeredCustomers.getComboBox().widthProperty());
-                                                          }
-            });
-//            registeredCustomers = new ComboBox<>();
-//            registeredCustomers.setEditable(true);
 
-//            registeredCustomers.getEditor().textProperty().addListener(new ChangeListener<String>() {
-//                @Override
-//                public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-//                    // Apply filtering
-//                    filteredItems.setPredicate(customer -> {
-//                        if (newValue == null || newValue.isBlank()) return true;
-//                        String lower = newValue.toLowerCase();
-//                        return customer.getFirstName().toLowerCase().contains(lower)
-//                                || customer.getLastName().toLowerCase().contains(lower);
-//                    });
-//
-//                    System.out.println("Customer combobox is focused: " + registeredCustomers.isFocused());
-//                    // Force dropdown to show filtered items
-//                    Platform.runLater(() -> {
-//                        if (registeredCustomers.isFocused()) {
-//                            if (!registeredCustomers.isShowing()) {
-//                                System.out.println("Dropdown is visible");
-//                                registeredCustomers.show();
-//                            }
-//
-//                            // Only select if user typed the exact full name
-//                            Customer exactMatch = registeredCustomers.getConverter().fromString(newValue.trim());
-//                            if (exactMatch != null && !exactMatch.equals(registeredCustomers.getValue())) {
-//                                registeredCustomers.getSelectionModel().select(exactMatch);
-//                            }
-//                        }
-//                    });
-//
-//                }
-//            });
+            registeredCustomers.getComboBox().setConverter(new StringConverter<Customer>() {
+                @Override
+                public String toString(Customer object) {
+                    if (object != null){
+                        return object.getFirstName() + " " + object.getLastName();
+                    }
+                    return null;
+                }
+
+                @Override
+                public Customer fromString(String string) {
+                    return filteredItems.stream().filter(customer -> (customer.getFirstName() + ' ' + customer.getLastName()).toLowerCase().contains(string.toLowerCase())).findFirst().orElse(null);
+                }
+            });
+
+            registeredCustomers.getComboBox().getEditor().textProperty().addListener(new ChangeListener<String>() {
+                @Override
+                public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+
+                    System.out.println("New value entered in the text box: " + newValue);
+                    filteredItems.setPredicate(new Predicate<Customer>() {
+                        @Override
+                        public boolean test(Customer customer) {
+                            if (newValue == null || newValue.isBlank() || newValue.isEmpty()){
+                                return true;
+                            }else {
+                                return customer.getFirstName().toLowerCase().contains(newValue.toLowerCase()) || customer.getLastName().toLowerCase().contains(newValue.toLowerCase()) || customer.getPhone().contains(newValue);
+                            }
+                        }
+                    });
+
+                    if (registeredCustomers.getComboBox().isShowing()) {
+                        registeredCustomers.getComboBox().hide();
+                    }
+                    registeredCustomers.getComboBox().show();
+                }
+            });
         } catch (SQLException exception) {
             exception.printStackTrace();
         }
 
-        // Returning items section
-//        VBox returningItemsContainer = new VBox();
-
-//        Text returningItemsText = new Text("Return Items");
-//        returningItemsText.getStyleClass().add("paragraph-texts");
-
-//        HBox returnComponentContainer = new HBox();
-//        TextField returningItemId = new TextField();
-//        returningItemId.setPromptText("Item id");
-//        returningItemId.getStyleClass().add("default-text-areas");
-//        returningItemId.setStyle("-fx-border-radius: 10 0 0 10; -fx-pref-height: 18px;");
-
-//        Button returnButton = new Button("Return \uD83D\uDD01");
-//        returnButton.getStyleClass().add("add-button");
-//        returnButton.setStyle("-fx-background-radius: 0 10 10 0; -fx-pref-height: 21px; -fx-border-width: 0.79px; -fx-border-color: green; -fx-border-radius: 0 10 10 0;");
-//        returnButton.setMinWidth(Region.USE_PREF_SIZE);
-//        returnButton.setPrefWidth(Region.USE_COMPUTED_SIZE);
-//        returnButton.setMaxWidth(Region.USE_PREF_SIZE);
-
-//        returnButton.setOnAction(event -> {
-//            itemMessageContainer.setStyle("-fx-font-size: 14px; -fx-text-fill: white; -fx-background-color: #264653; -fx-padding: 5 10; -fx-border-color: #2a9d8f; -fx-border-radius: 9; -fx-background-radius: 6; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.4), 4, 0, 1, 1);");
-//
-//            itemsDeletingMsgTimer = new PauseTransition(Duration.seconds(2));
-//            itemsDeletingMsgTimer.setOnFinished(ev -> {
-//                itemMessageContainer.setText("");
-//                itemMessageContainer.setStyle("");
-//            });
-//            itemsDeletingMsgTimer.play();
-//
-//            String idText = returningItemId.getText();
-//
-//            if (idText.isEmpty()) {
-//                itemMessageContainer.setText("❌ Please enter item_has_size_id.");
-//                return;
-//            }
-//
-//            if (registeredCustomers == null) {
-//                itemMessageContainer.setText("⚠️ Cannot access customer list.");
-//                return;
-//            }
-//
-//            Customer selectedCustomer = (Customer) registeredCustomers.getField().getSelectionModel().getSelectedItem();
-//
-//            if (selectedCustomer == null) {
-//                itemMessageContainer.setText("❌ Please select a customer.");
-//                return;
-//            }
-//
-//            try {
-//                int itemHasSizeId = Integer.parseInt(idText);
-//                int customerId = selectedCustomer.getId();
-//
-//                boolean success = dbConnection.handleItemReturn(itemHasSizeId, customerId, itemMessageContainer);
-//
-//                if (success) {
-//                    itemMessageContainer.setText("✅ Successfully returned item and updated stock.");
-//                }
-//
-//            } catch (NumberFormatException e) {
-//                itemMessageContainer.setText("❌ ID must be a number.");
-//            }
-//        });
-//
-//        returnComponentContainer.setPadding(new Insets(7, 0, 10, 0));
-//        returnComponentContainer.getChildren().addAll(returningItemId, returnButton);
-//        returningItemsContainer.getChildren().addAll(returningItemsText, returnComponentContainer);
-
-        VBox customerPointsContainer = new VBox();
-
-        customerPointsContainer.setAlignment(Pos.CENTER);
-
-        FontIcon pointsIcon = new FontIcon(FontAwesomeSolid.COINS);
-        pointsIcon.setFill(Paint.valueOf("#EECC00"));
-
-        Label pointsLabel = new Label();
-        pointsLabel.setTextAlignment(TextAlignment.LEFT);
-        pointsLabel.setContentDisplay(ContentDisplay.LEFT);
-        pointsLabel.setGraphic(pointsIcon);
-        pointsLabel.setGraphicTextGap(5.0D);
-        pointsLabel.setStyle("-fx-text-fill: lightGray; font-weight: bold; -fx-font-size: 14px;");
-
-//        ComboBox<Customer> customerComboBox = registeredCustomers;
         FormField<TextField, String> customerSearchBox = new FormField<>("Search Customer", TextField.class);
         ((TextField)customerSearchBox.getControl()).textProperty().addListener(new ChangeListener<String>() {
             @Override
@@ -453,8 +375,15 @@ public class Checkout implements ThemeObserver, AuthenticateStateListener {
                     }
                 });
 
-                registeredCustomers.getComboBox().show();
-                registeredCustomers.getComboBox().hide();
+//                ObservableList<Customer> filteredCopy = FXCollections.observableArrayList(filteredItems);
+//                registeredCustomers.getComboBox().setItems(null);
+//                registeredCustomers.getComboBox().setItems(filteredCopy);
+
+                registeredCustomers.getComboBox().setItems(filteredItems);
+//                        registeredCustomers.getComboBox().show();
+                if (registeredCustomers.getComboBox().isShowing()) {
+                    registeredCustomers.getComboBox().hide();
+                }
                 registeredCustomers.getComboBox().show();
             }
         });
@@ -474,6 +403,20 @@ public class Checkout implements ThemeObserver, AuthenticateStateListener {
                 setTextFill(Paint.valueOf("#0088FF"));
             }
         });
+
+        VBox customerPointsContainer = new VBox();
+
+        customerPointsContainer.setAlignment(Pos.CENTER);
+
+        FontIcon pointsIcon = new FontIcon(FontAwesomeSolid.COINS);
+        pointsIcon.setFill(Paint.valueOf("#EECC00"));
+
+        Label pointsLabel = new Label();
+        pointsLabel.setTextAlignment(TextAlignment.LEFT);
+        pointsLabel.setContentDisplay(ContentDisplay.LEFT);
+        pointsLabel.setGraphic(pointsIcon);
+        pointsLabel.setGraphicTextGap(5.0D);
+        pointsLabel.setStyle("-fx-text-fill: lightGray; font-weight: bold; -fx-font-size: 14px;");
 
 //        customerComboBox.setConverter(new StringConverter<Customer>() {
 //            @Override
