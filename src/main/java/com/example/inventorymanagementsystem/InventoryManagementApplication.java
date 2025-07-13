@@ -446,8 +446,8 @@ public class InventoryManagementApplication extends Application implements com.e
                     inventory,
                     users,
                     liabilitiesTab,
-                    salesTab
-//                    settings
+                    salesTab,
+                    settings
             );
 
             rootContainer.getChildren().addAll(titleBar, tabPane);
@@ -461,9 +461,7 @@ public class InventoryManagementApplication extends Application implements com.e
                 });
             }
         }
-
         scene.setRoot(rootContainer);
-
         System.out.println("Application Initialized!");
     }
 
@@ -482,6 +480,4 @@ public class InventoryManagementApplication extends Application implements com.e
             });
         }
     }
-
-
 }
