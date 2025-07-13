@@ -1,5 +1,6 @@
 package com.example.inventorymanagementsystem.view.components;
 
+
 import com.example.inventorymanagementsystem.services.interfaces.ThemeObserver;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -84,7 +85,6 @@ public class Card extends VBox implements ThemeObserver {
 
     public Card(String title, String body, String footer){
         super();
-        initContainers();
 
         titleLabel = new Label(title);
         bodyLabel = new Label(body);
@@ -98,72 +98,22 @@ public class Card extends VBox implements ThemeObserver {
         com.example.inventorymanagementsystem.state.ThemeObserver.init().addObserver(this);
     }
 
-    /**
-     * Set the header text to the provided text. The text added to the Header will be a Label Node.
-     * @param headerText - Text to be placed in the header.
-     */
-    public void setHeader(String headerText){
-        if(titleLabel != null){
-            titleLabel.setText(headerText);
-        }
-//        this.headerContainer.getChildren().remove(this.titleLabel);
+    public void setTitle(String newTitle){
+        titleLabel.setText(newTitle);
     }
 
-    /**
-     * Set the Header to a specified node. Use this method if you need to customize the header with your own component
-     * @param header - Node to be placed as the header
-     */
-    public void setHeader(Node header){
-        if(this.header != null) {
-            this.headerContainer.getChildren().remove(this.header);
-        }
-
-        this.header = header;
-        this.headerContainer.getChildren().add(this.header);
+    public void setBody(String newBody){
+        bodyLabel.setText(newBody);
     }
 
-    /**
-     * Set the text of the body to the provided text
-     * @param bodyText - Text to be placed in the body
-     */
-    public void setBody(String bodyText){
-        if(this.bodyLabel != null){
-            this.bodyLabel.setText(bodyText);
-        }
+    public void setFooter(String newFooter){
+        footerLabel.setText(newFooter);
     }
 
-    /**
-     * Set the body to a specified Node. Use this method to customize the body content of the card.
-     * @param newBody - Node to be placed as the body of the card
-     */
-    public void setBody(Node newBody){
-        if (this.body != null) {
-            bodyContainer.getChildren().remove(this.body);
+    public void setAccountBalance(double newBalance){
+        if(newBalance < 0){
+            System.out.println("Incorrect balance");
         }
-        this.body = newBody;
-        bodyContainer.setCenter(this.body);
-    }
-
-    /**
-     * Set the Footer text to the provided text.
-     * @param footerText - Text to be placed in the footer
-     */
-    public void setFooter(String footerText){
-        if(this.footerLabel != null){
-            this.footerLabel.setText(footerText);
-        }
-    }
-
-    /**
-     * Set the footer content to the specified Node. Use this method to customize the footer content as you need
-     * @param footerNode - Node to be placed in the footer.
-     */
-    public void setFooter(Node footerNode){
-        if(this.footer != null) {
-            this.footerContainer.getChildren().remove(this.footer);
-        }
-        this.footer = footerNode;
-        this.footerContainer.getChildren().add(this.footer);
     }
 
     /**
