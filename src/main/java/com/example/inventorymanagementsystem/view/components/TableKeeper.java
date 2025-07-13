@@ -140,10 +140,10 @@ public class TableKeeper {
         salesTable.setPrefWidth(800);
         salesTable.setMaxWidth(Double.MAX_VALUE);
 
-        TableColumn<SalesRow, String> dateCol = new TableColumn<>("Date");
+        TableColumn<SalesRow, String> dateCol = new TableColumn<>("Item");
         dateCol.setCellValueFactory(new PropertyValueFactory<>("date"));
 
-        TableColumn<SalesRow, Integer> itemCol = new TableColumn<>("Item");
+        TableColumn<SalesRow, Integer> itemCol = new TableColumn<>("Date");
         itemCol.setCellValueFactory(new PropertyValueFactory<>("itemName"));
 
         TableColumn<SalesRow, Integer> priceCol = new TableColumn<>("Price");
