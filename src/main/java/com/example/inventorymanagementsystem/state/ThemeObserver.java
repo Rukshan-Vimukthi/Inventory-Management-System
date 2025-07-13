@@ -9,11 +9,13 @@ import java.util.List;
 public class ThemeObserver {
     private static ThemeObserver themeObserver;
     private static List<com.example.inventorymanagementsystem.services.interfaces.ThemeObserver> nodes;
-    private static List<com.example.inventorymanagementsystem.services.interfaces.ThemeObserver> controls;
+
+    int currentTheme = 0;
 
     private ThemeObserver(){
-        nodes = new ArrayList<>();
-        controls = new ArrayList<>();
+        if (nodes == null) {
+            nodes = new ArrayList<>();
+        }
     }
 
     public static ThemeObserver init(){
@@ -28,14 +30,28 @@ public class ThemeObserver {
     }
 
     public void applyLightThemeChange(){
+        currentTheme = 1;
         for (var item : nodes){
-            item.lightTheme();
+            if (item != null) {
+                item.lightTheme();
+            }
         }
     }
 
     public void applyDarkThemeChange(){
+        currentTheme = 0;
         for (var item : nodes){
-            item.darkTheme();
+            if (item != null) {
+                item.darkTheme();
+            }
+        }
+    }
+
+    public void notifyAllListeners(){
+        if (currentTheme == 0){
+            applyDarkThemeChange();
+        }else{
+            applyLightThemeChange();
         }
     }
 }

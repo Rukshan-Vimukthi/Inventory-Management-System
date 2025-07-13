@@ -4,37 +4,67 @@ import com.example.inventorymanagementsystem.InventoryManagementApplication;
 import com.example.inventorymanagementsystem.InventoryManagementApplicationController;
 import com.example.inventorymanagementsystem.db.Connection;
 import com.example.inventorymanagementsystem.models.*;
-import com.example.inventorymanagementsystem.view.components.Card;
-import com.example.inventorymanagementsystem.view.components.ChartKeeper;
-import com.example.inventorymanagementsystem.view.components.ChartTableToggleComponent;
-import com.example.inventorymanagementsystem.view.components.TableKeeper;
+import com.example.inventorymanagementsystem.services.interfaces.ThemeObserver;
+import com.example.inventorymanagementsystem.services.utils.ExcelExportUtil;
+import com.example.inventorymanagementsystem.services.utils.PdfExportUtil;
+import com.example.inventorymanagementsystem.view.components.*;
+import javafx.animation.ScaleTransition;
 import javafx.collections.ObservableList;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.scene.SnapshotParameters;
 import javafx.scene.chart.*;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.WritableImage;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
+import javafx.stage.FileChooser;
+import javafx.util.Duration;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
+//import org.apache.poi.ss.usermodel.Row;
+//import org.apache.poi.ss.usermodel.Sheet;
+//import org.apache.poi.ss.usermodel.Workbook;
+//import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import java.net.ConnectException;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import javax.imageio.ImageIO;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.sql.SQLException;
+import java.text.DecimalFormat;
 import java.util.*;
-import java.util.concurrent.Flow;
 
-import static com.example.inventorymanagementsystem.view.components.ChartKeeper.*;
+import static javafx.application.Application.launch;
 
-public class Analytics {
-    private VBox mainLayout;
+public class Analytics extends VBox implements ThemeObserver {
+    // Containers
+    private static VBox mainLayout;
+    HBox salesSection;
+    VBox navbar;
+    HBox stockContainer;
+    HBox revenueUnitSec;
+    GridPane allChartsContainer;
+    // Card Labels
+    Label totalProducts;
+    Label inventoryValue;
+    Label lowStoke;
+    private Text fastMoving;
+    private Text slowMovingItems;
+    Text soldUnits;
+    Text customersAmount;
+    Text revenue;
+    // Components in used
     @FXML
     private CategoryAxis xAxis; // Date axis
     @FXML
@@ -52,9 +82,23 @@ public class Analytics {
     private Button searchBtn;
     @FXML
     private Button showAllBtn;
+    Button refresh;
+    private ListView<String> lowStockListView;
     private final InventoryManagementApplicationController.NavigationHandler navigationHandler;
+    private LineChart<String, String> currentSalesChart;
+    private TableView<TableKeeper.SalesRow> currentSalesTable;
+    private ChartTableToggleComponent stockToggleComponent;
+    private ChartTableToggleComponent reorderToggleComponent;
+    ChartTableToggleComponent revenueToggleComponent;
+    // Charts and tables in the main view
+    ChartTableToggleComponent stockToggleComponent2;
+    ChartTableToggleComponent reorderToggleComponent2;
+    ChartTableToggleComponent salesToggleComponent2;
+    ChartTableToggleComponent revenueToggleComponent2;
+    ComboBox<String> dateRange;
 
-    public Analytics(InventoryManagementApplicationController.NavigationHandler navigationHandler) {
+    public Analytics(InventoryManagementApplicationController.NavigationHandler navigationHandler) throws SQLException {
+        super();
         this.navigationHandler = navigationHandler;
 
         mainLayout = new VBox();
@@ -62,25 +106,22 @@ public class Analytics {
         mainLayout.getStylesheets().add(
                 String.valueOf(InventoryManagementApplication.class.getResource("css/style.css"))
         );
-
-        Connection dbConnection = Connection.getInstance();
         connection = Connection.getInstance();
 
-        VBox navbar = new VBox();
+        navbar = new VBox();
         navbar.setMaxWidth(Double.MAX_VALUE);
         navbar.setPadding(new Insets(20, 0, 20, 0));
+        navbar.setStyle("-fx-background-radius: 10px;");
+        navbar.getStyleClass().add("nav-bar");
         navbar.setSpacing(5.5);
-        navbar.setStyle("-fx-background-color: lightGray;");
         navbar.setAlignment(Pos.CENTER);
 
         Text heading = new Text("Inventory Analytics");
-        heading.setFont(Font.font("Verdana", FontWeight.BOLD, 25));
-        heading.setFill(Color.web("#444444"));
+        heading.getStyleClass().add("heading-texts");
         heading.setTextAlignment(TextAlignment.CENTER);
 
         Text subHeading = new Text("Real-time insights into your inventory, sales, and operations performance.");
-        subHeading.setStyle("-fx-font-size: 15px;");
-        subHeading.setFill(Color.web("#777777"));
+        subHeading.getStyleClass().add("paragraph-texts");
 
         HBox headerContainer = new HBox();
         headerContainer.setPadding(new Insets(20, 0, 0, 0));
@@ -96,6 +137,7 @@ public class Analytics {
                 )
         );
         dateRange.setPromptText("Date Range");
+        dateRange.getStyleClass().add("default-dropdowns");
 
         ComboBox<String> export = new ComboBox<>(
                 FXCollections.observableArrayList(
@@ -106,8 +148,12 @@ public class Analytics {
                 )
         );
         export.setPromptText("Export");
+        export.getStyleClass().add("default-dropdowns");
 
-        Button refresh = new Button("Refresh ↻");
+        refresh = new Button("Refresh ↻");
+        refresh.getStyleClass().add("default-buttons");
+        HoverTooltip refreshTooltip = new HoverTooltip("Refresh data and charts");
+        refreshTooltip.attachTo(refresh);
 
         FlowPane summaryCardContainer = new FlowPane();
         summaryCardContainer.setHgap(20);
@@ -116,77 +162,69 @@ public class Analytics {
         summaryCardContainer.setAlignment(Pos.CENTER);
         summaryCardContainer.setMaxWidth(Double.MAX_VALUE);
 
-        int totalProductSum = dbConnection.getTotalProducts();
+        int totalProductSum = connection.getTotalProducts();
         // Total product Card
-        Text totalProductsTxt = new Text("Total Products in inventory");
+        Text totalProductsTxt = new Text("📦 Total Products in inventory");
         totalProductsTxt.setTextAlignment(TextAlignment.CENTER);
-        totalProductsTxt.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
-        Label totalProducts = new Label(totalProductSum + " Products are Available");
-        totalProducts.setStyle("-fx-font-size: 17px; -fx-text-fill: white; -fx-font-weight: bold;");
-        Text percentage = new Text("40% from Expected");
+        totalProductsTxt.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+        totalProductsTxt.getStyleClass().add("sub-cards-heading");
+        totalProducts = new Label(totalProductSum + " Products are Available");
+        totalProducts.setStyle("-fx-font-size: 15px; -fx-text-fill: gray; -fx-font-weight: bold;");
+        Region percentage = new Region();
         Card productCard = new Card(totalProductsTxt, totalProducts, percentage);
         productCard.getStyleClass().add("summary-cards");
 
-        int totalProductValue = dbConnection.getTotalProductValue();
-        int remainingItemAmount = dbConnection.getRemainingProductsSum();
+//        int totalProductValue = connection.getTotalProductValue();
+//        int remainingItemAmount = connection.getRemainingProductsSum();
+        int totalInventoryValue = connection.getTotalProductValue();
+        DecimalFormat formatter = new DecimalFormat("#,###");
+        String formattedTotalInventoryValue = formatter.format(totalInventoryValue);
         // Total Inventory Value card
-        Text inventoryValueTxt = new Text("Total Inventory Value");
-        inventoryValueTxt.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
-        Label inventoryValue = new Label("$ " + remainingItemAmount * totalProductValue + " of Value");
-        inventoryValue.setStyle("-fx-font-size: 17px; -fx-text-fill: white; -fx-font-weight: bold;");
-        Text expectedValue = new Text("Expecting $100");
+        Text inventoryValueTxt = new Text("💰 Total Inventory Value");
+        inventoryValueTxt.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; ");
+        inventoryValueTxt.getStyleClass().add("sub-cards-heading");
+        inventoryValue = new Label("Rs." + formattedTotalInventoryValue + " of Value");
+        inventoryValue.setStyle("-fx-font-size: 15px; -fx-text-fill: gray; -fx-font-weight: bold;");
+        Region expectedValue = new Region();
         Card inventoryValueCard = new Card(inventoryValueTxt, inventoryValue, expectedValue);
         inventoryValueCard.getStyleClass().add("summary-cards");
 
-        int totalSoldQty = dbConnection.getTotalSoldQuantity();
+        int lowStokeProducts = Connection.getLowStockItemCount(connection);
         // Total sales Card
-        Text totalSaleTxt = new Text("Total Sales");
-        totalSaleTxt.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
-        Label totalSales = new Label(totalSoldQty + " Sales");
-        totalSales.setStyle("-fx-font-size: 17px; -fx-text-fill: white; -fx-font-weight: bold;");
-        Text maxSales = new Text("Maximum $100");
-        Card salesCard = new Card(totalSaleTxt, totalSales, maxSales);
-        salesCard.getStyleClass().add("summary-cards");
-
-        int lowStokeProducts = Connection.getLowStockItemCount(dbConnection);
-        // Total sales Card
-        Text lowStokeTxt = new Text("Low Stokes");
-        lowStokeTxt.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
-        Label lowStoke = new Label(lowStokeProducts + " Items");
-        lowStoke.setStyle("-fx-font-size: 17px; -fx-text-fill: white; -fx-font-weight: bold;");
-        Text currentAmount = new Text("Maximum $100");
+        Text lowStokeTxt = new Text("🔸 Low Stokes");
+        lowStokeTxt.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+        lowStokeTxt.getStyleClass().add("sub-cards-heading");
+        lowStoke = new Label(lowStokeProducts + " Items");
+        lowStoke.setStyle("-fx-font-size: 15px; -fx-text-fill: gray; -fx-font-weight: bold;");
+        Region currentAmount = new Region();
         Card lowStockCard = new Card(lowStokeTxt, lowStoke, currentAmount);
         lowStockCard.getStyleClass().add("summary-cards");
+        // Tooltip
+        List<String> mainLowStockItems = Connection.getLowStockitemNames(connection);
+        HoverTooltip mainLowStokesTooltip = new HoverTooltip("Low Stocks: \n" + String.join("\n⚫ ", mainLowStockItems));
+        mainLowStokesTooltip.attachTo(lowStockCard);
 
-
-        Text fastVsSlowTxt = new Text("Fast vs Slow Moving Items");
-        fastVsSlowTxt.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
-        Text fastMoving = new Text();
-        fastMoving.setStyle("-fx-font-size: 13px; -fx-text-fill: white; -fx-font-weight: bold;");
+        Text fastTxt = new Text("✈ Fast Moving Items");
+        fastTxt.getStyleClass().add("sub-cards-heading");
+        fastTxt.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+        fastMoving = new Text();
         fastMoving.setFill(Color.WHITE);
+        refreshFastMovingItems(this.connection);
+        Region emptySpace = new Region();
+        Card fastCard = new Card(fastTxt, fastMoving, emptySpace);
+        fastCard.getStyleClass().add("summary-cards");
 
-        Map<String, List<SoldProducts>> salesData = connection.getTopAndBottomSellingProducts();
-        if (salesData != null && salesData.containsKey("top")) {
-            List<SoldProducts> topList = salesData.get("top");
-            if (topList != null && !topList.isEmpty()) {
-                StringBuilder textBuilder = new StringBuilder("");
-                for (SoldProducts ps : topList) {
-                    String itemName = connection.getItemNameById(ps.getItemId());
-                    textBuilder.append(itemName)
-                            .append(" :- Sold: ").append(ps.getTotalSold());
+        Text slowText = new Text("🐌 Slow Moving Items");
+        slowText.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+        slowText.getStyleClass().add("sub-cards-heading");
+        slowMovingItems = new Text();
+        slowMovingItems.setFill(Color.WHITE);
+        refreshSlowMovingItems(this.connection);
+        Region slowMovingItemSpace = new Region();
+        Card slowCard = new Card(slowText, slowMovingItems, slowMovingItemSpace);
+        slowCard.getStyleClass().add("summary-cards");
 
-                }
-                fastMoving.setText(textBuilder.toString());
-            } else {
-                fastMoving.setText("No top selling products found.");
-            }
-        }
-
-        Text slowMoving = new Text("Maximum $100");
-        Card fastVsSlowCard = new Card(fastVsSlowTxt, fastMoving, slowMoving);
-        fastVsSlowCard.getStyleClass().add("summary-cards");
-
-        summaryCardContainer.getChildren().addAll(productCard, inventoryValueCard, salesCard, lowStockCard, fastVsSlowCard);
+        summaryCardContainer.getChildren().addAll(productCard, inventoryValueCard, lowStockCard, fastCard, slowCard);
 
         VBox stockAnalytics = new VBox();
         stockAnalytics.setMaxWidth(Double.MAX_VALUE);
@@ -196,27 +234,22 @@ public class Analytics {
 
         // Current Stock Section
         Text currentStockTxt = new Text("Current Stock Levels");
-        currentStockTxt.setStyle("-fx-font-size: 25; -fx-font-weight: bold;");
-        currentStockTxt.setFill(Color.web("#333333"));
+        currentStockTxt.getStyleClass().add("heading-texts");
         currentStockTxt.setTextAlignment(TextAlignment.CENTER);
 
-        ChartTableToggleComponent stockToggleComponent = new ChartTableToggleComponent(
-                ChartKeeper.getStockLevelChart(),
-                TableKeeper.getStockLevelTable()
-        );
+        stockContainer = new HBox(10);
+        double halfStockContainer = stockContainer.getPrefWidth() / 2;
+
+        stockToggleComponent = createStockComponent();
         stockToggleComponent.setMaxWidth(Double.MAX_VALUE);
+        stockToggleComponent.setPrefWidth(halfStockContainer);
         stockToggleComponent.setPrefHeight(Region.USE_COMPUTED_SIZE);
 
-        ChartTableToggleComponent reorderToggleComponent = new ChartTableToggleComponent(
-                ChartKeeper.getReorderAlertChart(connection),
-                TableKeeper.getReorderAlertTable()
-        );
+        reorderToggleComponent = createReorderComponent();
         reorderToggleComponent.setMaxWidth(Double.MAX_VALUE);
+        reorderToggleComponent.setPrefWidth(halfStockContainer);
         reorderToggleComponent.setPrefHeight(Region.USE_COMPUTED_SIZE);
 
-        HBox stockContainer = new HBox(10);
-        HBox.setHgrow(stockToggleComponent, Priority.ALWAYS);
-        HBox.setHgrow(reorderToggleComponent, Priority.ALWAYS);
         stockContainer.setAlignment(Pos.TOP_CENTER);
         stockContainer.setMaxWidth(Double.MAX_VALUE);
         stockContainer.setPadding(new Insets(30, 0, 20, 0));
@@ -228,27 +261,28 @@ public class Analytics {
 
         // Current Stock Section
         Text saleHeading = new Text("Sales Analytics");
-        saleHeading.setStyle("-fx-font-size: 25; -fx-font-weight: bold;");
-        saleHeading.setFill(Color.web("#333333"));
+        saleHeading.getStyleClass().add("heading-texts");
         saleHeading.setTextAlignment(TextAlignment.CENTER);
 
         // Top Selling items card
-
         VBox topSoldItemCard = new VBox();
         Text topSellingTxt= new Text("\uD83E\uDD47 Top-Selling Product");
         topSellingTxt.getStyleClass().add("sub-cards-heading");
 
         Text topSoldProduct = new Text();
 
-        Map<String, List<SoldProducts>> topSalesData = connection.getTopAndBottomSellingProducts();
+        Map<String, List<SoldProducts>> topSalesData = this.connection.getTopAndBottomSellingProducts();
         if (topSalesData != null && topSalesData.containsKey("top")) {
             List<SoldProducts> topList = topSalesData.get("top");
             if (topList != null && !topList.isEmpty()) {
-                StringBuilder textBuilder = new StringBuilder("\n");
+                StringBuilder textBuilder = new StringBuilder();
                 for (SoldProducts ps : topList) {
-                    String itemName = connection.getItemNameById(ps.getItemId());
+                    String itemName = this.connection.getItemNameById(ps.getItemId());
                     textBuilder.append(itemName)
-                            .append(" :- Sold: ").append(ps.getTotalSold());
+                            .append(" :- Sold: ").append(ps.getTotalSold()).append(", ");
+                }
+                if (textBuilder.length() > 2) {
+                    textBuilder.setLength(textBuilder.length() - 2);
                 }
                 topSoldProduct.setText(textBuilder.toString());
             } else {
@@ -257,41 +291,47 @@ public class Analytics {
         }
 
         topSoldProduct.getStyleClass().add("sub-cards-value");
-        topSoldItemCard.getStyleClass().add("sub-cards");
+        topSoldItemCard.getStyleClass().add("summary-cards");
         topSoldItemCard.setAlignment(Pos.CENTER);
         topSoldItemCard.getChildren().addAll(topSellingTxt, topSoldProduct);
 
         // Top Selling items card
+        int totalSoldQty = connection.getTotalSoldQuantity();
         VBox soldUnitCard = new VBox();
         Text unitSoldTxt= new Text("\uD83D\uDD01 Units Sold");
         unitSoldTxt.getStyleClass().add("sub-cards-heading");
-        Text soldUnits = new Text("Total Ordered Quantity " + totalSoldQty);
+        soldUnits = new Text("Total Ordered Quantity " + totalSoldQty);
         soldUnits.getStyleClass().add("sub-cards-value");
-        soldUnitCard.getStyleClass().add("sub-cards");
+        soldUnitCard.getStyleClass().add("summary-cards");
         soldUnitCard.setAlignment(Pos.CENTER);
         soldUnitCard.getChildren().addAll(unitSoldTxt, soldUnits);
 
-        int totalCustomers = dbConnection.getTotalCustomers();
+        int totalCustomers = connection.getTotalCustomers();
         // Total customers card
         VBox totalCustomersCard = new VBox();
         Text totalCustomersTxt= new Text("\uD83D\uDC65 Total Customers");
         totalCustomersTxt.getStyleClass().add("sub-cards-heading");
-        Text customersAmount = new Text(totalCustomers + " Customers");
+        customersAmount = new Text(totalCustomers + " Customers");
         customersAmount.getStyleClass().add("sub-cards-value");
-        totalCustomersCard.getStyleClass().add("sub-cards");
+        totalCustomersCard.getStyleClass().add("summary-cards");
         totalCustomersCard.setAlignment(Pos.CENTER);
         totalCustomersCard.getChildren().addAll(totalCustomersTxt, customersAmount);
 
         // Total customers card
-        int orderedItemsValue = dbConnection.getOrderedQuantityValue();
+        int orderedItemsValue = connection.getOrderedQuantityValue();
+        int revenueValue = totalSoldQty * orderedItemsValue;
+        DecimalFormat revenueFormatter = new DecimalFormat("#,###");
+        String formattedRevenue = revenueFormatter.format(revenueValue);
         VBox orderFullFilledCard = new VBox();
         Text revenueTxt= new Text("\uD83D\uDCE6 Revenue");
         revenueTxt.getStyleClass().add("sub-cards-heading");
-        Text revenue = new Text("$ " +( totalSoldQty * orderedItemsValue) + " of revenue");
+        revenue = new Text("Rs." + formattedRevenue + " of revenue");
         revenue.getStyleClass().add("sub-cards-value");
-        orderFullFilledCard.getStyleClass().add("sub-cards");
+        orderFullFilledCard.getStyleClass().add("summary-cards");
         orderFullFilledCard.setAlignment(Pos.CENTER);
         orderFullFilledCard.getChildren().addAll(revenueTxt, revenue);
+
+        applyHoverZoomEffect(productCard, inventoryValueCard, lowStockCard, fastCard, slowCard, topSoldItemCard, soldUnitCard, totalCustomersCard, orderFullFilledCard);
 
         FlowPane salesCardContainer = new FlowPane();
         salesCardContainer.setHgap(20);
@@ -299,187 +339,175 @@ public class Analytics {
         salesCardContainer.setMaxWidth(Double.MAX_VALUE);
         salesCardContainer.setAlignment(Pos.CENTER);
         salesCardContainer.setPadding(new Insets(30, 0, 30, 0));
+
         salesCardContainer.getChildren().addAll(topSoldItemCard, soldUnitCard ,totalCustomersCard, orderFullFilledCard);
 
         VBox saleAnalyticsSec = new VBox();
         saleAnalyticsSec.setAlignment(Pos.CENTER);
         saleAnalyticsSec.setMaxWidth(Double.MAX_VALUE);
-        saleAnalyticsSec.getChildren().addAll(saleHeading, salesCardContainer);
 
         VBox salesOverTimeSec = new VBox();
+        salesSection = new HBox();
+        revenueUnitSec = new HBox();
 
-        // Shows the sales
         dateRange.setOnAction(e -> {
-            String selected = dateRange.getValue();
-            LineChart<String, Number> chart = ChartKeeper.getSalesChart(Connection.getInstance(), selected);
-            TableView<TableKeeper.SalesRow> table = TableKeeper.getSalesTable(selected);
-
-            ChartTableToggleComponent salesToggleComponent = new ChartTableToggleComponent(chart, table);
-            salesOverTimeSec.getChildren().setAll(salesToggleComponent);
-            salesToggleComponent.setMaxWidth(1200);
+            try {
+                if (currentSalesChart != null && currentSalesTable != null) {
+                    updateSalesSectionUI(currentSalesChart, currentSalesTable);
+                } else {
+                    loadDataAndRefreshUI(dateRange.getValue());
+                }
+                loadDataAndRefreshUI(dateRange.getValue());
+            }catch(SQLException exception){
+                exception.printStackTrace();
+            }
         });
+        loadDataAndRefreshUI(dateRange.getValue());
 
-        dateRange.getOnAction().handle(null);
+        saleAnalyticsSec.getChildren().addAll(saleHeading, salesCardContainer, salesOverTimeSec);
 
-        salesOverTimeSec.setAlignment(Pos.CENTER);
+        // Shows the revenue and the unit sold table & chart | Alert section
+        HBox revenueAlertSection = new HBox();
+        revenueAlertSection.setPadding(new Insets(20, 0,0, 0));
+        revenueAlertSection.setAlignment(Pos.CENTER);
+        revenueAlertSection.setMaxWidth(Double.MAX_VALUE);
 
-        // Shows the revenue and the unit sold table & chart
-        ChartTableToggleComponent revenueToggleComponent = new ChartTableToggleComponent(
-                ChartKeeper.getRevenueChart(connection),
-                TableKeeper.getRevenueTable()
-        );
-        revenueToggleComponent.setPrefWidth(1200);
+        revenueToggleComponent = createRevenueToggleComponent();
+        revenueToggleComponent.setMaxWidth(800);
+        reorderToggleComponent.setPrefWidth(500);
+        revenueToggleComponent.setMaxHeight(400);
+        revenueAlertSection.setMinWidth(800);
 
-        HBox revenueUnitSec = new HBox();
-        revenueUnitSec.setAlignment(Pos.TOP_CENTER);
-        revenueUnitSec.setMaxWidth(Double.MAX_VALUE);
-        revenueUnitSec.setPadding(new Insets(30, 0, 20, 0));
-        revenueUnitSec.setAlignment(Pos.CENTER);
         revenueUnitSec.getChildren().addAll(revenueToggleComponent);
+        salesOverTimeSec.getChildren().addAll(salesSection);
 
         // Alerts section
         VBox alertsSec = new VBox();
-        Text alertsTxt = new Text("\uD83D\uDEA8 Alerts & Exceptions");
-        alertsTxt.setStyle("-fx-font-size: 25; -fx-font-weight: bold;");
-        alertsTxt.setFill(Color.web("#333333"));
-        alertsSec.setAlignment(Pos.CENTER);
+        Text alertsTxt = new Text("\uD83D\uDD14 Alerts & ⚠ Exceptions");
+        alertsTxt.getStyleClass().add("heading-texts");
+        alertsTxt.setTextAlignment(TextAlignment.CENTER);
+        alertsSec.setAlignment(Pos.TOP_CENTER);
+        alertsSec.setPadding(new Insets(30, 0, 10 ,0));
+        alertsSec.setMaxWidth(Double.MAX_VALUE);
+        alertsSec.setSpacing(30);
 
         FlowPane alertsContainer = new FlowPane();
-        alertsContainer.setHgap(10.0);
-        alertsContainer.setVgap(10.0);
+        alertsContainer.setHgap(20.0);
+        alertsContainer.setVgap(20.0);
         alertsContainer.setPadding(new Insets(20, 0, 20, 0));
-        alertsContainer.setStyle("-fx-background-color: lightGray");
         alertsContainer.setMaxWidth(Double.MAX_VALUE);
-        alertsContainer.setAlignment(Pos.CENTER);
+        alertsContainer.setAlignment(Pos.CENTER_LEFT);
+        alertsContainer.setMaxWidth(1300);
+        alertsContainer.setStyle("-fx-background-color: rgba(0, 0, 0, 0.15); -fx-background-radius: 20;");
 
         // Alerts Low Stoke Card
         VBox lowStockAlertCard = new VBox();
-        Text lowStockTxt = new Text("Alert! Low Stokes");
+        Text lowStockTxt = new Text("\uD83D\uDD34 LOW-STOKES ALERT");
         lowStockTxt.getStyleClass().add("alert-heading");
         Text lowStocks = new Text("You currently have " + lowStokeProducts + " low stokes");
         lowStocks.getStyleClass().add("alert-content");
-        lowStocks.setFill(Color.web("#333333"));
         lowStockAlertCard.getChildren().addAll(lowStockTxt, lowStocks);
+        lowStockAlertCard.setSpacing(10);
         lowStockAlertCard.getStyleClass().add("alert-cards");
+        // The tooltip
+        List<String> lowStockItems = Connection.getLowStockitemNames(connection);
+        HoverTooltip lowStokesTooltip = new HoverTooltip("Low Stocks: \n" + String.join("\n⚫ ", lowStockItems));
+        lowStokesTooltip.attachTo(lowStockAlertCard);
+
+        // Alerts Low Stoke Card
+        int outofStokesItems = Connection.getOutofStokeItems(connection);
+        VBox outofStokeCard = new VBox();
+        Text outOfStockTxt = new Text("\uD83D\uDD34 OUT-OF-STOCK ALERT");
+        outOfStockTxt.getStyleClass().add("alert-heading");
+        Text outOfStocks = new Text("You have " + outofStokesItems + " out of stokes");
+        outOfStocks.getStyleClass().add("alert-content");
+        outofStokeCard.getChildren().addAll(outOfStockTxt, outOfStocks);
+        outofStokeCard.setSpacing(10);
+        outofStokeCard.getStyleClass().add("alert-cards");
+        // The tooltip
+        List<String> outOfStockItems = Connection.getOutOfStockItemNames(connection);
+        HoverTooltip outOfStokesTooltip = new HoverTooltip("Out-of-Stocks: \n" + String.join("\n⚫ ", outOfStockItems));
+        outOfStokesTooltip.attachTo(outofStokeCard);
 
         // Alerts Over Stoke Card
+        int overStokesItems = Connection.getOverStockItems(connection);
         VBox overStockAlertCard = new VBox();
-        Text overStockTxt = new Text("Alert! OverStock Warning!");
+        Text overStockTxt = new Text("\uD83D\uDD34 OVER-STOCKS ALERT");
         overStockTxt.getStyleClass().add("alert-heading");
-        HBox overStockMessageContainer = new HBox();
-
-        Text overStocks = new Text();
-
-        Map<String, List<SoldProducts>> overStockData = connection.getTopAndBottomSellingProducts();
-        if (overStockData != null && overStockData.containsKey("top")) {
-            List<SoldProducts> topList = overStockData.get("top");
-            if (topList != null && !topList.isEmpty()) {
-                StringBuilder textBuilder = new StringBuilder();
-                for (SoldProducts ps : topList) {
-                    String itemName = connection.getItemNameById(ps.getItemId());
-                    textBuilder.append(itemName)
-                            .append(" :- Sold: ").append(ps.getTotalSold());
-                }
-                overStocks.setText(textBuilder.toString());
-            } else {
-                overStocks.setText("No top selling products found.");
-            }
-        }
-
+        Text overStocks = new Text("You have " + overStokesItems + " over stokes");
+        overStocks.getStyleClass().add("alert-content");
+        overStockAlertCard.setSpacing(10);
         overStocks.getStyleClass().add("alert-content");
         overStocks.setFill(Color.web("#333333"));
-        overStockMessageContainer.getChildren().addAll(overStocks);
-        overStockAlertCard.getChildren().addAll(overStockTxt, overStockMessageContainer);
+        overStockAlertCard.getChildren().addAll(overStockTxt, overStocks);
         overStockAlertCard.getStyleClass().add("alert-cards");
+        // The tooltip
+        List<String> overStockItems = Connection.getOverStockitemNames(connection);
+        HoverTooltip overStokesTooltip = new HoverTooltip("Over Stocks: \n" + String.join("\n⚫ ", overStockItems));
+        overStokesTooltip.attachTo(overStockAlertCard);
 
-        alertsContainer.getChildren().addAll(lowStockAlertCard, overStockAlertCard);
-        alertsSec.setSpacing(30.0);
+        alertsContainer.getChildren().addAll(lowStockAlertCard, overStockAlertCard, outofStokeCard);
+        alertsSec.setPrefWidth(750);
+        alertsSec.setAlignment(Pos.TOP_CENTER);
         alertsSec.getChildren().addAll(alertsTxt, alertsContainer);
 
-        // User analytics section
-        VBox userAnalyticsSec = new VBox();
-        userAnalyticsSec.setSpacing(30.0);
+        revenueAlertSection.setMaxWidth(Double.MAX_VALUE);
+        revenueAlertSection.setAlignment(Pos.CENTER);
+        revenueAlertSection.setSpacing(40);
+        revenueAlertSection.getChildren().addAll(revenueToggleComponent, alertsSec);
 
-        Text userAnalyticsTxt = new Text("\uD83D\uDC64 User/Staff Analytics");
-        userAnalyticsTxt.setStyle("-fx-font-size: 25; -fx-font-weight: bold;");
-        userAnalyticsTxt.setFill(Color.web("#333333"));
-        userAnalyticsTxt.setTextAlignment(TextAlignment.CENTER);
+        // updating all the cards data
+        List<Runnable> refreshTasks = new ArrayList<>();
+        refreshTasks.add(() -> {
+            // Updating low stokes
+            int updatedLowStock = Connection.getLowStockItemCount(connection);
+            lowStoke.setText(updatedLowStock + " Items");
+            lowStocks.setText("You currently have " + updatedLowStock + " low stokes");
+            // Updating out of stocks
+            int updatedOutOfStocks = Connection.getOutofStokeItems(connection);
+            outOfStocks.setText("You have " + updatedOutOfStocks + " out of stocks");
+            // Updating over stocks
+            int updatedOverStocks = Connection.getOverStockItems(connection);
+            overStocks.setText("You got " + updatedOverStocks + " over stocks");
 
-        HBox searchBarContainer = new HBox();
-        searchBar = new TextField();
-        searchBar.setPromptText("Search name...");
-        Button searchBtn = new Button("Search");
-        searchBtn.setOnAction(e -> searchUser());
-        Region spaceForShowAll = new Region();
-        spaceForShowAll.setMinWidth(30);
-        Button showAllBtn = new Button("Show All");
-        showAllBtn.setOnAction(e -> showAllUsers());
-        searchBarContainer.getChildren().addAll(searchBar, searchBtn, spaceForShowAll, showAllBtn);
-        searchBarContainer.setAlignment(Pos.CENTER);
-
-        fullUserList = dbConnection.getUserDetail();
-        userTable.setItems(fullUserList);
-
-        // Creating the user table
-        userTable.setMaxWidth(1300);
-        userTable.setMaxHeight(200);
-
-        TableColumn<User, Integer> idCol = new TableColumn<>("Id");
-        idCol.setCellValueFactory(new PropertyValueFactory<>("id"));
-
-        TableColumn<User, String> firstNameCol = new TableColumn<>("First Name");
-        firstNameCol.setCellValueFactory(new PropertyValueFactory<>("firstName"));
-
-        TableColumn<User, String> lastNameCol = new TableColumn<>("Last Name");
-        lastNameCol.setCellValueFactory(new PropertyValueFactory<>("lastName"));
-
-        TableColumn<User, String> emailCol = new TableColumn<>("E Mail");
-        emailCol.setCellValueFactory(new PropertyValueFactory<>("email"));
-
-        TableColumn<User, String> passwordCol = new TableColumn<>("Password");
-        passwordCol.setCellValueFactory(new PropertyValueFactory<>("password"));
-
-        userTable.getColumns().addAll(idCol, firstNameCol, lastNameCol, emailCol, passwordCol);
-        userTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-
-        userAnalyticsSec.getChildren().addAll(userAnalyticsTxt, searchBarContainer, userTable);
-        userAnalyticsSec.setMaxWidth(Double.MAX_VALUE);
-        userAnalyticsSec.setAlignment(Pos.CENTER);
-        userAnalyticsSec.setPadding(new Insets(50, 0, 20, 0));
+            // Updating low stock item names
+            List<String> updatedItems = Connection.getLowStockitemNames(connection);
+            mainLowStokesTooltip.setText("Low Stocks: \n" + String.join("\n⚫ ", updatedItems));
+            lowStokesTooltip.setText("Low Stokes: \n" + String.join("\n⚫ ", updatedItems));
+            // Updating out of stocks names
+            List<String> updatedOutOfStokes = Connection.getOutOfStockItemNames(connection);
+            outOfStokesTooltip.setText("Out of Stocks: \n" + String.join("\n⚫ ", updatedOutOfStokes));
+            // Updating over stock item names
+            List<String> updatedOverStockNames = Connection.getOverStockitemNames(connection);
+            overStokesTooltip.setText("Over Stocks: \n" + String.join("\n⚫ ", updatedOverStockNames));
+        });
 
         VBox visualArea = new VBox();
         visualArea.setSpacing(30.0);
-
         Text visualAreaTxt = new Text("\uD83D\uDCC8 Charts and Visuals Area");
-        visualAreaTxt.setStyle("-fx-font-size: 25; -fx-font-weight: bold;");
+        visualAreaTxt.getStyleClass().add("heading-texts");
         visualAreaTxt.setFill(Color.web("#333333"));
         visualAreaTxt.setTextAlignment(TextAlignment.CENTER);
 
         HBox stockReorderRow = new HBox(20);
 
         // Stock level & chart
-        ChartTableToggleComponent stockToggleComponent2 = new ChartTableToggleComponent(
-                ChartKeeper.getStockLevelChart(),
-                TableKeeper.getStockLevelTable()
-        );
-        // Reorder chart & table
-        ChartTableToggleComponent reorderToggleComponent2 = new ChartTableToggleComponent(
-                ChartKeeper.getReorderAlertChart(connection),
-                TableKeeper.getReorderAlertTable()
-        );
+        stockToggleComponent2 = createStockComponent();
 
-        ChartTableToggleComponent salesToggleComponent2 = new ChartTableToggleComponent(
-                ChartKeeper.getSalesChart(connection, ""),
+        // Reorder chart & table
+        reorderToggleComponent2 = createReorderComponent();
+
+        // Sales chart and Table
+        salesToggleComponent2 = new ChartTableToggleComponent(
+                ChartKeeper.getSalesChart(this.connection, ""),
                 TableKeeper.getSalesTable("")
         );
         salesToggleComponent2.setMaxWidth(Double.MAX_VALUE);
+        salesToggleComponent2.setMaxHeight(60);
         HBox.setHgrow(salesToggleComponent2, Priority.ALWAYS);
 
         // Shows the revenue and the unit sold table & chart
-        ChartTableToggleComponent revenueToggleComponent2 = new ChartTableToggleComponent(
-                ChartKeeper.getRevenueChart(connection),
-                TableKeeper.getRevenueTable()
-        );
+        revenueToggleComponent2 = createRevenueToggleComponent();
 
         stockToggleComponent2.setMaxWidth(Double.MAX_VALUE);
         stockToggleComponent2.setPrefHeight(Region.USE_COMPUTED_SIZE);
@@ -500,36 +528,133 @@ public class Analytics {
         HBox salesRevenueRow = new HBox(20);
         salesRevenueRow.setAlignment(Pos.CENTER);
         salesRevenueRow.setPadding(new Insets(10));
+        salesRevenueRow.setPrefHeight(300);
         HBox.setHgrow(revenueToggleComponent2, Priority.ALWAYS);
         stockToggleComponent2.prefWidthProperty().bind(salesRevenueRow.widthProperty().divide(2));
         reorderToggleComponent2.prefWidthProperty().bind(salesRevenueRow.widthProperty().divide(2));
-        salesRevenueRow.getChildren().addAll( salesToggleComponent2, revenueToggleComponent2);
+        revenueToggleComponent2.prefWidthProperty().bind(salesRevenueRow.widthProperty().divide(2));
 
         // Show all the sales
+        dateRange.setValue("This Year");
         dateRange.setOnAction(e -> {
             String selected = dateRange.getValue();
-            LineChart<String, Number> chart = ChartKeeper.getSalesChart(connection, selected);
-            TableView<TableKeeper.SalesRow> table = TableKeeper.getSalesTable(selected);
+            LineChart<String, String> chart = ChartKeeper.getSalesChart(this.connection, selected);
+            TableView<TableKeeper.SalesRow> table = null;
+            try {
+                table = TableKeeper.getSalesTable(selected);
+                boolean chartEmpty = chart.getData().isEmpty();
+                boolean tableEmpty = table.getItems().isEmpty();
 
-            ChartTableToggleComponent newSalesComponent = new ChartTableToggleComponent(chart, table);
-            newSalesComponent.setMaxWidth(Double.MAX_VALUE);
-            HBox.setHgrow(newSalesComponent, Priority.ALWAYS);
-            newSalesComponent.prefWidthProperty().bind(salesRevenueRow.widthProperty().divide(2));
+                if (chartEmpty && tableEmpty) {
+                    Label noDataMessage = new Label("No data found related to the selected date");
+                    noDataMessage.setStyle("-fx-font-size: 20px; -fx-text-fill: black; -fx-font-weight: 600; -fx-background-color: white; -fx-background-radius: 10; -fx-padding: 20 10 10 10; -fx-spacing: 20; -fx-border-color: red; -fx-border-width: 2;-fx-border-radius: 5; -fx-border-style: solid;");
+                    noDataMessage.setAlignment(Pos.CENTER);
+                    StackPane noDataPane = new StackPane(noDataMessage);
+                    noDataPane.setPrefSize(600, 400);
 
-            // Replace old sales chart with new one
-            salesRevenueRow.getChildren().set(0, newSalesComponent);
+                    // added this if condition to check are there any children available
+                    // in the salesRevenueRow container before replacing the children in the
+                    // 0th index
+                    if (salesRevenueRow.getChildren().size() > 0) {
+                        salesRevenueRow.getChildren().set(0, noDataPane);
+                    }
+
+                } else {
+                    ChartTableToggleComponent newSalesComponent2 = new ChartTableToggleComponent(chart, table);
+                    newSalesComponent2.setMaxWidth(Double.MAX_VALUE);
+                    HBox.setHgrow(newSalesComponent2, Priority.ALWAYS);
+                    newSalesComponent2.prefWidthProperty().bind(salesRevenueRow.widthProperty().divide(2));
+                    HBox.setHgrow(newSalesComponent2, Priority.ALWAYS);
+
+                    salesRevenueRow.getChildren().addAll(newSalesComponent2, revenueToggleComponent2);
+                }
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
+
+
         });
+        dateRange.getOnAction().handle(new ActionEvent());
 
-        VBox allChartsContainer = new VBox(20);
+        allChartsContainer = new GridPane();
         allChartsContainer.setPadding(new Insets(20, 0, 0, 0));
+        allChartsContainer.setHgap(40);
+        allChartsContainer.setVgap(20);
         allChartsContainer.setAlignment(Pos.CENTER);
-
         allChartsContainer.setMaxWidth(Double.MAX_VALUE);
-        allChartsContainer.getChildren().addAll(stockReorderRow, salesRevenueRow);
+        ColumnConstraints chartsContainerWidth = new ColumnConstraints();
+        chartsContainerWidth.setPercentWidth(50);
+
+        allChartsContainer.getColumnConstraints().addAll(chartsContainerWidth, chartsContainerWidth);
+
+        allChartsContainer.add(stockToggleComponent2, 0, 0);
+        allChartsContainer.add(reorderToggleComponent2, 1, 0);
+        allChartsContainer.add(revenueToggleComponent2, 0, 1);
+        allChartsContainer.add(salesRevenueRow, 1, 1);
+
+        GridPane.setHgrow(stockToggleComponent2, Priority.ALWAYS);
+        GridPane.setHgrow(reorderToggleComponent2, Priority.ALWAYS);
+        GridPane.setHgrow(revenueToggleComponent2, Priority.ALWAYS);
+        GridPane.setHgrow(salesRevenueRow, Priority.ALWAYS);
+
+        GridPane.setVgrow(stockToggleComponent2, Priority.ALWAYS);
+        GridPane.setVgrow(reorderToggleComponent2, Priority.ALWAYS);
+        GridPane.setVgrow(revenueToggleComponent2, Priority.ALWAYS);
+        GridPane.setVgrow(salesRevenueRow, Priority.ALWAYS);
 
         refresh.setOnAction(event -> {
-            allChartsContainer.getChildren().clear();
-            allChartsContainer.getChildren().addAll(getStockLevelChart(), getReorderAlertChart(connection), getRevenueChart(connection));
+            refreshTasks.forEach(Runnable::run);
+            try {
+                refreshAllComponents();
+                loadDataAndRefreshUI(dateRange.getValue());
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+
+            // Refreshing the cards
+            int updatedTotalItemsSum = connection.getTotalProducts();
+            totalProducts.setText(updatedTotalItemsSum + " Products are Available");
+
+//            int updatedRemainingAmount = connection.getRemainingProductsSum();admin
+            int updatedInventoryValue = connection.getTotalProductValue();
+            DecimalFormat inventoryFormatter = new DecimalFormat("#,###");
+            String updateValue = inventoryFormatter.format(updatedInventoryValue);
+            inventoryValue.setText("Rs." + updateValue + " of Value");
+
+            int updatedTotalSoldQty = connection.getTotalSoldQuantity();
+            soldUnits.setText("Total Ordered Quantity " + updatedTotalSoldQty);
+
+            int updatedTotalCustomers = connection.getTotalCustomers();
+            customersAmount.setText(updatedTotalCustomers + " Customers");
+
+            int updatedOrderedItemsValue = connection.getOrderedQuantityValue();
+            int updatedRevenueValue = (updatedTotalSoldQty * updatedOrderedItemsValue);
+            DecimalFormat updatedRevenueFormatter = new DecimalFormat("#,###");
+            String updatedCompletedRevenue = updatedRevenueFormatter.format(updatedRevenueValue);
+            revenue.setText("Rs." + updatedCompletedRevenue + " of revenue");
+
+            // Updating the items with the sold amount
+            Map<String, List<SoldProducts>> updatedTopSalesData = this.connection.getTopAndBottomSellingProducts();
+
+            if (topSalesData != null && topSalesData.containsKey("top")) {
+                List<SoldProducts> topList = topSalesData.get("top");
+                if (topList != null && !topList.isEmpty()) {
+                    StringBuilder textBuilder = new StringBuilder();
+                    for (SoldProducts ps : topList) {
+                        String itemName = this.connection.getItemNameById(ps.getItemId());
+                        textBuilder.append(itemName)
+                                .append(" :- Sold: ").append(ps.getTotalSold()).append(", ");
+                    }
+                    if (textBuilder.length() > 2) {
+                        textBuilder.setLength(textBuilder.length() -2);
+                    }
+                    topSoldProduct.setText(textBuilder.toString());
+                } else {
+                    topSoldProduct.setText("0");
+                }
+            } else {
+                topSoldProduct.setText("0");
+            }
         });
 
         visualArea.setAlignment(Pos.CENTER);
@@ -541,12 +666,15 @@ public class Analytics {
         HBox sellInfoFooterSec = new HBox();
         Text soldText = new Text("Total items sold: " + totalSoldQty + " items");
         soldText.setStyle("-fx-font-size: 19px; -fx-font-weight: 600;");
+        soldText.getStyleClass().add("paragraph-texts");
         soldText.setTextAlignment(TextAlignment.CENTER);
         Text horizontalLine = new Text(" | ");
         horizontalLine.setStyle("-fx-font-weight: 900; -fx-font-size: 20px;");
+        horizontalLine.getStyleClass().add("paragraph-texts");
 
         Text lowStocksMsg = new Text( lowStokeProducts+ " Low stock items");
         lowStocksMsg.setStyle("-fx-font-size: 19px; -fx-font-weight: 600;");
+        lowStocksMsg.getStyleClass().add("paragraph-texts");
 
         sellInfoFooterSec.setSpacing(10);
         sellInfoFooterSec.setAlignment(Pos.CENTER);
@@ -554,17 +682,60 @@ public class Analytics {
 
         Button inventoryLink = new Button("View Inventory");
         inventoryLink.setOnAction(e -> navigationHandler.goToInventory());
+        inventoryLink.getStyleClass().add("default-buttons");
 
         HBox footerSEc = new HBox();
-        ComboBox<String> footerExports = new ComboBox<>(
-                FXCollections.observableArrayList(
-                        Arrays.asList(
-                                "Export as PDF",
-                                "Export as Excel"
-                        )
-                )
-        );
+        ComboBox<String> footerExports = new ComboBox<>(FXCollections.observableArrayList("Export as PDF", "Export as Excel"));
+        footerExports.setOnAction(e -> {
+            String selectedFormat = footerExports.getValue();
+            if (selectedFormat == null) return;
+
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setInitialFileName("report");
+
+            List<TableView<?>> tables = List.of(
+                    currentSalesTable,
+                    stockToggleComponent.getTable(),
+                    reorderToggleComponent.getTable(),
+                    revenueToggleComponent.getTable()
+            );
+
+            List<String> titles = List.of(
+                    "Current Sales",
+                    "Stock Levels",
+                    "Reorder Summary",
+                    "Revenue Breakdown"
+            );
+
+            if ("Export as PDF".equals(selectedFormat)) {
+                fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF files (*.pdf)", "*.pdf"));
+                File file = fileChooser.showSaveDialog(null);
+
+                if (file != null) {
+                    try {
+                        PdfExportUtil.exportMultipleTablesToPdf(tables, titles, file);
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            } else if ("Export as Excel".equals(selectedFormat)) {
+                fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel files (*.xlsx)", "*.xlsx"));
+
+                File file = fileChooser.showSaveDialog(null);
+
+                if (file != null) {
+                    try {
+                        ExcelExportUtil.exportMultipleTablesToExcel(tables, titles, file);
+                        System.out.println("Tables count: " + tables.size() + ", Titles count: " + titles.size());
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            }
+        });
+
         footerExports.setPromptText("Export");
+        footerExports.getStyleClass().add("default-dropdowns");
 
         footerSEc.getChildren().addAll(footerExports, inventoryLink);
         footerSEc.setSpacing(30);
@@ -572,9 +743,10 @@ public class Analytics {
 
         Text helpText = new Text("Need help?  Contact rukshanse.info@gmail.com / sandunsathyajith1@gmail.com");
         helpText.setStyle("-fx-font-size: 17px; -fx-font-weight: 500;");
+        helpText.getStyleClass().add("paragraph-texts");
 
         mainFooterSec.setMaxWidth(Double.MAX_VALUE);
-        mainFooterSec.setStyle("-fx-background-color: lightGray;");
+        mainFooterSec.getStyleClass().add("footer-section");
         mainFooterSec.setPadding(new Insets(30, 0, 30, 0));
         mainFooterSec.setSpacing(20);
         mainFooterSec.setAlignment(Pos.CENTER);
@@ -587,11 +759,195 @@ public class Analytics {
         headerContainer.getChildren().addAll(dateRange, export, refresh);
         navbar.getChildren().addAll(heading, subHeading, headerContainer);
 
-        mainLayout.getChildren().addAll(navbar, summaryCardContainer, stockAnalytics, saleAnalyticsSec, salesOverTimeSec, revenueUnitSec, alertsSec, userAnalyticsSec, visualArea, mainFooterSec);
+        mainLayout.getChildren().addAll(navbar, summaryCardContainer, stockAnalytics, saleAnalyticsSec, revenueAlertSection, visualArea, mainFooterSec);
         ScrollPane mainContainer = new ScrollPane();
         mainContainer.setContent(mainLayout);
         mainContainer.setFitToWidth(true);
         mainContainer.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+    }
+
+    public static VBox getMainLayout() {
+        return mainLayout;
+    }
+
+    private ChartTableToggleComponent createStockComponent() throws SQLException{
+        ChartTableToggleComponent chartTableToggleComponent = new ChartTableToggleComponent(
+                ChartKeeper.getStockLevelChart(),
+                TableKeeper.getStockLevelTable()
+        );
+        chartTableToggleComponent.setMaxWidth(Double.MAX_VALUE);
+        chartTableToggleComponent.setPrefHeight(Region.USE_COMPUTED_SIZE);
+        HBox.setHgrow(chartTableToggleComponent, Priority.ALWAYS);
+        return chartTableToggleComponent;
+    }
+
+    private void refreshStockChart(HBox stockContainer) throws SQLException {
+        stockContainer.getChildren().clear();
+        ChartTableToggleComponent refreshedComponent = createStockComponent(); // fetches fresh chart data
+        stockContainer.getChildren().add(refreshedComponent);
+    }
+
+    private ChartTableToggleComponent createReorderComponent() throws SQLException {
+        ChartTableToggleComponent chartTableToggleComponent = new ChartTableToggleComponent(
+                ChartKeeper.getReorderAlertChart(connection),
+                TableKeeper.getReorderAlertTable()
+        );
+        chartTableToggleComponent.setMaxWidth(Double.MAX_VALUE);
+        chartTableToggleComponent.setPrefHeight(Region.USE_COMPUTED_SIZE);
+        HBox.setHgrow(chartTableToggleComponent, Priority.ALWAYS);
+        return chartTableToggleComponent;
+    }
+
+    private ChartTableToggleComponent createRevenueToggleComponent() throws SQLException {
+        ChartTableToggleComponent chartTableToggleComponent = new ChartTableToggleComponent(
+                ChartKeeper.getRevenueChart(connection),
+                TableKeeper.getRevenueTable()
+        );
+        chartTableToggleComponent.setMaxWidth(Double.MAX_VALUE);
+        chartTableToggleComponent.setPrefHeight(Region.USE_COMPUTED_SIZE);
+        HBox.setHgrow(chartTableToggleComponent, Priority.ALWAYS);
+        return chartTableToggleComponent;
+    }
+
+    public void refreshAllComponents() throws SQLException {
+        stockContainer.getChildren().removeAll(stockToggleComponent, reorderToggleComponent);
+        revenueUnitSec.getChildren().removeAll(revenueToggleComponent);
+        allChartsContainer.getChildren().removeAll(stockToggleComponent2, reorderToggleComponent2, salesToggleComponent2, revenueToggleComponent2);
+
+        stockToggleComponent = createStockComponent();
+
+        stockToggleComponent.setMaxWidth(Double.MAX_VALUE);
+        reorderToggleComponent = createReorderComponent();
+        reorderToggleComponent.setMaxWidth(Double.MAX_VALUE);
+        revenueToggleComponent = createRevenueToggleComponent();
+        revenueToggleComponent.setMaxWidth(1400);
+
+        stockToggleComponent2 = createStockComponent();
+        reorderToggleComponent2 = createReorderComponent();
+        revenueToggleComponent2 = createRevenueToggleComponent();
+        GridPane.setHgrow(stockToggleComponent2, Priority.ALWAYS);
+        GridPane.setHgrow(reorderToggleComponent2, Priority.ALWAYS);
+        GridPane.setHgrow(revenueToggleComponent2, Priority.ALWAYS);
+
+        GridPane.setVgrow(stockToggleComponent2, Priority.ALWAYS);
+        GridPane.setVgrow(reorderToggleComponent2, Priority.ALWAYS);
+        GridPane.setVgrow(revenueToggleComponent2, Priority.ALWAYS);
+        allChartsContainer.add(stockToggleComponent2, 0, 0);
+        allChartsContainer.add(reorderToggleComponent2, 1, 0);
+        allChartsContainer.add(revenueToggleComponent2, 0, 1);
+
+        stockContainer.getChildren().add(0, reorderToggleComponent);
+        stockContainer.getChildren().add(0, stockToggleComponent);
+        revenueUnitSec.getChildren().add(0, revenueToggleComponent);
+    }
+
+    private void loadDataAndRefreshUI(String selectedDateRange) throws SQLException {
+        currentSalesChart = ChartKeeper.getSalesChart(connection, selectedDateRange);
+        currentSalesTable = TableKeeper.getSalesTable(selectedDateRange);
+
+        updateSalesSectionUI(currentSalesChart, currentSalesTable);
+    }
+
+    private void updateSalesSectionUI(LineChart<String, String> chart, TableView<TableKeeper.SalesRow> table) {
+        salesSection.getChildren().clear();
+
+        boolean chartEmpty = chart.getData().isEmpty();
+        boolean tableEmpty = table.getItems().isEmpty();
+
+        if (chartEmpty && tableEmpty) {
+            Label noDataMessage = new Label("No data found related to the selected date!");
+            StackPane noDataPane = new StackPane(noDataMessage);
+            noDataPane.setPrefSize(600, 600);
+            salesSection.getChildren().add(noDataPane);
+        } else {
+            chart.setMaxHeight(600);
+
+            ScrollPane scrollableChart = new ScrollPane(chart);
+            scrollableChart.setStyle("-fx-background-color: transparent;");
+            scrollableChart.setFitToWidth(true);
+            scrollableChart.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+            scrollableChart.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+            scrollableChart.setMaxHeight(500);
+
+            ChartTableToggleComponent salesToggleComponent = new ChartTableToggleComponent(scrollableChart, table);
+
+            salesToggleComponent.setMaxWidth(1300);
+            salesToggleComponent.setAlignment(Pos.CENTER);
+            HBox.setHgrow(salesToggleComponent, Priority.ALWAYS);
+            salesSection.getChildren().add(salesToggleComponent);
+            salesSection.setAlignment(Pos.CENTER);
+        }
+    }
+
+    // For showing the fast moving items
+    public void refreshFastMovingItems(Connection connection) {
+        Map<String, List<SoldProducts>> salesData = connection.getTopAndBottomSellingProducts();
+
+        if (salesData != null && salesData.containsKey("top")) {
+            List<SoldProducts> topList = salesData.get("top");
+            if (topList != null && !topList.isEmpty()) {
+                StringBuilder textBuilder = new StringBuilder();
+                for (SoldProducts ps : topList) {
+                    String itemName = connection.getItemNameById(ps.getItemId());
+                    textBuilder.append(itemName).append(", ");
+                }
+                if (textBuilder.length() > 2) {
+                    textBuilder.setLength(textBuilder.length() - 2);
+                }
+                fastMoving.setText(textBuilder.toString());
+                fastMoving.setStyle("-fx-font-size: 15px; -fx-fill: gray; -fx-font-weight: bold;");
+            } else {
+                fastMoving.setText("0");
+                fastMoving.setStyle("-fx-font-size: 15px; -fx-fill: gray; -fx-font-weight: bold;");
+            }
+        } else {
+            fastMoving.setText("0");
+            fastMoving.setStyle("-fx-font-size: 15px; -fx-fill: gray; -fx-font-weight: bold;");
+        }
+    }
+    // For showing the slow moving items
+    public void refreshSlowMovingItems(Connection connection) {
+        Map<String, List<SoldProducts>> salesData = connection.getTopAndBottomSellingProducts();
+
+        if (salesData != null && salesData.containsKey("bottom")) {
+            List<SoldProducts> bottomList = salesData.get("bottom");
+            if (bottomList != null && !bottomList.isEmpty()) {
+                StringBuilder textBuilder = new StringBuilder();
+                for (SoldProducts ps : bottomList) {
+                    String itemName = connection.getItemNameById(ps.getItemId());
+                    textBuilder.append(itemName).append(", ");
+                }
+                if (textBuilder.length() > 2) {
+                    textBuilder.setLength(textBuilder.length() - 2);
+                }
+                slowMovingItems.setText(textBuilder.toString());
+                slowMovingItems.setStyle("-fx-font-size: 15px; -fx-fill: gray; -fx-font-weight: bold;");
+            } else {
+                slowMovingItems.setText("0");
+                slowMovingItems.setStyle("-fx-font-size: 15px; -fx-fill: gray; -fx-font-weight: bold;");
+            }
+        } else {
+            slowMovingItems.setText("0");
+            slowMovingItems.setStyle("-fx-font-size: 15px; -fx-fill: gray; -fx-font-weight: bold;");
+        }
+    }
+
+    @Override
+    public void lightTheme() {
+        mainLayout.setStyle("-fx-background-color: white; ");
+        mainLayout.getStylesheets().clear();
+        mainLayout.getStylesheets().add(
+                String.valueOf(InventoryManagementApplication.class.getResource("css/lightTheme.css"))
+        );
+    }
+
+    @Override
+    public void darkTheme() {
+        mainLayout.setStyle("-fx-background-color: #222; ");
+        mainLayout.getStylesheets().clear();
+        mainLayout.getStylesheets().add(
+                String.valueOf(InventoryManagementApplication.class.getResource("css/darkTheme.css"))
+        );
     }
 
     // Search button searching action
@@ -610,11 +966,33 @@ public class Analytics {
         }
     }
 
+    // Adding smooth hover effect
+    public void applyHoverZoomEffect(Region... cards) {
+        for (Region card : cards) {
+            card.setOnMouseEntered(event -> {
+                ScaleTransition transform = new ScaleTransition(Duration.millis(150), card);
+                transform.setToX(1.02);
+                transform.setToY(1.02);
+                transform.play();
+            });
+            card.setOnMouseExited(event -> {
+                ScaleTransition transform = new ScaleTransition(Duration.millis(150), card);
+                transform.setToX(1);
+                transform.setToY(1);
+                transform.play();
+            });
+        }
+    }
+
+    public VBox getLayout() {
+        return mainLayout;
+    }
     private void showAllUsers() {
         searchBar.clear(); // Clear search box
         userTable.setItems(fullUserList); // Reset table to show all users
     }
-    public VBox getLayout() {
-        return mainLayout;
+
+    public static void main(String[] args) {
+        launch(args);
     }
 }
