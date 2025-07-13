@@ -466,7 +466,6 @@ public class Checkout implements ThemeObserver, AuthenticateStateListener {
             @Override
             protected void updateItem(Customer item, boolean empty) {
                 super.updateItem(item, empty);
-
                 if (item != null) {
                     setText("%s %s".formatted(item.getFirstName(), item.getLastName()));
                     payFromPoints.setDisable(item.getPoints() <= 0);
@@ -1265,7 +1264,6 @@ public class Checkout implements ThemeObserver, AuthenticateStateListener {
                 selectedCustomer = null;
 
                 customerComboBox.getSelectionModel().clearSelection();
-
                 itemComboBox.getSelectionModel().clearSelection();
                 itemId.setText("");
                 checkOutButton.setDisable(false);
@@ -1284,10 +1282,10 @@ public class Checkout implements ThemeObserver, AuthenticateStateListener {
                 if(filteredItems != null) {
                     filteredItems.setPredicate(customer -> true);
                 }
-                customerComboBox.getSelectionModel().clearSelection();
-                if (!customerComboBox.isFocused()) {
-                    customerComboBox.getEditor().setText("");
-                }
+//                customerComboBox.getSelectionModel().clearSelection();
+//                if (!customerComboBox.isFocused()) {
+//                    customerComboBox.getEditor().setText("");
+//                }
             }catch(SQLException sqlException){
                 sqlException.printStackTrace();
             }
@@ -1298,6 +1296,8 @@ public class Checkout implements ThemeObserver, AuthenticateStateListener {
         if (!receivedFund.getText().trim().equals("")) {
             checkOutButton.setDisable(false);
         }
+
+        customerComboBox.getSelectionModel().clearSelection();
 
         itemMessageContainer = new Label("");
         // The floating section in the right_side

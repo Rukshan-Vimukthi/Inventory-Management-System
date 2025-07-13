@@ -278,6 +278,7 @@ public class ChartKeeper {
             String name = item.getName();
             int quantity = item.getAmount();
             double price = item.getSellingPrice();
+//            double price = item.getCostWithDiscount();
             double revenueAmount = quantity * price;
 
             totalUnitsSold.put(name, totalUnitsSold.getOrDefault(name, 0) + quantity);

@@ -233,7 +233,7 @@ public class TableKeeper {
         String query = """
         SELECT i.name AS product_name,
                SUM(chs.amount) AS total_units_sold,
-               SUM(chs.amount * chs.price) AS total_revenue
+               SUM(chs.amount * chs.price_with_discount) AS total_revenue
         FROM customer_has_item_has_size chs
         JOIN item_has_size ihs ON chs.item_has_size_id = ihs.id
         JOIN item i ON ihs.item_id = i.id
@@ -248,6 +248,8 @@ public class TableKeeper {
                 String name = rs.getString("product_name");
                 int unitsSold = rs.getInt("total_units_sold");
                 double revenue = rs.getDouble("total_revenue");
+
+                System.out.println("Revenue X: " + unitsSold + " : " + revenue);
 
                 revenueDataList.add(new RevenueData(name, unitsSold, revenue));
             }

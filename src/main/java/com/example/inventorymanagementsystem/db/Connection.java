@@ -35,9 +35,9 @@ public class Connection {
     private Connection() throws SQLException{
         String dbLink = "jdbc:mysql://localhost:3306/sandyafashioncorner?useSSL=false&allowPublicKeyRetrieval=true";
         String username = "root";
-//        String password = "root@techlix2002";
+        String password = "root@techlix2002";
 //        String password = "Sandun@2008.sd";
-        String password = "root@2025sfc";
+//        String password = "root@2025sfc";
         connection = DriverManager.getConnection(dbLink, username, password);
     }
 
@@ -948,6 +948,7 @@ public class Connection {
                     totalAmountPaid += totalCost;
                     fullPaymentMade = true;
                     updatedPoints = receivedAmount - totalCost;
+                    System.out.println("New points added: " + updatedPoints);
                     statement.execute("UPDATE customer SET `points` = `points` + %f WHERE id = %d".formatted(updatedPoints, customer.getId()));
                 }
             }
@@ -1217,6 +1218,8 @@ public class Connection {
     }
 
     public List<CustomerSale> getCustomerSales(String date, int customerID){
+        System.out.println("Date for customer sale is " + date);
+        System.out.println("Customer ID for customer sale " + customerID);
         List<CustomerSale> customerSales = new ArrayList<>();
         try{
             statement = connection.createStatement();
@@ -1224,11 +1227,15 @@ public class Connection {
 
             if (date == null && customerID == 0) {
                 resultSet = statement.executeQuery("SELECT * FROM sale INNER JOIN customer_has_item_has_size ON customer_has_item_has_size.sale_id = sale.id INNER JOIN `color_has_item_has_size` ON `color_has_item_has_size`.`item_has_size_id` = `customer_has_item_has_size`.`item_has_size_id`");
+                System.out.println("Both the customer and date is not provided!");
             }else if(date != null && customerID == 0){
+                System.out.println("Date provided but customer is not provided!");
                 resultSet = statement.executeQuery("SELECT * FROM sale INNER JOIN customer_has_item_has_size ON customer_has_item_has_size.sale_id = sale.id INNER JOIN `color_has_item_has_size` ON `color_has_item_has_size`.`item_has_size_id` = `customer_has_item_has_size`.`item_has_size_id` WHERE `date` = '%s'".formatted(date));
             }else if(date == null && customerID != 0){
+                System.out.println("Date not provided but customer is provided!");
                 resultSet = statement.executeQuery("SELECT * FROM sale INNER JOIN customer_has_item_has_size ON customer_has_item_has_size.sale_id = sale.id INNER JOIN `color_has_item_has_size` ON `color_has_item_has_size`.`item_has_size_id` = `customer_has_item_has_size`.`item_has_size_id` WHERE `sale`.`customer_id` = %d".formatted(customerID));
             }else {
+                System.out.println("Date and customer is provided!");
                 resultSet = statement.executeQuery("SELECT * FROM sale INNER JOIN customer_has_item_has_size ON customer_has_item_has_size.sale_id = sale.id INNER JOIN `color_has_item_has_size` ON `color_has_item_has_size`.`item_has_size_id` = `customer_has_item_has_size`.`item_has_size_id` WHERE `date` = '%s' AND `sale`.`customer_id` = %d".formatted(date, customerID));
             }
 
@@ -2154,7 +2161,7 @@ public class Connection {
             }
 
             PreparedStatement ps = connection.prepareStatement(
-                    "INSERT INTO customer (first_name, last_name, phone, email, registered_date, image_path) VALUES (?, ?, ?, ?, ?, ?)"
+                    "INSERT INTO customer (first_name, last_name, phone, email, registered_date, image_path, points, refund_amount) VALUES (?, ?, ?, ?, ?, ?, 0.0, 0.0)"
             );
             ps.setString(1, first_name);
             ps.setString(2, last_name);

@@ -179,7 +179,7 @@ public class Liabilities extends HBox implements ThemeObserver {
             }
         });
 
-        TableColumn<LiableCustomers, String> lastNameColumn = new TableColumn<>("First Name");
+        TableColumn<LiableCustomers, String> lastNameColumn = new TableColumn<>("Last Name");
         lastNameColumn.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<LiableCustomers, String>, ObservableValue<String>>() {
             @Override
             public ObservableValue<String> call(TableColumn.CellDataFeatures<LiableCustomers, String> param) {
@@ -221,17 +221,21 @@ public class Liabilities extends HBox implements ThemeObserver {
 
         pointsAvailableColumn.setCellFactory(new Callback<TableColumn<LiableCustomers, Customer>, TableCell<LiableCustomers, Customer>>() {
             @Override
+
             public TableCell<LiableCustomers, Customer> call(TableColumn<LiableCustomers, Customer> param) {
                 return new TableCell<>(){
                     @Override
                     protected void updateItem(Customer item, boolean empty) {
                         super.updateItem(item, empty);
-                        if (item != null) {
+                        if (!empty || item != null) {
                             FontIcon coinsIcon = new FontIcon(FontAwesomeSolid.COINS);
                             coinsIcon.setFill(Paint.valueOf("#FFDD00"));
                             this.setText(String.valueOf(item.getPoints()));
                             this.setGraphic(coinsIcon);
                             this.setGraphicTextGap(5.0D);
+                        }else{
+                            this.setText(null);
+                            this.setGraphic(null);
                         }
                     }
                 };
@@ -327,6 +331,10 @@ public class Liabilities extends HBox implements ThemeObserver {
 //            System.out.println("Amount to be clear: " + amount);
         });
 
+        HBox clearDebtButtonContainer = new HBox();
+        clearDebtButtonContainer.getChildren().add(clearDebt);
+        HBox.setHgrow(clearDebt, Priority.ALWAYS);
+
         Button clearDebtUsingPoints = new Button("Pay Debt From Points");
         clearDebtUsingPoints.setStyle("-fx-background-color: #FFBB00; -fx-text-fill: #150500");
         clearDebtUsingPoints.setDisable(true);
@@ -345,7 +353,7 @@ public class Liabilities extends HBox implements ThemeObserver {
 
         VBox footer = new VBox();
         footer.setFillWidth(true);
-        footer.getChildren().addAll(clearDebt, clearDebtUsingPoints);
+        footer.getChildren().addAll(clearDebtButtonContainer, clearDebtUsingPoints);
         footer.setSpacing(10.0D);
 
         customer.getComboBox().getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Customer>() {

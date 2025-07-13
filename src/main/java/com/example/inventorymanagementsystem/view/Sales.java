@@ -82,7 +82,7 @@ public class Sales extends VBox implements ThemeObserver {
             @Override
             public void changed(ObservableValue<? extends Customer> observable, Customer oldValue, Customer newValue) {
                 try {
-                    Data.getInstance().refreshCustomerSales((String)saleDatePicker.getValue(), newValue.getId());
+                    Data.getInstance().refreshCustomerSales((String)datePicker.getValue(), newValue.getId());
                     selectedCustomer = newValue;
                 } catch (SQLException e) {
                     throw new RuntimeException(e);
@@ -114,11 +114,7 @@ public class Sales extends VBox implements ThemeObserver {
             @Override
             public void handle(ActionEvent event) {
                 try {
-                    if (saleDatePicker != null && selectedCustomer != null) {
-                        Data.getInstance().refreshCustomerSales((String) saleDatePicker.getValue(), selectedCustomer.getId());
-                    }else{
-                        Data.getInstance().refreshCustomerSales(null, 0);
-                    }
+                    Data.getInstance().refreshCustomerSales(null, 0);
                 }catch(SQLException exception){
                     exception.printStackTrace();
                 }
