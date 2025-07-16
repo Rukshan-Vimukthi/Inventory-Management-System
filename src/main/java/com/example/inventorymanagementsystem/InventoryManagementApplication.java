@@ -200,9 +200,7 @@ public class InventoryManagementApplication extends Application implements com.e
 
         // remove the frame of the window
         stage.initStyle(StageStyle.UNDECORATED);
-//        stage.setMaximized(true);
-        stage.setWidth(1905);
-        stage.setHeight(1090);
+        stage.setMaximized(true);
         stage.setResizable(true);
         stage.setScene(scene);
         stage.show();
