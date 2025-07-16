@@ -370,7 +370,7 @@ public class Checkout implements ThemeObserver, AuthenticateStateListener {
                         if (newValue == null || newValue.isBlank() || newValue.isEmpty()){
                             return true;
                         }else {
-                            return customer.getFirstName().toLowerCase().contains(newValue.toLowerCase()) || customer.getLastName().toLowerCase().contains(newValue.toLowerCase()) || customer.getPhone().contains(newValue);
+                            return customer.getFirstName().toLowerCase().contains(newValue.toLowerCase()) || customer.getLastName().toLowerCase().contains(newValue.toLowerCase());
                         }
                     }
                 });
