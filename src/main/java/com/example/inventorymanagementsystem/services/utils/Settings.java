@@ -29,8 +29,8 @@ public class Settings implements ISettings {
             boolean dirCreated = applicationDir.mkdirs();
         }
 
-//        settingsFile = new File(Constants.APPLICATION_DIR + "\\settings.json");
-        settingsFile = new File("settings.json");
+        settingsFile = new File(Constants.APPLICATION_DIR + "\\settings.json");
+//        settingsFile = new File("settings.json");
         if (!settingsFile.exists()){
             try {
                 boolean fileCreated = settingsFile.createNewFile();

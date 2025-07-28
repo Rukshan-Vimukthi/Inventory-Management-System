@@ -3,12 +3,9 @@ package com.example.inventorymanagementsystem.state;
 import com.example.inventorymanagementsystem.db.Connection;
 import com.example.inventorymanagementsystem.models.*;
 import javafx.application.Platform;
-import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.value.ObservableDoubleValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.collections.ObservableMap;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -23,6 +20,7 @@ public class Data {
     private ObservableList<ItemDetail> itemDetails;
 
     private ObservableList<Customer> topTenCustomers;
+    private ObservableList<Customer> filteredCustomers;
 
     private ObservableList<Role> roles;
 
@@ -64,6 +62,7 @@ public class Data {
         userAnalytics = connection.getUserAnalyticsResult();
         users = FXCollections.observableArrayList(connection.getUsers());
         customers = FXCollections.observableArrayList(connection.getCustomers());
+        filteredCustomers = FXCollections.observableArrayList(connection.getCustomers());
         totalLiableCustomers = new SimpleIntegerProperty();
         customerLiableItems = FXCollections.observableArrayList(new ArrayList<>());
         customerSales = FXCollections.observableArrayList(connection.getCustomerSales(null, 0));
@@ -111,7 +110,9 @@ public class Data {
 
     public void refreshCustomers(){
         customers.clear();
+        filteredCustomers.clear();
         customers.addAll(connection.getCustomers());
+        filteredCustomers.addAll(connection.getCustomers());
     }
 
     public void refreshCustomerSales(String date, int customerID){
@@ -273,5 +274,26 @@ public class Data {
 
     public ObservableList<CustomerSale> getCustomerSales(){
         return customerSales;
+    }
+
+    public ObservableList<Customer> filterCustomers(String keyWord){
+        if (keyWord != null){
+            filteredCustomers.clear();
+            for (Customer customer : customers){
+                String customerName = "";
+                if (customer.getFirstName() != null){
+                    customerName += customer.getFirstName();
+                }
+
+                if (customer.getLastName() != null){
+                    customerName += " " + customer.getLastName();
+                }
+
+                if (customerName.contains(keyWord) || (customer.getPhone() != null && customer.getPhone().contains(keyWord))){
+                    filteredCustomers.add(customer);
+                }
+            }
+        }
+        return filteredCustomers;
     }
 }

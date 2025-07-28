@@ -33,6 +33,8 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.skin.ComboBoxListViewSkin;
 import javafx.scene.input.InputMethodEvent;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -294,11 +296,12 @@ public class Checkout implements ThemeObserver, AuthenticateStateListener {
                 }
             });
 
-            registeredCustomers = new FormField<>("Select Customer", ComboBox.class, filteredItems);
+            registeredCustomers = new FormField<>("Select Customer", ComboBox.class);
+            registeredCustomers.getComboBox().setItems(Data.getInstance().filterCustomers(null));
 //            registeredCustomers.getComboBox().setVisibleRowCount(6);
-            registeredCustomers.getComboBox().setEditable(true);
+//            registeredCustomers.getComboBox().setEditable(true);
 //            registeredCustomers.getComboBox().getEditor().setDisable(true);
-            registeredCustomers.getComboBox().getEditor().setOpacity(1);
+//            registeredCustomers.getComboBox().getEditor().setOpacity(1);
             registeredCustomers.getComboBox().setCellFactory(new Callback<ListView<Customer>, ListCell<Customer>>() {
                 @Override
                 public ListCell<Customer> call(ListView<Customer> param) {
@@ -332,28 +335,28 @@ public class Checkout implements ThemeObserver, AuthenticateStateListener {
                 }
             });
 
-            registeredCustomers.getComboBox().getEditor().textProperty().addListener(new ChangeListener<String>() {
-                @Override
-                public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-
-                    System.out.println("New value entered in the text box: " + newValue);
-                    filteredItems.setPredicate(new Predicate<Customer>() {
-                        @Override
-                        public boolean test(Customer customer) {
-                            if (newValue == null || newValue.isBlank() || newValue.isEmpty()){
-                                return true;
-                            }else {
-                                return customer.getFirstName().toLowerCase().contains(newValue.toLowerCase()) || customer.getLastName().toLowerCase().contains(newValue.toLowerCase()) || customer.getPhone().contains(newValue);
-                            }
-                        }
-                    });
-
-                    if (registeredCustomers.getComboBox().isShowing()) {
-                        registeredCustomers.getComboBox().hide();
-                    }
-                    registeredCustomers.getComboBox().show();
-                }
-            });
+//            registeredCustomers.getComboBox().getEditor().textProperty().addListener(new ChangeListener<String>() {
+//                @Override
+//                public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+//
+//                    System.out.println("New value entered in the text box: " + newValue);
+//                    filteredItems.setPredicate(new Predicate<Customer>() {
+//                        @Override
+//                        public boolean test(Customer customer) {
+//                            if (newValue == null || newValue.isBlank() || newValue.isEmpty()){
+//                                return true;
+//                            }else {
+//                                return customer.getFirstName().toLowerCase().contains(newValue.toLowerCase()) || customer.getLastName().toLowerCase().contains(newValue.toLowerCase()) || customer.getPhone().contains(newValue);
+//                            }
+//                        }
+//                    });
+//
+//                    if (registeredCustomers.getComboBox().isShowing()) {
+//                        registeredCustomers.getComboBox().hide();
+//                    }
+//                    registeredCustomers.getComboBox().show();
+//                }
+//            });
         } catch (SQLException exception) {
             exception.printStackTrace();
         }
@@ -364,27 +367,46 @@ public class Checkout implements ThemeObserver, AuthenticateStateListener {
             public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
 
                 System.out.println("New value entered in the text box: " + newValue);
-                filteredItems.setPredicate(new Predicate<Customer>() {
-                    @Override
-                    public boolean test(Customer customer) {
-                        if (newValue == null || newValue.isBlank() || newValue.isEmpty()){
-                            return true;
-                        }else {
-                            return customer.getFirstName().toLowerCase().contains(newValue.toLowerCase()) || customer.getLastName().toLowerCase().contains(newValue.toLowerCase());
-                        }
-                    }
-                });
+//                filteredItems.setPredicate(new Predicate<Customer>() {
+//                    @Override
+//                    public boolean test(Customer customer) {
+//                        if (newValue == null || newValue.isBlank() || newValue.isEmpty()){
+//                            return true;
+//                        }else {
+//                            return customer.getFirstName().toLowerCase().contains(newValue.toLowerCase()) || customer.getLastName().toLowerCase().contains(newValue.toLowerCase());
+//                        }
+//                    }
+//                });
 
 //                ObservableList<Customer> filteredCopy = FXCollections.observableArrayList(filteredItems);
 //                registeredCustomers.getComboBox().setItems(null);
 //                registeredCustomers.getComboBox().setItems(filteredCopy);
 
-                registeredCustomers.getComboBox().setItems(filteredItems);
+//                registeredCustomers.getComboBox().setItems(filteredItems);
 //                        registeredCustomers.getComboBox().show();
+
+                try {
+                    Data.getInstance().filterCustomers(newValue);
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
                 if (registeredCustomers.getComboBox().isShowing()) {
                     registeredCustomers.getComboBox().hide();
                 }
                 registeredCustomers.getComboBox().show();
+            }
+        });
+        ((TextField)customerSearchBox.getControl()).setOnKeyPressed(new EventHandler<KeyEvent>() {
+            @Override
+            public void handle(KeyEvent event) {
+                switch (event.getCode()) {
+                    case ENTER ->
+                            registeredCustomers.getComboBox().getSelectionModel().select(registeredCustomers.getComboBox().getSelectionModel().getSelectedItem());
+                    case DOWN -> registeredCustomers.getComboBox().getSelectionModel().selectNext();
+                    case UP -> registeredCustomers.getComboBox().getSelectionModel().selectLast();
+                    default -> {
+                    }
+                }
             }
         });
         ComboBox<Customer> customerComboBox = registeredCustomers.getComboBox();
@@ -499,6 +521,7 @@ public class Checkout implements ThemeObserver, AuthenticateStateListener {
                         payFromRefundAmount.setDisable(true);
                     }
 
+                    
                     try {
                         String fetchPointsSQL = "SELECT points FROM customer WHERE id = ?";
                         try (PreparedStatement stmt = dbConnection.getJdbcConnection().prepareStatement(fetchPointsSQL)) {
