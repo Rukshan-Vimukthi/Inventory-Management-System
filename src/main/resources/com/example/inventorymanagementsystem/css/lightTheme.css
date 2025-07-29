@@ -1,4 +1,8 @@
 
+.secondary-bg-color {
+    -fx-background-color: 	#f7f7f7;
+}
+
 .nav-bar {
     -fx-background-color: lightGray;
     -fx-text-fill: black;
@@ -119,6 +123,7 @@
 .charts {
     -fx-background-color:  #F8FAFB;
     -fx-text-fill: #1E293B;
+    -fx-max-width: 30px;
 }
 
 .chart-plot-background {

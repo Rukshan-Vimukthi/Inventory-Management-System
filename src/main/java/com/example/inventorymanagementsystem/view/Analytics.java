@@ -20,6 +20,7 @@ import javafx.scene.SnapshotParameters;
 import javafx.scene.chart.*;
 import javafx.scene.control.*;
 import javafx.scene.image.WritableImage;
+import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
@@ -95,6 +96,7 @@ public class Analytics extends VBox implements ThemeObserver {
     ChartTableToggleComponent reorderToggleComponent2;
     ChartTableToggleComponent salesToggleComponent2;
     ChartTableToggleComponent revenueToggleComponent2;
+    ChartTableToggleComponent dailyCustomersToggle;
     ComboBox<String> dateRange;
 
     public Analytics(InventoryManagementApplicationController.NavigationHandler navigationHandler) throws SQLException {
@@ -230,7 +232,7 @@ public class Analytics extends VBox implements ThemeObserver {
         stockAnalytics.setMaxWidth(Double.MAX_VALUE);
 
         stockAnalytics.setAlignment(Pos.TOP_CENTER);
-        stockAnalytics.setPadding(new Insets(40, 0, 20, 30));
+        stockAnalytics.setPadding(new Insets(70, 0, 30, 0));
 
         // Current Stock Section
         Text currentStockTxt = new Text("Current Stock Levels");
@@ -345,6 +347,8 @@ public class Analytics extends VBox implements ThemeObserver {
         VBox saleAnalyticsSec = new VBox();
         saleAnalyticsSec.setAlignment(Pos.CENTER);
         saleAnalyticsSec.setMaxWidth(Double.MAX_VALUE);
+        saleAnalyticsSec.getStyleClass().add("secondary-bg-color");
+        saleAnalyticsSec.setPadding(new Insets(60, 0, 60, 0));
 
         VBox salesOverTimeSec = new VBox();
         salesSection = new HBox();
@@ -366,11 +370,65 @@ public class Analytics extends VBox implements ThemeObserver {
 
         saleAnalyticsSec.getChildren().addAll(saleHeading, salesCardContainer, salesOverTimeSec);
 
+        // New customers section
+        VBox dailyCustomersSec = new VBox();
+        dailyCustomersSec.setPadding(new Insets(60, 0, 60, 0));
+        dailyCustomersSec.setSpacing(10);
+        dailyCustomersSec.setAlignment(Pos.CENTER);
+
+        Text dailyCustomersText = new Text("Daily Customer Count");
+        dailyCustomersText.getStyleClass().add("heading-texts");
+        dailyCustomersText.setTextAlignment(TextAlignment.CENTER);
+
+        HBox dateRangeCustomerContainer = new HBox();
+        dateRangeCustomerContainer.setAlignment(Pos.TOP_RIGHT);
+        dateRangeCustomerContainer.setPadding(new Insets(0, 180, 0, 0));
+        ComboBox<String> dateRangeCustomer = new ComboBox<>(
+                FXCollections.observableArrayList(
+                        Arrays.asList("Today", "Yesterday", "Last 7 Days", "This Month", "Last Month", "This Year", "Last Year")
+                )
+        );
+        dateRangeCustomer.setPromptText("Date Range");
+        dateRangeCustomer.getStyleClass().add("default-dropdowns");
+        dateRangeCustomerContainer.getChildren().addAll(dateRangeCustomer);
+
+        ChartTableToggleComponent[] currentToggle = new ChartTableToggleComponent[1];
+        currentToggle[0] = new ChartTableToggleComponent(
+                ChartKeeper.getCustomersCountChart(this.connection, null),
+                TableKeeper.getSalesCustomersTable(this.connection, null)
+        );
+
+        ScrollPane dailyToggleScrollpane = new ScrollPane(currentToggle[0]);
+        dailyToggleScrollpane.setFitToWidth(true);
+        dailyToggleScrollpane.setFitToHeight(true);
+        dailyToggleScrollpane.setPannable(true);
+        dailyToggleScrollpane.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        dailyToggleScrollpane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        dailyToggleScrollpane.setMaxHeight(500);
+        dailyToggleScrollpane.setPrefHeight(500);
+        dailyToggleScrollpane.setMaxWidth(1300);
+        dailyToggleScrollpane.setPrefWidth(1300);
+
+        dateRangeCustomer.valueProperty().addListener((obs, oldValue, newValue) -> {
+            ChartTableToggleComponent newToggle = new ChartTableToggleComponent(
+                    ChartKeeper.getCustomersCountChart(this.connection, newValue),
+                    TableKeeper.getSalesCustomersTable(this.connection, newValue)
+            );
+
+            dailyToggleScrollpane.setContent(newToggle);
+            currentToggle[0] = newToggle;
+        });
+
+        // Add all to layout
+        dailyCustomersSec.getChildren().addAll(dailyCustomersText, dateRangeCustomerContainer, dailyToggleScrollpane);
+
+
         // Shows the revenue and the unit sold table & chart | Alert section
         HBox revenueAlertSection = new HBox();
         revenueAlertSection.setPadding(new Insets(20, 0,0, 0));
         revenueAlertSection.setAlignment(Pos.CENTER);
         revenueAlertSection.setMaxWidth(Double.MAX_VALUE);
+        revenueAlertSection.getStyleClass().add("secondary-bg-color");
 
         revenueToggleComponent = createRevenueToggleComponent();
         revenueToggleComponent.setMaxWidth(800);
@@ -387,14 +445,14 @@ public class Analytics extends VBox implements ThemeObserver {
         alertsTxt.getStyleClass().add("heading-texts");
         alertsTxt.setTextAlignment(TextAlignment.CENTER);
         alertsSec.setAlignment(Pos.TOP_CENTER);
-        alertsSec.setPadding(new Insets(30, 0, 10 ,0));
+        alertsSec.setPadding(new Insets(60, 0, 60 ,0));
         alertsSec.setMaxWidth(Double.MAX_VALUE);
         alertsSec.setSpacing(30);
 
         FlowPane alertsContainer = new FlowPane();
         alertsContainer.setHgap(20.0);
         alertsContainer.setVgap(20.0);
-        alertsContainer.setPadding(new Insets(20, 0, 20, 0));
+        alertsContainer.setPadding(new Insets(20, 0, 20, 20));
         alertsContainer.setMaxWidth(Double.MAX_VALUE);
         alertsContainer.setAlignment(Pos.CENTER_LEFT);
         alertsContainer.setMaxWidth(1300);
@@ -484,6 +542,7 @@ public class Analytics extends VBox implements ThemeObserver {
 
         VBox visualArea = new VBox();
         visualArea.setSpacing(30.0);
+        visualArea.setPadding(new Insets(60, 0, 60, 0));
         Text visualAreaTxt = new Text("\uD83D\uDCC8 Charts and Visuals Area");
         visualAreaTxt.getStyleClass().add("heading-texts");
         visualAreaTxt.setFill(Color.web("#333333"));
@@ -615,7 +674,7 @@ public class Analytics extends VBox implements ThemeObserver {
             int updatedTotalItemsSum = connection.getTotalProducts();
             totalProducts.setText(updatedTotalItemsSum + " Products are Available");
 
-//            int updatedRemainingAmount = connection.getRemainingProductsSum();admin
+//          int updatedRemainingAmount = connection.getRemainingProductsSum();admin
             int updatedInventoryValue = connection.getTotalProductValue();
             DecimalFormat inventoryFormatter = new DecimalFormat("#,###");
             String updateValue = inventoryFormatter.format(updatedInventoryValue);
@@ -658,7 +717,6 @@ public class Analytics extends VBox implements ThemeObserver {
         });
 
         visualArea.setAlignment(Pos.CENTER);
-        visualArea.setPadding(new Insets(30, 0, 20, 0));
         visualArea.setSpacing(20);
         visualArea.getChildren().addAll(visualAreaTxt, allChartsContainer);
 
@@ -756,10 +814,24 @@ public class Analytics extends VBox implements ThemeObserver {
 
         ScrollPane mainScrlSec = new ScrollPane(mainLayout);
         mainScrlSec.setFitToWidth(true);
+        mainScrlSec.setOnScroll(event -> {
+            double delta = event.getDeltaY();
+            double contentHeight = mainScrlSec.getContent().getBoundsInLocal().getHeight();
+            double viewportHeight = mainScrlSec.getViewportBounds().getHeight();
+            double scrollSpeed = 0.5;
+            double newVValue = mainScrlSec.getVvalue() - (delta * scrollSpeed / contentHeight);
+
+            newVValue = Math.max(0, Math.min(1, newVValue));
+
+            mainScrlSec.setVvalue(newVValue);
+            event.consume();
+        });
+
+
         headerContainer.getChildren().addAll(dateRange, export, refresh);
         navbar.getChildren().addAll(heading, subHeading, headerContainer);
 
-        mainLayout.getChildren().addAll(navbar, summaryCardContainer, stockAnalytics, saleAnalyticsSec, revenueAlertSection, visualArea, mainFooterSec);
+        mainLayout.getChildren().addAll(navbar, summaryCardContainer, stockAnalytics, saleAnalyticsSec, dailyCustomersSec, revenueAlertSection, visualArea, mainFooterSec);
         ScrollPane mainContainer = new ScrollPane();
         mainContainer.setContent(mainLayout);
         mainContainer.setFitToWidth(true);

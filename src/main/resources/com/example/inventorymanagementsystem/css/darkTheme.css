@@ -1,4 +1,8 @@
 
+.secondary-bg-color {
+    -fx-background-color: #1f1f1f;
+}
+
 .tab-header-area {
     -fx-background-color: black;
     -fx-border-color: derive(-fx-base, -20%);
