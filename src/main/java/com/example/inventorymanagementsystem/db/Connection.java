@@ -34,10 +34,13 @@ public class Connection {
 
     private Connection() throws SQLException{
         String dbLink = "jdbc:mysql://localhost:3306/sandyafashioncorner?useSSL=false&allowPublicKeyRetrieval=true";
+//        String dbLink = "jdbc:mysql://192.168.43.242:3306/sandyafashioncorner?useSSL=false&allowPublicKeyRetrieval=true";
         String username = "root";
-//        String password = "root@techlix2002";
-        String password = "Sandun@2008.sd";
+//        String username = "dev";
+        String password = "root@techlix2002";
+//        String password = "Sandun@2008.sd";
 //        String password = "root@2025sfc";
+//        String password = "dev@sfc@2025";
         connection = DriverManager.getConnection(dbLink, username, password);
     }
 
@@ -1249,41 +1252,47 @@ public class Connection {
                 int colorHasItemHasSizeID = resultSet.getInt("color_has_item_has_size.id");
 
                 int customerHasItemHasSizeID = resultSet.getInt("customer_has_item_has_size.id");
+                int itemHasSizeID = resultSet.getInt("customer_has_item_has_size.item_has_size_id");
                 int boughtAmount = resultSet.getInt("customer_has_item_has_size.amount");
                 double discount = resultSet.getDouble("customer_has_item_has_size.discount");
                 double unitPrice = resultSet.getDouble("customer_has_item_has_size.price");
                 double costWithDiscount = resultSet.getDouble("customer_has_item_has_size.price_with_discount");
                 double refundAmount = resultSet.getDouble("customer_has_item_has_size.refund_amount");
-                ItemDetail itemDetail = getItemDetail(colorHasItemHasSizeID);
+                ItemDetail itemDetail = getItemDetail(itemHasSizeID);
 
-                System.out.println("Refund amountX: " + refundAmount);
+                if (itemDetail != null) {
+                    System.out.println("Refund amountX: " + refundAmount);
 
-                double totalCost = boughtAmount * unitPrice;
+                    double totalCost = boughtAmount * unitPrice;
 
-                CheckoutItem checkoutItem = new CheckoutItem(
-                        customerHasItemHasSizeID,
-                        itemDetail.getName(),
-                        itemDetail.getSize(),
-                        itemDetail.getItemColor(),
-                        boughtAmount,
-                        itemDetail.getPrice(),
-                        itemDetail.getSellingPrice(),
-                        discount,
-                        String.valueOf(totalCost),
-                        costWithDiscount,
-                        refundAmount
-                );
+                    CheckoutItem checkoutItem = new CheckoutItem(
+                            customerHasItemHasSizeID,
+                            itemDetail.getName(),
+                            itemDetail.getSize(),
+                            itemDetail.getItemColor(),
+                            boughtAmount,
+                            itemDetail.getPrice(),
+                            itemDetail.getSellingPrice(),
+                            discount,
+                            String.valueOf(totalCost),
+                            costWithDiscount,
+                            refundAmount
+                    );
 
-                int customerId = resultSet.getInt("customer_has_item_has_size.customer_id");
-                int amount = resultSet.getInt("customer_has_item_has_size.amount");
-                Customer customer = getCustomer(customerId);
-                CustomerSale customerSale = new CustomerSale(saleID, receivedMoney, cost, amount, saleDate, customer, itemDetail, checkoutItem);
-                customerSales.add(customerSale);
+                    int customerId = resultSet.getInt("customer_has_item_has_size.customer_id");
+                    int amount = resultSet.getInt("customer_has_item_has_size.amount");
+                    Customer customer = getCustomer(customerId);
+                    Logger.logMessage("Customer Who bought the product:" + customerId + " : " + customer.getFirstName());
+                    System.out.println("Customer Who bought the product:" + customerId + " : " + customer.getFirstName());
+
+                    CustomerSale customerSale = new CustomerSale(saleID, receivedMoney, cost, amount, saleDate, customer, itemDetail, checkoutItem);
+                    customerSales.add(customerSale);
+                }
             }
 
         }catch(Exception e){
-            e.printStackTrace();
             Logger.logError(e.getMessage(), e);
+            e.printStackTrace();
         }
         System.out.println("Customer sale list length: " + customerSales.size());
         return customerSales;

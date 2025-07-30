@@ -183,7 +183,6 @@ public class TableContainer<T> extends VBox implements ThemeObserver {
                             pane.setMinWidth(20.0D);
                             pane.setMaxHeight(20.0D);
                             pane.setMinHeight(20.0D);
-                            System.out.println("Background Color: " + item);
                             if (item != null) {
                                 pane.setStyle("-fx-background-color: " + String.valueOf(item) + "; ");
                             }
