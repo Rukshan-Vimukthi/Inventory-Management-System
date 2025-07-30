@@ -1,10 +1,7 @@
 package com.example.inventorymanagementsystem.view.components;
-import com.example.inventorymanagementsystem.models.CheckoutItem;
 import com.example.inventorymanagementsystem.models.RevenueData;
-import javafx.beans.property.SimpleDoubleProperty;
+import com.example.inventorymanagementsystem.services.utils.Logger;
 import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.scene.chart.XYChart;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -17,9 +14,12 @@ import com.example.inventorymanagementsystem.db.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class TableKeeper {
     public static TableView<StockRow> getStockLevelTable() throws SQLException{
@@ -133,7 +133,7 @@ public class TableKeeper {
     }
 
     public static TableView<SalesRow> getSalesTable(String filter) throws SQLException {
-        Connection connection = Connection.getInstance(); // Your DB connection
+        Connection connection = Connection.getInstance();
 
         TableView<SalesRow> salesTable = new TableView<>();
         salesTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
@@ -206,6 +206,80 @@ public class TableKeeper {
         }
         public Integer getPrice(){return price;}
         public Integer getAmount(){return amount;}
+    }
+
+    public static class DailyCustomerCount {
+        private final String customer;
+        private final Integer count;
+
+        public DailyCustomerCount(String customer, Integer count) {
+            this.customer = customer;
+            this.count = count;
+        }
+
+        public String getCustomer() {
+            return customer;
+        }
+
+        public Integer getCount() {
+            return count;
+        }
+    }
+
+    public static TableView<DailyCustomerCount> getSalesCustomersTable(Connection connection, String selectedRange) {
+        TableView<DailyCustomerCount> table = new TableView<>();
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        table.setPrefWidth(800);
+        table.setMaxWidth(Double.MAX_VALUE);
+
+        TableColumn<DailyCustomerCount, String> customerCol = new TableColumn<>("Customer");
+        customerCol.setCellValueFactory(new PropertyValueFactory<>("customer"));
+
+        TableColumn<DailyCustomerCount, Integer> countCol = new TableColumn<>("Total Orders");
+        countCol.setCellValueFactory(new PropertyValueFactory<>("count"));
+
+        table.getColumns().addAll(customerCol, countCol);
+
+        ObservableList<DailyCustomerCount> data = FXCollections.observableArrayList();
+
+        try {
+            Map<String, Set<String>> dateToCustomers = connection.getCustomersBySaleDate();
+
+            // Get the date range boundaries
+            LocalDate[] range = ChartKeeper.parseDateRange(selectedRange);
+            LocalDate startDate = range[0];
+            LocalDate endDate = range[1];
+            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+            // Map to accumulate total orders per customer
+            Map<String, Integer> customerOrderCounts = new HashMap<>();
+
+            // Loop through all dates and filter by date range
+            for (Map.Entry<String, Set<String>> entry : dateToCustomers.entrySet()) {
+                LocalDate date = LocalDate.parse(entry.getKey(), dtf);
+
+                if ((startDate == null || !date.isBefore(startDate)) &&
+                        (endDate == null || !date.isAfter(endDate))) {
+
+                    // Count orders per customer (assuming each occurrence = 1 order)
+                    for (String customer : entry.getValue()) {
+                        customerOrderCounts.put(customer, customerOrderCounts.getOrDefault(customer, 0) + 1);
+                    }
+                }
+            }
+
+            // Convert aggregated counts to DailyCustomerCount objects
+            for (Map.Entry<String, Integer> custEntry : customerOrderCounts.entrySet()) {
+                data.add(new DailyCustomerCount(custEntry.getKey(), custEntry.getValue()));
+            }
+
+        } catch (Exception e) {
+            Logger.logError("Error loading daily customers table: " + e.getMessage(), e);
+            e.printStackTrace();
+        }
+
+        table.setItems(data);
+        return table;
     }
 
     public static TableView<RevenueData> getRevenueTable() throws SQLException {

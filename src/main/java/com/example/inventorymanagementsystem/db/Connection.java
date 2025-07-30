@@ -37,8 +37,8 @@ public class Connection {
 //        String dbLink = "jdbc:mysql://192.168.43.242:3306/sandyafashioncorner?useSSL=false&allowPublicKeyRetrieval=true";
         String username = "root";
 //        String username = "dev";
-        String password = "root@techlix2002";
-//        String password = "Sandun@2008.sd";
+//        String password = "root@techlix2002";
+        String password = "Sandun@2008.sd";
 //        String password = "root@2025sfc";
 //        String password = "dev@sfc@2025";
         connection = DriverManager.getConnection(dbLink, username, password);
@@ -437,6 +437,54 @@ public class Connection {
             exception.printStackTrace();
         }
         return items;
+    }
+
+    public Map<String, Set<String>> getCustomersBySaleDate() {
+        Map<String, Set<String>> dateToCustomers = new LinkedHashMap<>();
+
+        String query = """
+        SELECT s.date, c.first_name
+        FROM sale s
+        JOIN customer c ON s.customer_id = c.id
+        ORDER BY s.date
+    """;
+
+        try (
+                PreparedStatement statement = connection.prepareStatement(query);
+                ResultSet rs = statement.executeQuery()
+        ) {
+            while (rs.next()) {
+                String date = rs.getString("date");
+                String name = rs.getString("first_name");
+
+                dateToCustomers
+                        .computeIfAbsent(date, k -> new LinkedHashSet<>())
+                        .add(name);
+            }
+        } catch (SQLException e) {
+            Logger.logError(e.getMessage(), e);
+            e.printStackTrace();
+        }
+
+        return dateToCustomers;
+    }
+
+    public ResultSet getCustomerWiseSalesData() {
+        ResultSet rs = null;
+        try {
+            String query = "SELECT c.name AS customer_name, " +
+                    "SUM(chis.amount * chis.price) AS total_sales, " +
+                    "SUM(chis.amount) AS total_quantity " +
+                    "FROM customer_has_item_has_size chis " +
+                    "JOIN customer c ON chis.customer_id = c.id " +
+                    "GROUP BY chis.customer_id";
+            Statement stmt = connection.createStatement();
+            rs = stmt.executeQuery(query);
+        } catch (SQLException e) {
+            Logger.logError("Error fetching customer-wise sales data: " + e.getMessage(), e);
+            e.printStackTrace();
+        }
+        return rs;
     }
 
     public int addNewColor(String colorCode){

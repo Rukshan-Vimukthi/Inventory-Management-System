@@ -15,6 +15,8 @@ import javafx.scene.layout.VBox;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class ChartKeeper {
@@ -250,6 +252,130 @@ public class ChartKeeper {
             default:
                 return "";
         }
+    }
+
+    // Shows the daily customers
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+    public static BarChart<String, Number> getCustomersCountChart(Connection connection, String dateRange) {
+        CategoryAxis xAxis = new CategoryAxis();
+        NumberAxis yAxis = new NumberAxis();
+        xAxis.setLabel("Date");
+        yAxis.setLabel("Number of Customers");
+
+        BarChart<String, Number> customerBarChart = new BarChart<>(xAxis, yAxis);
+        customerBarChart.setAnimated(false);
+        customerBarChart.getStyleClass().add("charts");
+        customerBarChart.setPrefHeight(500);
+
+        XYChart.Series<String, Number> customerSeries = new XYChart.Series<>();
+        customerSeries.setName("Customers Per Day");
+
+        Map<String, Set<String>> dateToCustomers = connection.getCustomersBySaleDate();
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+        // Compute start and end date from the dateRange string
+        LocalDate[] range = parseDateRange(dateRange);
+        LocalDate startDate = range[0];
+        LocalDate endDate = range[1];
+
+        List<String> filteredDates = new ArrayList<>();
+
+        for (Map.Entry<String, Set<String>> entry : dateToCustomers.entrySet()) {
+            LocalDate date = LocalDate.parse(entry.getKey(), formatter);
+
+            // Filter by date range if specified
+            if ((startDate == null || !date.isBefore(startDate)) &&
+                    (endDate == null || !date.isAfter(endDate))) {
+
+                filteredDates.add(entry.getKey());
+
+                XYChart.Data<String, Number> dataPoint = new XYChart.Data<>(entry.getKey(), entry.getValue().size());
+                customerSeries.getData().add(dataPoint);
+
+                String customerList = String.join(", ", entry.getValue());
+                Tooltip tooltip = new Tooltip("Customers: " + customerList);
+                tooltip.setStyle("""
+                -fx-background-color: #1f2937;
+                -fx-text-fill: white;
+                -fx-padding: 8px;
+                -fx-background-radius: 6px;
+                -fx-font-size: 13px;
+                -fx-border-color: #93c5fd;
+                -fx-border-radius: 6px;
+            """);
+
+                dataPoint.nodeProperty().addListener((obs, oldNode, newNode) -> {
+                    if (newNode != null) {
+                        newNode.setOnMouseEntered(event -> tooltip.show(newNode, event.getScreenX() + 10, event.getScreenY() - 30));
+                        newNode.setOnMouseExited(event -> tooltip.hide());
+
+                        VBox mainLayout = Analytics.getMainLayout();
+                        if (mainLayout != null) {
+                            mainLayout.addEventFilter(ScrollEvent.SCROLL, scrollEvent -> {
+                                if (tooltip.isShowing()) {
+                                    tooltip.hide();
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+        }
+
+        // Sort the dates to display in order on X axis
+        Collections.sort(filteredDates);
+        xAxis.setCategories(FXCollections.observableArrayList(filteredDates));
+
+        customerBarChart.getData().add(customerSeries);
+
+        return customerBarChart;
+    }
+
+    // You also need this helper method (same as previous):
+    public static LocalDate[] parseDateRange(String rangeStr) {
+        LocalDate now = LocalDate.now();
+        LocalDate start = null;
+        LocalDate end = null;
+
+        if (rangeStr == null || rangeStr.isEmpty()) {
+            return new LocalDate[]{null, null}; // no filtering
+        }
+
+        switch (rangeStr) {
+            case "Today":
+                start = now;
+                end = now;
+                break;
+            case "Yesterday":
+                start = now.minusDays(1);
+                end = start;
+                break;
+            case "Last 7 Days":
+                start = now.minusDays(6); // include today (7 days total)
+                end = now;
+                break;
+            case "This Month":
+                start = now.withDayOfMonth(1);
+                end = now;
+                break;
+            case "Last Month":
+                start = now.minusMonths(1).withDayOfMonth(1);
+                end = start.withDayOfMonth(start.lengthOfMonth());
+                break;
+            case "This Year":
+                start = now.withDayOfYear(1);
+                end = now;
+                break;
+            case "Last Year":
+                start = now.minusYears(1).withDayOfYear(1);
+                end = start.withDayOfYear(start.lengthOfYear());
+                break;
+            default:
+                return new LocalDate[]{null, null};
+        }
+        return new LocalDate[]{start, end};
     }
 
     // Shows the revenue
