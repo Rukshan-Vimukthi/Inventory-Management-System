@@ -382,7 +382,7 @@ public class Analytics extends VBox implements ThemeObserver {
 
         HBox dateRangeCustomerContainer = new HBox();
         dateRangeCustomerContainer.setAlignment(Pos.TOP_RIGHT);
-        dateRangeCustomerContainer.setPadding(new Insets(0, 180, 0, 0));
+        dateRangeCustomerContainer.setPadding(new Insets(0, 80, 0, 0));
         ComboBox<String> dateRangeCustomer = new ComboBox<>(
                 FXCollections.observableArrayList(
                         Arrays.asList("Today", "Yesterday", "Last 7 Days", "This Month", "Last Month", "This Year", "Last Year")
@@ -406,17 +406,11 @@ public class Analytics extends VBox implements ThemeObserver {
         dailyToggleScrollpane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         dailyToggleScrollpane.setMaxHeight(500);
         dailyToggleScrollpane.setPrefHeight(500);
-        dailyToggleScrollpane.setMaxWidth(1300);
-        dailyToggleScrollpane.setPrefWidth(1300);
+        dailyToggleScrollpane.setMaxWidth(1600);
+        dailyToggleScrollpane.setPrefWidth(1600);
 
         dateRangeCustomer.valueProperty().addListener((obs, oldValue, newValue) -> {
-            ChartTableToggleComponent newToggle = new ChartTableToggleComponent(
-                    ChartKeeper.getCustomersCountChart(this.connection, newValue),
-                    TableKeeper.getSalesCustomersTable(this.connection, newValue)
-            );
-
-            dailyToggleScrollpane.setContent(newToggle);
-            currentToggle[0] = newToggle;
+            updateCustomerToggle(newValue, dailyToggleScrollpane, currentToggle);
         });
 
         // Add all to layout
@@ -670,6 +664,9 @@ public class Analytics extends VBox implements ThemeObserver {
                 throw new RuntimeException(e);
             }
 
+            String currentRange = dateRangeCustomer.getValue();
+            updateCustomerToggle(currentRange, dailyToggleScrollpane, currentToggle);
+
             // Refreshing the cards
             int updatedTotalItemsSum = connection.getTotalProducts();
             totalProducts.setText(updatedTotalItemsSum + " Products are Available");
@@ -831,7 +828,7 @@ public class Analytics extends VBox implements ThemeObserver {
         headerContainer.getChildren().addAll(dateRange, export, refresh);
         navbar.getChildren().addAll(heading, subHeading, headerContainer);
 
-        mainLayout.getChildren().addAll(navbar, summaryCardContainer, stockAnalytics, saleAnalyticsSec, dailyCustomersSec, revenueAlertSection, visualArea, mainFooterSec);
+        mainLayout.getChildren().addAll(navbar, summaryCardContainer, dailyCustomersSec, stockAnalytics, saleAnalyticsSec, revenueAlertSection, visualArea, mainFooterSec);
         ScrollPane mainContainer = new ScrollPane();
         mainContainer.setContent(mainLayout);
         mainContainer.setFitToWidth(true);
@@ -840,6 +837,16 @@ public class Analytics extends VBox implements ThemeObserver {
 
     public static VBox getMainLayout() {
         return mainLayout;
+    }
+
+    private void updateCustomerToggle(String selectedRange, ScrollPane dailyToggleScrollpane, ChartTableToggleComponent[] currentToggle) {
+        ChartTableToggleComponent newToggle = new ChartTableToggleComponent(
+                ChartKeeper.getCustomersCountChart(this.connection, selectedRange),
+                TableKeeper.getSalesCustomersTable(this.connection, selectedRange)
+        );
+
+        dailyToggleScrollpane.setContent(newToggle);
+        currentToggle[0] = newToggle;
     }
 
     private ChartTableToggleComponent createStockComponent() throws SQLException{

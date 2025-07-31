@@ -308,6 +308,8 @@ public class ChartKeeper {
 
                 dataPoint.nodeProperty().addListener((obs, oldNode, newNode) -> {
                     if (newNode != null) {
+                        newNode.setStyle("-fx-bar-fill: #fbbc04; -fx-background-radius: 6px;");
+
                         newNode.setOnMouseEntered(event -> tooltip.show(newNode, event.getScreenX() + 10, event.getScreenY() - 30));
                         newNode.setOnMouseExited(event -> tooltip.hide());
 
@@ -340,7 +342,7 @@ public class ChartKeeper {
         LocalDate end = null;
 
         if (rangeStr == null || rangeStr.isEmpty()) {
-            return new LocalDate[]{null, null}; // no filtering
+            return new LocalDate[]{null, null};
         }
 
         switch (rangeStr) {
